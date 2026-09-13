@@ -1,0 +1,931 @@
+{
+    "time_slice":  "T145",
+    "scenario":  "中途岛战役",
+    "phase_label":  "残局猎杀：美军两艘航母追击赤城、加贺等受创漂移的损管实体",
+    "side":  "IJN",
+    "side_name":  "日本海军",
+    "source_file":  "t145_midway_all_units_Imperial_Japanese_Navy.inst",
+    "cleaning_notes":  [
+                           "已剔除 CMO 平台字段：DB_ID、FormatVersion、Template、Member_DBID、Member_GUID、ParentGroupGUID、LoadoutID、Loadout_ID、AC_DBID、Member_SBR、MagazineRecords、阵位/队形内部字段、武器弹幕实体",
+                           "已按 类型+名称+坐标 去重（CMO 导出存在舰艇/设施重复）",
+                           "舰载机若同时出现在 HostedAircraftRecords 与顶层且高度约0，仅保留为母舰舰载清单",
+                           "防空阵地按型号聚合为 battery_count，不再保留 CMO 单体炮位",
+                           "飞机/舰艇类别由单位名称推断，不依赖 CMO 数据库 ID",
+                           "舰艇若 Member_SBR 含 Damage 则标记 damaged，不保留 SBR 原文；航速接近 0 则标为停航或受创漂泊",
+                           "未改写经纬度与航向，仅做四舍五入"
+                       ],
+    "summary":  {
+                    "unit_count":  27,
+                    "ship_count":  20,
+                    "airborne_aircraft_count":  7,
+                    "facility_count":  0,
+                    "groups":  [
+                                   {
+                                       "name":  "Nagumo\u0027s Task Force",
+                                       "count":  20
+                                   }
+                               ],
+                    "airborne_by_class":  [
+                                              {
+                                                  "unit_class":  "战斗机-零式",
+                                                  "count":  7
+                                              }
+                                          ],
+                    "embarked_ready_count":  65,
+                    "embarked_not_ready_count":  4,
+                    "embarked_by_class_and_ready":  [
+                                                        {
+                                                            "key":  "俯冲轰炸机-九九式/彗星|ready_min=0",
+                                                            "count":  27
+                                                        },
+                                                        {
+                                                            "key":  "舰载侦察机-水上飞机|ready_min=0",
+                                                            "count":  9
+                                                        },
+                                                        {
+                                                            "key":  "鱼雷机-九七式|ready_min=0",
+                                                            "count":  27
+                                                        },
+                                                        {
+                                                            "key":  "战斗机-零式|ready_min=0",
+                                                            "count":  2
+                                                        },
+                                                        {
+                                                            "key":  "战斗机-零式|ready_min=22",
+                                                            "count":  1
+                                                        },
+                                                        {
+                                                            "key":  "战斗机-零式|ready_min=26",
+                                                            "count":  1
+                                                        },
+                                                        {
+                                                            "key":  "战斗机-零式|ready_min=28",
+                                                            "count":  1
+                                                        },
+                                                        {
+                                                            "key":  "战斗机-零式|ready_min=6",
+                                                            "count":  1
+                                                        }
+                                                    ]
+                },
+    "units":  [
+                  {
+                      "name":  "IJN Akagi",
+                      "unit_type":  "Ship",
+                      "unit_class":  "航空母舰",
+                      "status":  "受创漂泊",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.126402,
+                      "longitude":  -177.610685,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  true,
+                      "embarked_aircraft_count":  31,
+                      "embarked_aircraft":  [
+                                                {
+                                                    "name":  "Akagi Murata Kate #13",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Akagi Chihaya Val  #13",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kikushi Kate #10",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kikushi Kate #12",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Akagi Murata Kate #2",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kikushi Kate #11",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Akagi Murata Kate #3",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Abe Kate #9",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Akagi Murata Kate #6",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Akagi Murata Kate #17",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Abe Kate #4",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Abe Kate #1",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Akagi Murata Kate #7",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Abe Kate #3",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Akagi Chihaya Val  #9",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kikushi Kate #2",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Akagi Chihaya Val  #11",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Abe Kate #5",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kikushi Kate #5",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kikushi Kate #8",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Abe Kate #6",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Abe Kate #8",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kikushi Kate #3",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kikushi Kate #9",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kikushi Kate #6",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kikushi Kate #1",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kikushi Kate #4",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Akagi Murata Kate #16",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Akagi Murata Kate #15",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Akagi Murata Kate #14",
+                                                    "unit_class":  "鱼雷机-九七式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Akagi Itaya Zero  #19",
+                                                    "unit_class":  "战斗机-零式",
+                                                    "ready_time_min":  26,
+                                                    "status":  "舰载"
+                                                }
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Soryu",
+                      "unit_type":  "Ship",
+                      "unit_class":  "航空母舰",
+                      "status":  "受创漂泊",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.097305,
+                      "longitude":  -177.780182,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  true,
+                      "embarked_aircraft_count":  16,
+                      "embarked_aircraft":  [
+                                                {
+                                                    "name":  "Soryu Suganami Zero #9",
+                                                    "unit_class":  "战斗机-零式",
+                                                    "ready_time_min":  28,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Ikeda Val #3",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Ikeda Val #8",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Ikeda Val #5",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Ikeda Val #1",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Ikeda Val #9",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Ikeda Val #6",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Ikeda Val #7",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Ikeda Val #11",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Ikeda Val #10",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Kaga Ogawa Val #3",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Suganami Zero #6",
+                                                    "unit_class":  "战斗机-零式",
+                                                    "ready_time_min":  6,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Suganami Zero #8",
+                                                    "unit_class":  "战斗机-零式",
+                                                    "ready_time_min":  22,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kobayashi Val #9",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kobayashi Val #12",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Soryu Suganami Zero #11",
+                                                    "unit_class":  "战斗机-零式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                }
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Kazagumo",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.166331,
+                      "longitude":  -177.762344,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Hagikazi",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.087802,
+                      "longitude":  -177.600549,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Yugumo",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.187878,
+                      "longitude":  -177.52929,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Nowaki",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.093536,
+                      "longitude":  -177.545991,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Magikazi",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.07162,
+                      "longitude":  -177.436956,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Hamakazi",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.109652,
+                      "longitude":  -177.442265,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Makigumo",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.178462,
+                      "longitude":  -177.569391,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Tanikazi",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.048333,
+                      "longitude":  -177.525634,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Isokazi",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.060096,
+                      "longitude":  -177.478221,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Urakazi",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.138742,
+                      "longitude":  -177.457755,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Nagara",
+                      "unit_type":  "Ship",
+                      "unit_class":  "轻巡洋舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.211431,
+                      "longitude":  -177.589587,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Arashi",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.104695,
+                      "longitude":  -177.632806,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Kirishima",
+                      "unit_type":  "Ship",
+                      "unit_class":  "战列舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.138634,
+                      "longitude":  -177.565676,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  2,
+                      "embarked_aircraft":  [
+                                                {
+                                                    "name":  "Kirishima Iwabuchi Jake #2",
+                                                    "unit_class":  "舰载侦察机-水上飞机",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Kirishima Iwabuchi Jake #3",
+                                                    "unit_class":  "舰载侦察机-水上飞机",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                }
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Tone",
+                      "unit_type":  "Ship",
+                      "unit_class":  "重巡洋舰-侦察巡洋舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.15599,
+                      "longitude":  -177.676227,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  6,
+                      "embarked_aircraft":  [
+                                                {
+                                                    "name":  "Tone Jake Okada #2",
+                                                    "unit_class":  "舰载侦察机-水上飞机",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Kaga Ogawa Val #7",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kobayashi Val #11",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Tone Jake Okada #5",
+                                                    "unit_class":  "舰载侦察机-水上飞机",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Tone Jake Okada #4",
+                                                    "unit_class":  "舰载侦察机-水上飞机",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kobayashi Val #10",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                }
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Chikuma",
+                      "unit_type":  "Ship",
+                      "unit_class":  "重巡洋舰-侦察巡洋舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.111289,
+                      "longitude":  -177.713862,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  6,
+                      "embarked_aircraft":  [
+                                                {
+                                                    "name":  "Chikuma Komura Jake #3",
+                                                    "unit_class":  "舰载侦察机-水上飞机",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Mori Zero #16",
+                                                    "unit_class":  "战斗机-零式",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Chikuma Komura Jake #2",
+                                                    "unit_class":  "舰载侦察机-水上飞机",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kobayashi Val #8",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Chikuma Komura Jake #5",
+                                                    "unit_class":  "舰载侦察机-水上飞机",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kobayashi Val #15",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                }
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Haruna",
+                      "unit_type":  "Ship",
+                      "unit_class":  "战列舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.187837,
+                      "longitude":  -177.730541,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  3,
+                      "embarked_aircraft":  [
+                                                {
+                                                    "name":  "Kaga Ogawa Val #2",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Haruna Tokama Jake #2",
+                                                    "unit_class":  "舰载侦察机-水上飞机",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hiryu Kobayashi Val #17",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                }
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Kaga",
+                      "unit_type":  "Ship",
+                      "unit_class":  "航空母舰",
+                      "status":  "受创漂泊",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.172399,
+                      "longitude":  -177.575725,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  true,
+                      "embarked_aircraft_count":  5,
+                      "embarked_aircraft":  [
+                                                {
+                                                    "name":  "Kaga Ogawa Val #1",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Kaga Ogawa Val #17",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Kaga Ogawa Val #16",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Kaga Ogawa Val #14",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Kaga Ogawa Val #13",
+                                                    "unit_class":  "俯冲轰炸机-九九式/彗星",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                }
+                                            ]
+                  },
+                  {
+                      "name":  "IJN Akigumo",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "停航",
+                      "side":  "IJN",
+                      "group":  "Nagumo\u0027s Task Force",
+                      "latitude":  29.208091,
+                      "longitude":  -177.766659,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  81.6,
+                      "damaged":  false,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "Soryu Suganami Zero #5",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-零式",
+                      "status":  "空中",
+                      "side":  "IJN",
+                      "group":  null,
+                      "latitude":  28.744239,
+                      "longitude":  -179.446524,
+                      "altitude_m":  10971.5,
+                      "speed_kn":  160,
+                      "heading_deg":  199.8
+                  },
+                  {
+                      "name":  "Soryu Suganami Zero #10",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-零式",
+                      "status":  "空中",
+                      "side":  "IJN",
+                      "group":  null,
+                      "latitude":  28.59576,
+                      "longitude":  -178.637403,
+                      "altitude_m":  10971,
+                      "speed_kn":  160,
+                      "heading_deg":  315.3
+                  },
+                  {
+                      "name":  "Soryu Suganami Zero #1",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-零式",
+                      "status":  "空中",
+                      "side":  "IJN",
+                      "group":  null,
+                      "latitude":  28.505774,
+                      "longitude":  -179.159104,
+                      "altitude_m":  10970,
+                      "speed_kn":  160,
+                      "heading_deg":  10.7
+                  },
+                  {
+                      "name":  "Akagi Itaya Zero  #9",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-零式",
+                      "status":  "空中",
+                      "side":  "IJN",
+                      "group":  null,
+                      "latitude":  28.542722,
+                      "longitude":  -178.831216,
+                      "altitude_m":  10971.6,
+                      "speed_kn":  160,
+                      "heading_deg":  47.5
+                  },
+                  {
+                      "name":  "Akagi Itaya Zero  #7",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-零式",
+                      "status":  "空中",
+                      "side":  "IJN",
+                      "group":  null,
+                      "latitude":  29.006357,
+                      "longitude":  -178.613353,
+                      "altitude_m":  10971.6,
+                      "speed_kn":  160,
+                      "heading_deg":  336.3
+                  },
+                  {
+                      "name":  "Soryu Suganami Zero #2",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-零式",
+                      "status":  "空中",
+                      "side":  "IJN",
+                      "group":  null,
+                      "latitude":  28.702253,
+                      "longitude":  -179.138334,
+                      "altitude_m":  10970.8,
+                      "speed_kn":  160,
+                      "heading_deg":  149.3
+                  },
+                  {
+                      "name":  "Soryu Suganami Zero #3",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-零式",
+                      "status":  "空中",
+                      "side":  "IJN",
+                      "group":  null,
+                      "latitude":  29.039178,
+                      "longitude":  -179.68059,
+                      "altitude_m":  10970.5,
+                      "speed_kn":  160,
+                      "heading_deg":  21
+                  }
+              ]
+}

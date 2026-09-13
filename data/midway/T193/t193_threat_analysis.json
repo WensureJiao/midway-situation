@@ -1,0 +1,84 @@
+{
+  "time_slice": "T193",
+  "scenario": "中途岛战役",
+  "phase_label": "终局终结：完整的32小时对抗结束，记录中途岛守卫战的最终战果",
+  "data_files": [
+    "t193_midway_cleaned_Imperial_Japanese_Navy.json",
+    "t193_midway_cleaned_United_States_Navy.json"
+  ],
+  "final_scorecard": {
+    "defender_result": "中途岛守住",
+    "ijn_carriers": "在场赤城、加贺、苍龙受创漂泊；飞龙舰体不明",
+    "usn_carriers": "企业号、大黄蜂号、约克城号均在导出中，均无航母级损伤标记",
+    "midway": "主跑道可用，短跑道受损",
+    "air_attrition_vs_T21_approx": {
+      "ijn_unique_names": "135→76（约 -59）",
+      "usn_unique_names": "168→95（约 -73）",
+      "usn_heavier_sbd_wildcat_loss": "无畏式、野猫损耗最大，符合其承担搜索/突击/护航的代价；PBY 基本保全"
+    }
+  },
+  "threat_context": "终局威胁从“谁能打赢战役”变成“残存力量还能造成意外伤害吗”。日方对岛战略威胁已消失；剩余风险是低空残存零式、未知飞龙、以及美方自身受损护航舰。评估应服务战果巩固，而不是再规划一次主力决战。",
+  "tasks": [
+    {
+      "task_id": "T193-THR-01",
+      "category": "威胁分析",
+      "capability": "关键威胁目标筛选",
+      "prompt": "在战果已明的前提下筛选终局仍值得跟踪的目标。美方视角：还有哪些能破坏守卫战果（残存战斗机、不明飞龙、伤舰是否被拖走）。日方视角：还有没有可执行的反击对象。明确把中途岛本身从“日方即将夺取的目标”降级为“已守住的基地”。",
+      "usn_view_key_threats": [
+        { "target": "赤城/加贺/苍龙残骸", "reason": "若被拖带或火灾被控，仍可能留下可修复价值；终局需确认其失去再起。但它们已不是空中威胁源。" },
+        { "target": "贴舰低空零式与西侧高空零式", "reason": "唯一在空日机，可能咬 CAP 或做最后拦截。" },
+        { "target": "飞龙（始终无舰体）", "reason": "战果表上的最大未知项，不能当已击沉。" },
+        { "target": "无", "reason": "对中途岛的两栖/航空夺取威胁本时刻不成立：日方无航速、无突击波。" }
+      ],
+      "ijn_view_key_threats": [
+        { "target": "覆盖残骸空域的野猫", "reason": "阻止任何残存日机接近伤舰或美舰。" },
+        { "target": "企业号/大黄蜂号", "reason": "仍能放飞，但日方已无可用甲板执行反击。" },
+        { "target": "中途岛岸基辩护者", "reason": "岛屿仍是航空基地，对漂泊舰可补刀。" },
+        { "target": "约克城号", "reason": "停航但未标损伤，不是终局主威胁。" }
+      ],
+      "do_not_overweight": ["把全部日驱逐舰当关键威胁", "把短跑道受损写成中途岛失守", "把名称仍在的舰载攻击机当在空突击"],
+      "evaluation_points": ["守岛成功后对岛威胁降级", "飞龙仍在清单", "伤航母是残骸跟踪不是对等航母战"]
+    },
+    {
+      "task_id": "T193-THR-02",
+      "category": "威胁分析",
+      "capability": "威胁等级评估",
+      "prompt": "按紧急/高/中/低评估终局目标。战役级威胁应整体为低；局部对空仍可给中。必须引用 speed、damaged、空中机型。把美方 Benham/Ellet/New Orleans 的损伤评为战术损伤，不改变战役胜负。",
+      "rating_scale": ["紧急", "高", "中", "低"],
+      "reference_ratings": [
+        { "perspective": "战役", "target": "日方再夺中途岛", "level": "低", "evidence": "全体 0 kn，无突击机在空，岛上机场仍在。" },
+        { "perspective": "美方看日方", "target": "三艘伤航母残骸", "level": "中（跟踪）/ 低（打击美舰）", "evidence": "仍存在且受损，但无航速。" },
+        { "perspective": "美方看日方", "target": "残存零式", "level": "中", "evidence": "8 架在空，含贴舰低空 1 架。" },
+        { "perspective": "美方看日方", "target": "飞龙未知", "level": "中至高（不确定性）", "evidence": "无观测几何，不是已证实威胁。" },
+        { "perspective": "日方看美方", "target": "野猫 CAP", "level": "高（对残存日机）", "evidence": "约 19 架在伤舰空域。" },
+        { "perspective": "日方看美方", "target": "企业号/大黄蜂号", "level": "高（能力）但日方无法兑现打击", "evidence": "仍在航行；己方无放飞平台。" },
+        { "perspective": "任一方", "target": "USS Benham/Ellet/New Orleans 损伤", "level": "低（战役）", "evidence": "护航舰带伤仍伴随 TF16，不改变守岛结果。" },
+        { "perspective": "任一方", "target": "中途岛短跑道受损", "level": "低", "evidence": "主跑道仍在，辩护者仍能升空。" }
+      ],
+      "evaluation_points": ["战役威胁整体下降", "战术损伤不上升为战役失败", "未知飞龙用不确定性评级"]
+    },
+    {
+      "task_id": "T193-THR-03",
+      "category": "威胁分析",
+      "capability": "目标优先级排序",
+      "prompt": "给出终局巩固清单，而不是决战清单。（1）美方：确认战果、防意外；（2）日方：残存兵力若还能行动应优先保人员/放弃伤舰，而不是打美航母。",
+      "usn_priority_order": [
+        { "rank": 1, "target": "中途岛主跑道与岸基航空", "action": "保持可用，作为守卫战果的核心指标。" },
+        { "rank": 2, "target": "赤城/加贺/苍龙残骸状态确认", "action": "CAP 监视，防止拖带或再起火被控后脱离。" },
+        { "rank": 3, "target": "残存零式", "action": "野猫清场，避免终局误伤/最后拦截。" },
+        { "rank": 4, "target": "飞龙补盲", "action": "PBY 仍在，用于闭合第四艘航母是否存在。" },
+        { "rank": 5, "target": "企业号/大黄蜂号自身防护", "action": "维持微速阵位与 CAP，不冒险靠近伤舰炮程。" },
+        { "rank": 6, "target": "受损护航舰", "action": "损管，不升格为战役目标。" }
+      ],
+      "ijn_priority_order": [
+        { "rank": 1, "target": "伤航母人员与损管", "action": "无航速前提下以救离/放弃为主，无法再突击。" },
+        { "rank": 2, "target": "召回或迫降残存零式", "action": "高空零式与母舰脱节，低空机靠近赤城，优先回收而不是拦截美舰。" },
+        { "rank": 3, "target": "飞龙（若仍独立存在）", "action": "唯一可能的保存兵力选项；本切片无法指挥。" },
+        { "rank": 4, "target": "美航母", "action": "能力上仍高价值，但在场三艘日航母无法执行，不应排成可操作第一。" },
+        { "rank": 5, "target": "中途岛", "action": "战役目标已失败，降为不执行。" }
+      ],
+      "tie_break_rule": "终局先巩固已得战果（岛、己方航母），再处理残骸与未知；不要为打一艘废舰把可用航母送进炮程。",
+      "evaluation_points": ["美方第一是守岛成果不是再砸驱逐舰", "日方第一不是打企业号", "有明确战果闭合"]
+    }
+  ]
+}

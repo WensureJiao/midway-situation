@@ -1,0 +1,37 @@
+[
+  {
+    "id": "T1",
+    "label": "初始态势",
+    "phase_label": "初始态势：红蓝双方初始兵力配置，南云机动部队集结",
+    "order": 1,
+    "path": "/data/midway/T1/pack.json"
+  },
+  {
+    "id": "T21",
+    "label": "广域搜索",
+    "phase_label": "广域搜索：双方侦察机顶出，开始大范围扇区搜索与接触",
+    "order": 2,
+    "path": "/data/midway/T21/pack.json"
+  },
+  {
+    "id": "T81",
+    "label": "机库危机",
+    "phase_label": "机库危机：日军航母甲板进行极严苛的鱼雷换炸弹整备周转",
+    "order": 3,
+    "path": "/data/midway/T81/pack.json"
+  },
+  {
+    "id": "T145",
+    "label": "残局猎杀",
+    "phase_label": "残局猎杀：美军两艘航母追击赤城、加贺等受创漂移的损管实体",
+    "order": 4,
+    "path": "/data/midway/T145/pack.json"
+  },
+  {
+    "id": "T193",
+    "label": "终局收束",
+    "phase_label": "终局终结：完整的32小时对抗结束，记录中途岛守卫战的最终战果",
+    "order": 5,
+    "path": "/data/midway/T193/pack.json"
+  }
+]

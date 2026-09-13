@@ -1,0 +1,1698 @@
+{
+    "time_slice":  "T81",
+    "scenario":  "中途岛战役",
+    "phase_label":  "机库危机：日军航母甲板进行极严苛的鱼雷换炸弹整备周转",
+    "side":  "USN",
+    "side_name":  "美国海军",
+    "source_file":  "t81_midway_all_units_United_States_Navy.inst",
+    "cleaning_notes":  [
+                           "已剔除 CMO 平台字段：DB_ID、FormatVersion、Template、Member_DBID、Member_GUID、ParentGroupGUID、LoadoutID、Loadout_ID、AC_DBID、Member_SBR、MagazineRecords、阵位/队形内部字段、武器弹幕实体",
+                           "已按 类型+名称+坐标 去重（CMO 导出存在舰艇/设施重复）",
+                           "舰载机若同时出现在 HostedAircraftRecords 与顶层且高度约0，仅保留为母舰舰载清单",
+                           "防空阵地按型号聚合为 battery_count，不再保留 CMO 单体炮位",
+                           "飞机/舰艇类别由单位名称推断，不依赖 CMO 数据库 ID",
+                           "未改写经纬度与航向，仅做四舍五入"
+                       ],
+    "summary":  {
+                    "unit_count":  97,
+                    "ship_count":  28,
+                    "airborne_aircraft_count":  30,
+                    "facility_count":  5,
+                    "groups":  [
+                                   {
+                                       "name":  "Task Force 16 Hornet-Enterprise Spuance",
+                                       "count":  19
+                                   },
+                                   {
+                                       "name":  "Task Force 17 Yorktown Fletcher",
+                                       "count":  9
+                                   },
+                                   {
+                                       "name":  "Midway Installation",
+                                       "count":  5
+                                   },
+                                   {
+                                       "name":  "Flight Beast10",
+                                       "count":  2
+                                   }
+                               ],
+                    "airborne_by_class":  [
+                                              {
+                                                  "unit_class":  "战斗机-野猫",
+                                                  "count":  20
+                                              },
+                                              {
+                                                  "unit_class":  "俯冲轰炸机-辩护者",
+                                                  "count":  6
+                                              },
+                                              {
+                                                  "unit_class":  "重型轰炸机-B-17",
+                                                  "count":  3
+                                              },
+                                              {
+                                                  "unit_class":  "远程巡逻机-PBY",
+                                                  "count":  1
+                                              }
+                                          ],
+                    "embarked_ready_count":  27,
+                    "embarked_not_ready_count":  9,
+                    "embarked_by_class_and_ready":  [
+                                                        {
+                                                            "key":  "俯冲轰炸机-无畏|ready_min=0",
+                                                            "count":  11
+                                                        },
+                                                        {
+                                                            "key":  "俯冲轰炸机-无畏|ready_min=123",
+                                                            "count":  1
+                                                        },
+                                                        {
+                                                            "key":  "俯冲轰炸机-无畏|ready_min=138",
+                                                            "count":  1
+                                                        },
+                                                        {
+                                                            "key":  "鱼雷机-毁灭者|ready_min=0",
+                                                            "count":  5
+                                                        },
+                                                        {
+                                                            "key":  "战斗机-野猫|ready_min=0",
+                                                            "count":  11
+                                                        },
+                                                        {
+                                                            "key":  "战斗机-野猫|ready_min=78",
+                                                            "count":  2
+                                                        },
+                                                        {
+                                                            "key":  "战斗机-野猫|ready_min=85",
+                                                            "count":  2
+                                                        },
+                                                        {
+                                                            "key":  "战斗机-野猫|ready_min=87",
+                                                            "count":  1
+                                                        },
+                                                        {
+                                                            "key":  "战斗机-野猫|ready_min=91",
+                                                            "count":  1
+                                                        },
+                                                        {
+                                                            "key":  "战斗机-野猫|ready_min=94",
+                                                            "count":  1
+                                                        }
+                                                    ]
+                },
+    "units":  [
+                  {
+                      "name":  "中途岛主跑道机场",
+                      "unit_type":  "Facility",
+                      "unit_class":  "机场",
+                      "status":  "固定",
+                      "side":  "USN",
+                      "group":  "Midway Installation",
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  0,
+                      "heading_deg":  0,
+                      "runway_class":  "长跑道"
+                  },
+                  {
+                      "name":  "中途岛短跑道机场",
+                      "unit_type":  "Facility",
+                      "unit_class":  "机场",
+                      "status":  "固定",
+                      "side":  "USN",
+                      "group":  "Midway Installation",
+                      "latitude":  28.207032,
+                      "longitude":  -177.382316,
+                      "altitude_m":  13,
+                      "speed_kn":  0,
+                      "heading_deg":  0,
+                      "runway_class":  "短跑道"
+                  },
+                  {
+                      "name":  "CVA-5 Yorktown",
+                      "unit_type":  "Ship",
+                      "unit_class":  "航空母舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 17 Yorktown Fletcher",
+                      "latitude":  29.694084,
+                      "longitude":  -179.256232,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  267.6,
+                      "embarked_aircraft_count":  4,
+                      "embarked_aircraft":  [
+                                                {
+                                                    "name":  "Yorktown Thatch Wildcats #21",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Yorktown Thatch Wildcats #25",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Yorktown Thatch Wildcats #6",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  87,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Yorktown Thatch Wildcats #11",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  94,
+                                                    "status":  "舰载"
+                                                }
+                                            ]
+                  },
+                  {
+                      "name":  "USS Russell",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 17 Yorktown Fletcher",
+                      "latitude":  29.701016,
+                      "longitude":  -179.23555,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  267.6,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Portland",
+                      "unit_type":  "Ship",
+                      "unit_class":  "重巡洋舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 17 Yorktown Fletcher",
+                      "latitude":  29.677411,
+                      "longitude":  -179.286541,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  267.6,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Astoria",
+                      "unit_type":  "Ship",
+                      "unit_class":  "重巡洋舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 17 Yorktown Fletcher",
+                      "latitude":  29.725955,
+                      "longitude":  -179.229737,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  267.6,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Morris",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 17 Yorktown Fletcher",
+                      "latitude":  29.711829,
+                      "longitude":  -179.284526,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  267.6,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Anderson",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 17 Yorktown Fletcher",
+                      "latitude":  29.686294,
+                      "longitude":  -179.235625,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  267.6,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Hammann",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 17 Yorktown Fletcher",
+                      "latitude":  29.697262,
+                      "longitude":  -179.268273,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  267.6,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Hughes",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 17 Yorktown Fletcher",
+                      "latitude":  29.711684,
+                      "longitude":  -179.264072,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  267.6,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Gwin",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 17 Yorktown Fletcher",
+                      "latitude":  29.677731,
+                      "longitude":  -179.246343,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  267.6,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "CVA-6 Enterprise",
+                      "unit_type":  "Ship",
+                      "unit_class":  "航空母舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.535815,
+                      "longitude":  -178.473774,
+                      "altitude_m":  0,
+                      "speed_kn":  2,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  20,
+                      "embarked_aircraft":  [
+                                                {
+                                                    "name":  "Enterprise Gray Wildcats #27",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Gray Wildcats #25",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Gray Wildcats #26",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Gray Wildcats #21",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Gray Wildcats #20",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Best Dauntless #19",
+                                                    "unit_class":  "俯冲轰炸机-无畏",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Lindsey Devastators #7",
+                                                    "unit_class":  "鱼雷机-毁灭者",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Lindsey Devastators #3",
+                                                    "unit_class":  "鱼雷机-毁灭者",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Lindsey Devastators #1",
+                                                    "unit_class":  "鱼雷机-毁灭者",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Gray Wildcats #8",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  91,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Gray Wildcats #7",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  78,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Best Dauntless #11",
+                                                    "unit_class":  "俯冲轰炸机-无畏",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Best Dauntless #1",
+                                                    "unit_class":  "俯冲轰炸机-无畏",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Gallaher Dauntless #16",
+                                                    "unit_class":  "俯冲轰炸机-无畏",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Best Dauntless #4",
+                                                    "unit_class":  "俯冲轰炸机-无畏",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Gallaher Dauntless #4",
+                                                    "unit_class":  "俯冲轰炸机-无畏",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Gray Wildcats #1",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  85,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Gallaher Dauntless #18",
+                                                    "unit_class":  "俯冲轰炸机-无畏",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Best Dauntless #8",
+                                                    "unit_class":  "俯冲轰炸机-无畏",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Enterprise Best Dauntless #12",
+                                                    "unit_class":  "俯冲轰炸机-无畏",
+                                                    "ready_time_min":  138,
+                                                    "status":  "舰载"
+                                                }
+                                            ]
+                  },
+                  {
+                      "name":  "CVA-7 Hornet",
+                      "unit_type":  "Ship",
+                      "unit_class":  "航空母舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.535805,
+                      "longitude":  -178.473736,
+                      "altitude_m":  0,
+                      "speed_kn":  2,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  12,
+                      "embarked_aircraft":  [
+                                                {
+                                                    "name":  "Hornet Mitchell Waldcats #9",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hornet Mitchell Waldcats #15",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hornet Mitchell Waldcats #1",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hornet Mitchell Waldcats #24",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hornet Waldron Devastators #9",
+                                                    "unit_class":  "鱼雷机-毁灭者",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hornet Johnson Dauntless #8",
+                                                    "unit_class":  "俯冲轰炸机-无畏",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hornet Waldron Devastators #10",
+                                                    "unit_class":  "鱼雷机-毁灭者",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hornet Rodee Dauntless #4",
+                                                    "unit_class":  "俯冲轰炸机-无畏",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hornet Johnson Dauntless #18",
+                                                    "unit_class":  "俯冲轰炸机-无畏",
+                                                    "ready_time_min":  0,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hornet Mitchell Waldcats #10",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  85,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hornet Mitchell Waldcats #5",
+                                                    "unit_class":  "战斗机-野猫",
+                                                    "ready_time_min":  78,
+                                                    "status":  "舰载"
+                                                },
+                                                {
+                                                    "name":  "Hornet Rodee Dauntless #1",
+                                                    "unit_class":  "俯冲轰炸机-无畏",
+                                                    "ready_time_min":  123,
+                                                    "status":  "舰载"
+                                                }
+                                            ]
+                  },
+                  {
+                      "name":  "USS Benham",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.528201,
+                      "longitude":  -178.534108,
+                      "altitude_m":  0,
+                      "speed_kn":  1.4,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Atlanta",
+                      "unit_type":  "Ship",
+                      "unit_class":  "防空巡洋舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.510421,
+                      "longitude":  -178.506027,
+                      "altitude_m":  0,
+                      "speed_kn":  2,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Norrthampton",
+                      "unit_type":  "Ship",
+                      "unit_class":  "重巡洋舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.562794,
+                      "longitude":  -178.546184,
+                      "altitude_m":  0,
+                      "speed_kn":  2,
+                      "heading_deg":  279.4,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS New Orleans",
+                      "unit_type":  "Ship",
+                      "unit_class":  "重巡洋舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.507397,
+                      "longitude":  -178.456796,
+                      "altitude_m":  0,
+                      "speed_kn":  2,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Maury",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.58814,
+                      "longitude":  -178.549866,
+                      "altitude_m":  0,
+                      "speed_kn":  2,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Dewy",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.616522,
+                      "longitude":  -178.499088,
+                      "altitude_m":  0,
+                      "speed_kn":  2,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Conyngham",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.490726,
+                      "longitude":  -178.484859,
+                      "altitude_m":  0,
+                      "speed_kn":  2,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Phelps",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.551918,
+                      "longitude":  -178.501685,
+                      "altitude_m":  0,
+                      "speed_kn":  2,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Minneapolis",
+                      "unit_type":  "Ship",
+                      "unit_class":  "重巡洋舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.608356,
+                      "longitude":  -178.526455,
+                      "altitude_m":  0,
+                      "speed_kn":  4.1,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Worden",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.567699,
+                      "longitude":  -178.478124,
+                      "altitude_m":  0,
+                      "speed_kn":  2,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Monaghan",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.589507,
+                      "longitude":  -178.443596,
+                      "altitude_m":  0,
+                      "speed_kn":  2,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Pensacola",
+                      "unit_type":  "Ship",
+                      "unit_class":  "重巡洋舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.578699,
+                      "longitude":  -178.413479,
+                      "altitude_m":  0,
+                      "speed_kn":  2.1,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Vincennes",
+                      "unit_type":  "Ship",
+                      "unit_class":  "重巡洋舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.604263,
+                      "longitude":  -178.473139,
+                      "altitude_m":  0,
+                      "speed_kn":  1,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Balch",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.53056,
+                      "longitude":  -178.417904,
+                      "altitude_m":  0,
+                      "speed_kn":  2,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Ellet",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.529202,
+                      "longitude":  -178.550644,
+                      "altitude_m":  0,
+                      "speed_kn":  2.1,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Alywin",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.57612,
+                      "longitude":  -178.413168,
+                      "altitude_m":  0,
+                      "speed_kn":  2,
+                      "heading_deg":  286.8,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "USS Monssen",
+                      "unit_type":  "Ship",
+                      "unit_class":  "驱逐舰",
+                      "status":  "水面航行",
+                      "side":  "USN",
+                      "group":  "Task Force 16 Hornet-Enterprise Spuance",
+                      "latitude":  29.568191,
+                      "longitude":  -178.573475,
+                      "altitude_m":  0,
+                      "speed_kn":  1.9,
+                      "heading_deg":  286.9,
+                      "embarked_aircraft_count":  0,
+                      "embarked_aircraft":  [
+
+                                            ]
+                  },
+                  {
+                      "name":  "Yorktown Thatch Wildcats #7",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.703254,
+                      "longitude":  -178.151433,
+                      "altitude_m":  3657.7,
+                      "speed_kn":  120,
+                      "heading_deg":  62.4
+                  },
+                  {
+                      "name":  "Yorktown Thatch Wildcats #3",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.438334,
+                      "longitude":  -177.917922,
+                      "altitude_m":  3657.4,
+                      "speed_kn":  120,
+                      "heading_deg":  67.9
+                  },
+                  {
+                      "name":  "Yorktown Thatch Wildcats #5",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.691187,
+                      "longitude":  -177.561663,
+                      "altitude_m":  3657.6,
+                      "speed_kn":  120,
+                      "heading_deg":  336.3
+                  },
+                  {
+                      "name":  "Yorktown Thatch Wildcats #1",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.430928,
+                      "longitude":  -177.947147,
+                      "altitude_m":  3657.9,
+                      "speed_kn":  120,
+                      "heading_deg":  206.8
+                  },
+                  {
+                      "name":  "Yorktown Thatch Wildcats #12",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.588402,
+                      "longitude":  -178.71708,
+                      "altitude_m":  3652.3,
+                      "speed_kn":  158.4,
+                      "heading_deg":  102
+                  },
+                  {
+                      "name":  "Yorktown Thatch Wildcats #8",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.659032,
+                      "longitude":  -178.213897,
+                      "altitude_m":  3657.6,
+                      "speed_kn":  120,
+                      "heading_deg":  238.9
+                  },
+                  {
+                      "name":  "Yorktown Thatch Wildcats #9",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.616937,
+                      "longitude":  -178.601187,
+                      "altitude_m":  10359.4,
+                      "speed_kn":  158.8,
+                      "heading_deg":  281.9
+                  },
+                  {
+                      "name":  "Hornet Mitchell Waldcats #6",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.689357,
+                      "longitude":  -177.417043,
+                      "altitude_m":  3657.6,
+                      "speed_kn":  120,
+                      "heading_deg":  82.8
+                  },
+                  {
+                      "name":  "Hornet Mitchell Waldcats #11",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.674285,
+                      "longitude":  -177.941296,
+                      "altitude_m":  3656.6,
+                      "speed_kn":  120,
+                      "heading_deg":  269.3
+                  },
+                  {
+                      "name":  "Hornet Mitchell Waldcats #12",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.372265,
+                      "longitude":  -177.745276,
+                      "altitude_m":  3658.5,
+                      "speed_kn":  120,
+                      "heading_deg":  359.5
+                  },
+                  {
+                      "name":  "Hornet Mitchell Waldcats #3",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.558244,
+                      "longitude":  -177.438881,
+                      "altitude_m":  3657.1,
+                      "speed_kn":  120,
+                      "heading_deg":  128.5
+                  },
+                  {
+                      "name":  "Hornet Mitchell Waldcats #8",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.576069,
+                      "longitude":  -177.588521,
+                      "altitude_m":  3658.3,
+                      "speed_kn":  120,
+                      "heading_deg":  91.9
+                  },
+                  {
+                      "name":  "Hornet Mitchell Waldcats #2",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.795428,
+                      "longitude":  -177.963515,
+                      "altitude_m":  3657.6,
+                      "speed_kn":  120,
+                      "heading_deg":  121.9
+                  },
+                  {
+                      "name":  "Hornet Mitchell Waldcats #21",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  "Flight Beast10",
+                      "latitude":  29.494624,
+                      "longitude":  -178.271582,
+                      "altitude_m":  92.3,
+                      "speed_kn":  120,
+                      "heading_deg":  333.7
+                  },
+                  {
+                      "name":  "Hornet Mitchell Waldcats #20",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  "Flight Beast10",
+                      "latitude":  29.491841,
+                      "longitude":  -178.269484,
+                      "altitude_m":  91.8,
+                      "speed_kn":  120,
+                      "heading_deg":  354.7
+                  },
+                  {
+                      "name":  "Enterprise Gray Wildcats #6",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.469765,
+                      "longitude":  -177.812955,
+                      "altitude_m":  3658.5,
+                      "speed_kn":  120,
+                      "heading_deg":  244.8
+                  },
+                  {
+                      "name":  "Enterprise Gray Wildcats #3",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.798526,
+                      "longitude":  -177.998839,
+                      "altitude_m":  3657.3,
+                      "speed_kn":  120,
+                      "heading_deg":  98.7
+                  },
+                  {
+                      "name":  "Enterprise Gray Wildcats #4",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.657007,
+                      "longitude":  -177.834532,
+                      "altitude_m":  3657,
+                      "speed_kn":  120,
+                      "heading_deg":  262.4
+                  },
+                  {
+                      "name":  "Enterprise Gray Wildcats #11",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.540996,
+                      "longitude":  -177.483195,
+                      "altitude_m":  3656.4,
+                      "speed_kn":  120,
+                      "heading_deg":  55.8
+                  },
+                  {
+                      "name":  "Enterprise Gray Wildcats #10",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.534934,
+                      "longitude":  -178.457031,
+                      "altitude_m":  161.6,
+                      "speed_kn":  120,
+                      "heading_deg":  273.4
+                  },
+                  {
+                      "name":  "Strawberry #19",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "远程巡逻机-PBY",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  100,
+                      "heading_deg":  0
+                  },
+                  {
+                      "name":  "VMF221 Wildcats #3",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  120,
+                      "heading_deg":  6.7
+                  },
+                  {
+                      "name":  "Strawberry #20",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "远程巡逻机-PBY",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  100,
+                      "heading_deg":  0
+                  },
+                  {
+                      "name":  "Strawberry #22",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "远程巡逻机-PBY",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  100,
+                      "heading_deg":  0
+                  },
+                  {
+                      "name":  "Strawberry #18",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "远程巡逻机-PBY",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  100,
+                      "heading_deg":  0
+                  },
+                  {
+                      "name":  "Strawberry #23",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "远程巡逻机-PBY",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  100,
+                      "heading_deg":  0
+                  },
+                  {
+                      "name":  "VMF221 Wildcats #6",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "战斗机-野猫",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  120,
+                      "heading_deg":  2.3
+                  },
+                  {
+                      "name":  "Strawberry #1",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "远程巡逻机-PBY",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  100,
+                      "heading_deg":  12.7
+                  },
+                  {
+                      "name":  "Strawberry #8",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "远程巡逻机-PBY",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  100,
+                      "heading_deg":  14.2
+                  },
+                  {
+                      "name":  "Strawberry #3",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "远程巡逻机-PBY",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.59578,
+                      "longitude":  -179.895584,
+                      "altitude_m":  307.2,
+                      "speed_kn":  100,
+                      "heading_deg":  303.7
+                  },
+                  {
+                      "name":  "Strawberry #11",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "远程巡逻机-PBY",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  100,
+                      "heading_deg":  14.1
+                  },
+                  {
+                      "name":  "7th Air Force Marauders #2",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "中型轰炸机-B-26",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  140,
+                      "heading_deg":  355.8
+                  },
+                  {
+                      "name":  "7th Air Force Marauders #4",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "中型轰炸机-B-26",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  140,
+                      "heading_deg":  356
+                  },
+                  {
+                      "name":  "VMSB-241 Vindicators #4",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "俯冲轰炸机-辩护者",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.02649,
+                      "longitude":  -177.377162,
+                      "altitude_m":  915.8,
+                      "speed_kn":  105,
+                      "heading_deg":  162.3
+                  },
+                  {
+                      "name":  "VMSB-241 Vindicators #3",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "俯冲轰炸机-辩护者",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.043224,
+                      "longitude":  -177.37242,
+                      "altitude_m":  915.1,
+                      "speed_kn":  120.2,
+                      "heading_deg":  50.9
+                  },
+                  {
+                      "name":  "VMSB-241 Vindicators #1",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "俯冲轰炸机-辩护者",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.05323,
+                      "longitude":  -177.376312,
+                      "altitude_m":  916.1,
+                      "speed_kn":  115.6,
+                      "heading_deg":  358.1
+                  },
+                  {
+                      "name":  "VT-8 Avengers #3",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "鱼雷机-复仇者",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  180,
+                      "heading_deg":  360
+                  },
+                  {
+                      "name":  "7th Air Force B-17s #2",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "重型轰炸机-B-17",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.069365,
+                      "longitude":  -177.525589,
+                      "altitude_m":  2237.7,
+                      "speed_kn":  180.9,
+                      "heading_deg":  4.3
+                  },
+                  {
+                      "name":  "7th Air Force B-17s #5",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "重型轰炸机-B-17",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  140,
+                      "heading_deg":  1.4
+                  },
+                  {
+                      "name":  "7th Air Force B-17s #4",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "重型轰炸机-B-17",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.036496,
+                      "longitude":  -177.378432,
+                      "altitude_m":  930.1,
+                      "speed_kn":  177.5,
+                      "heading_deg":  139.9
+                  },
+                  {
+                      "name":  "7th Air Force B-17s #1",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "重型轰炸机-B-17",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  140,
+                      "heading_deg":  12.8
+                  },
+                  {
+                      "name":  "7th Air Force B-17s #3",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "重型轰炸机-B-17",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.550868,
+                      "longitude":  -178.015005,
+                      "altitude_m":  1799.2,
+                      "speed_kn":  179.8,
+                      "heading_deg":  280.8
+                  },
+                  {
+                      "name":  "7th Air Force B-17s #6",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "重型轰炸机-B-17",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  140,
+                      "heading_deg":  347.4
+                  },
+                  {
+                      "name":  "7th Air Force B-17s #14",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "重型轰炸机-B-17",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  140,
+                      "heading_deg":  356.1
+                  },
+                  {
+                      "name":  "7th Air Force B-17s #9",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "重型轰炸机-B-17",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  140,
+                      "heading_deg":  358.7
+                  },
+                  {
+                      "name":  "7th Air Force B-17s #12",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "重型轰炸机-B-17",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  140,
+                      "heading_deg":  355.3
+                  },
+                  {
+                      "name":  "7th Air Force B-17s #10",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "重型轰炸机-B-17",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  140,
+                      "heading_deg":  15.9
+                  },
+                  {
+                      "name":  "7th Air Force B-17s #13",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "重型轰炸机-B-17",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  140,
+                      "heading_deg":  359.5
+                  },
+                  {
+                      "name":  "7th Air Force B-17s #16",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "重型轰炸机-B-17",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  140,
+                      "heading_deg":  12.5
+                  },
+                  {
+                      "name":  "VMSB-241 Vindicators #9",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "俯冲轰炸机-辩护者",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.888804,
+                      "longitude":  -177.950817,
+                      "altitude_m":  3657.2,
+                      "speed_kn":  125,
+                      "heading_deg":  121
+                  },
+                  {
+                      "name":  "VMSB-241 Vindicators #5",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "俯冲轰炸机-辩护者",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.871736,
+                      "longitude":  -178.211256,
+                      "altitude_m":  3656.8,
+                      "speed_kn":  125,
+                      "heading_deg":  170.8
+                  },
+                  {
+                      "name":  "VMSB-241 Vindicators #6",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "俯冲轰炸机-辩护者",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  105,
+                      "heading_deg":  357.9
+                  },
+                  {
+                      "name":  "VMSB-241 Vindicators #10",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "俯冲轰炸机-辩护者",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  105,
+                      "heading_deg":  357.9
+                  },
+                  {
+                      "name":  "Strawberry #26",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "远程巡逻机-PBY",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  100,
+                      "heading_deg":  0
+                  },
+                  {
+                      "name":  "Strawberry #27",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "远程巡逻机-PBY",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  100,
+                      "heading_deg":  0
+                  },
+                  {
+                      "name":  "Strawberry #28",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "远程巡逻机-PBY",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  100,
+                      "heading_deg":  0
+                  },
+                  {
+                      "name":  "Strawberry #29",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "远程巡逻机-PBY",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  100,
+                      "heading_deg":  0
+                  },
+                  {
+                      "name":  "Strawberry #30",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "远程巡逻机-PBY",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  100,
+                      "heading_deg":  0
+                  },
+                  {
+                      "name":  "VMSB-241 Vindicators #13",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "俯冲轰炸机-辩护者",
+                      "status":  "空中",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.695829,
+                      "longitude":  -178.508445,
+                      "altitude_m":  3657.6,
+                      "speed_kn":  125,
+                      "heading_deg":  218.2
+                  },
+                  {
+                      "name":  "VMSB-241 Vindicators #16",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "俯冲轰炸机-辩护者",
+                      "status":  "岸基停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  28.206959,
+                      "longitude":  -177.382232,
+                      "altitude_m":  13,
+                      "speed_kn":  105,
+                      "heading_deg":  0
+                  },
+                  {
+                      "name":  "Empty Slot 1 (SBD-5 Dauntless)",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "俯冲轰炸机-无畏",
+                      "status":  "停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.479834,
+                      "longitude":  -178.261379,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  0
+                  },
+                  {
+                      "name":  "Empty Slot 1 (SBD-5 Dauntless)",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "俯冲轰炸机-无畏",
+                      "status":  "停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.482787,
+                      "longitude":  -178.272547,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  0
+                  },
+                  {
+                      "name":  "Empty Slot 1 (SBD-5 Dauntless)",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "俯冲轰炸机-无畏",
+                      "status":  "停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.68013,
+                      "longitude":  -178.761467,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  0
+                  },
+                  {
+                      "name":  "Empty Slot 1 (SBD-5 Dauntless)",
+                      "unit_type":  "Aircraft",
+                      "unit_class":  "俯冲轰炸机-无畏",
+                      "status":  "停放",
+                      "side":  "USN",
+                      "group":  null,
+                      "latitude":  29.483594,
+                      "longitude":  -178.275599,
+                      "altitude_m":  0,
+                      "speed_kn":  0,
+                      "heading_deg":  0
+                  },
+                  {
+                      "name":  "中途岛防空阵地(AAA Bty (M16 12.7mm Quad x 4))",
+                      "unit_type":  "Facility",
+                      "unit_class":  "防空阵地",
+                      "status":  "固定",
+                      "side":  "USN",
+                      "group":  "Midway Installation",
+                      "latitude":  28.206382,
+                      "longitude":  -177.383072,
+                      "altitude_m":  13,
+                      "speed_kn":  0,
+                      "heading_deg":  0,
+                      "battery_count":  6,
+                      "original_designation":  "AAA Bty (M16 12.7mm Quad x 4)"
+                  },
+                  {
+                      "name":  "中途岛防空阵地(AAA Bty (90mm M1A1 x 4))",
+                      "unit_type":  "Facility",
+                      "unit_class":  "防空阵地",
+                      "status":  "固定",
+                      "side":  "USN",
+                      "group":  "Midway Installation",
+                      "latitude":  28.206588,
+                      "longitude":  -177.3829,
+                      "altitude_m":  13,
+                      "speed_kn":  0,
+                      "heading_deg":  0,
+                      "battery_count":  12,
+                      "original_designation":  "AAA Bty (90mm M1A1 x 4)"
+                  },
+                  {
+                      "name":  "中途岛防空阵地(AAA Bty (M19 40mm x 4))",
+                      "unit_type":  "Facility",
+                      "unit_class":  "防空阵地",
+                      "status":  "固定",
+                      "side":  "USN",
+                      "group":  "Midway Installation",
+                      "latitude":  28.205791,
+                      "longitude":  -177.382606,
+                      "altitude_m":  13,
+                      "speed_kn":  0,
+                      "heading_deg":  0,
+                      "battery_count":  11,
+                      "original_designation":  "AAA Bty (M19 40mm x 4)"
+                  }
+              ]
+}
