@@ -116,6 +116,8 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
     ...s,
     fill: seriesColor(chart, s.name, s.side, i),
   }));
+  const pieLabels = chart.type === "pie" && isCompositionChart(chart);
+  const barLabels = chart.type !== "pie";
 
   return (
     <div className="rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)]">
@@ -125,29 +127,37 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
           <p className="text-xs text-[var(--muted)]">{chart.description}</p>
         )}
       </div>
-      <div className="h-52">
+      <div className={pieLabels || barLabels ? "h-56" : "h-52"}>
         {chart.type === "pie" ? (
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+            <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
               <Pie
                 data={data}
                 dataKey="value"
                 nameKey="name"
-                innerRadius={34}
-                outerRadius={62}
+                innerRadius={32}
+                outerRadius={58}
                 paddingAngle={2}
+                label={
+                  pieLabels
+                    ? ({ value }) => `${value}`
+                    : false
+                }
+                labelLine={pieLabels ? { strokeWidth: 1 } : false}
               >
                 {data.map((s, i) => (
                   <Cell key={`${s.name}-${i}`} fill={s.fill} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip
+                formatter={(value, name) => [`${value} 架`, String(name)]}
+              />
               <Legend wrapperStyle={{ fontSize: 11 }} />
             </PieChart>
           </ResponsiveContainer>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
+            <BarChart data={data} margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#d6d3ce" />
               <XAxis
                 dataKey="name"
@@ -159,8 +169,15 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
               />
               <YAxis tick={{ fontSize: 10, fill: "#5c584f" }} width={28} />
               <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="value" radius={[3, 3, 0, 0]}>
+              <Bar
+                dataKey="value"
+                radius={[3, 3, 0, 0]}
+                label={
+                  barLabels
+                    ? { position: "top", fontSize: 11, fill: "#3d3a34" }
+                    : false
+                }
+              >
                 {data.map((s, i) => (
                   <Cell key={`${s.name}-${i}`} fill={s.fill} />
                 ))}
@@ -169,24 +186,6 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
           </ResponsiveContainer>
         )}
       </div>
-      {/* 机型构成：图例色块再列一行，保证「几项几色」一目了然 */}
-      {isCompositionChart(chart) && data.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t border-[var(--line)] pt-2">
-          {data.map((s, i) => (
-            <span
-              key={`${s.name}-${i}`}
-              className="inline-flex items-center gap-1.5 text-[11px] text-[var(--ink)]"
-            >
-              <i
-                className="inline-block h-2.5 w-2.5 rounded-sm"
-                style={{ background: s.fill }}
-              />
-              {s.name}
-              <span className="text-[var(--muted)]">({s.value})</span>
-            </span>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
