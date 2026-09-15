@@ -11,6 +11,7 @@ import type {
   SliceIndexItem,
   SlicePack,
 } from "@/lib/types";
+import { normalizeSituationSpec } from "@/lib/utils";
 import {
   AlertTriangle,
   Loader2,
@@ -121,7 +122,7 @@ export function SituationWorkbench() {
       }
       setSystemPrompt(data.system_prompt);
       setPrompt(data.prompt);
-      setSpec(data.spec);
+      setSpec(normalizeSituationSpec(data.spec));
       if (data.used_fallback) {
         setFallbackNote(data.error || "已回退本地生成器");
       }
@@ -340,10 +341,14 @@ export function SituationWorkbench() {
                     <i className="legend-dmg" /> 损伤
                   </span>
                   <span>菱形=舰 · 三角=在空机 · 圆点=设施 · 虚线=作战轴</span>
+                  <span>右上角可切换底图（默认卫星影像，便于看清中途岛）</span>
                 </div>
               </div>
 
-              <SituationCharts charts={spec.charts} />
+              <SituationCharts
+                charts={spec.charts}
+                threatRatings={spec.threat_ratings}
+              />
 
               <div className="grid gap-3 lg:grid-cols-2">
                 <div className="rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)]">

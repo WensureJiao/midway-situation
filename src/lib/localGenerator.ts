@@ -144,6 +144,36 @@ function buildCharts(pack: SlicePack): ChartSpec[] {
     });
   }
 
+  const usReadyClass = us.embarked_by_class_and_ready ?? [];
+  if (usReadyClass.length) {
+    charts.push({
+      id: "usn-embarked-class",
+      type: "pie",
+      title: "蓝方舰载机机型构成（就绪）",
+      description: "按 summary.embarked_by_class_and_ready",
+      series: usReadyClass.map((row) => ({
+        name: row.key.replace(/\|ready_min=\d+/, ""),
+        value: row.count,
+        side: "USN" as const,
+      })),
+    });
+  }
+
+  const ijReadyClass = ij.embarked_by_class_and_ready ?? [];
+  if (ijReadyClass.length) {
+    charts.push({
+      id: "ijn-embarked-class",
+      type: "pie",
+      title: "红方舰载机机型构成（就绪）",
+      description: "按 summary.embarked_by_class_and_ready",
+      series: ijReadyClass.map((row) => ({
+        name: row.key.replace(/\|ready_min=\d+/, ""),
+        value: row.count,
+        side: "IJN" as const,
+      })),
+    });
+  }
+
   return charts;
 }
 

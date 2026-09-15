@@ -11,6 +11,7 @@ import type {
   SituationViewSpec,
   SlicePack,
 } from "@/lib/types";
+import { normalizeSituationSpec } from "@/lib/utils";
 
 async function loadPack(timeSlice: string): Promise<SlicePack> {
   const file = path.join(
@@ -104,7 +105,7 @@ export async function POST(req: Request) {
       ok: true,
       system_prompt,
       prompt,
-      spec,
+      spec: normalizeSituationSpec(spec),
       used_fallback,
       error,
     };
