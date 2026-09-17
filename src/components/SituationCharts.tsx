@@ -16,12 +16,12 @@ import {
   YAxis,
 } from "recharts";
 
-const USN = "#3b82a8";
-const IJN = "#c45c4a";
+const USN = "#c45c4a";
+const IJN = "#3b82a8";
 
 const TYPE_PALETTE = [
-  "#3b82a8",
   "#c45c4a",
+  "#3b82a8",
   "#d4a017",
   "#5b8c5a",
   "#7c6bb0",
@@ -192,15 +192,16 @@ function levelScore(level: string): number {
   return 1;
 }
 
-type PerspectiveKey = "蓝方" | "红方";
+type PerspectiveKey = "红方" | "蓝方";
 
-function normalizePerspective(p: string): "蓝方" | "红方" | "其他" {
-  if (/蓝方看|美方看|蓝方视角|USN/.test(p) && !/红方看|日方看/.test(p))
-    return "蓝方";
-  if (/红方看|日方看|红方视角|IJN/.test(p) && !/蓝方看|美方看/.test(p))
-    return "红方";
-  if (/蓝|美/.test(p) && !/红|日/.test(p)) return "蓝方";
-  if (/红|日/.test(p) && !/蓝|美/.test(p)) return "红方";
+/** pack 数据里仍写「蓝方看=美、红方看=日」；界面已改为红=美、蓝=日 */
+function viewSideFromPerspective(p: string): "USN" | "IJN" | "其他" {
+  if (/美方|USN/.test(p)) return "USN";
+  if (/日方|IJN/.test(p)) return "IJN";
+  if (/蓝方看/.test(p)) return "USN";
+  if (/红方看/.test(p)) return "IJN";
+  if (/蓝|美/.test(p) && !/红|日/.test(p)) return "USN";
+  if (/红|日/.test(p) && !/蓝|美/.test(p)) return "IJN";
   return "其他";
 }
 
@@ -209,13 +210,14 @@ function ThreatLevelChart({
 }: {
   ratings: SituationViewSpec["threat_ratings"];
 }) {
-  const [perspective, setPerspective] = useState<PerspectiveKey>("蓝方");
+  const [perspective, setPerspective] = useState<PerspectiveKey>("红方");
 
   const filtered = useMemo(() => {
     return ratings.filter((r) => {
-      const n = normalizePerspective(r.perspective);
-      if (perspective === "蓝方") return n === "蓝方";
-      if (perspective === "红方") return n === "红方";
+      const side = viewSideFromPerspective(r.perspective);
+      // 界面：红方=美 USN，蓝方=日 IJN
+      if (perspective === "红方") return side === "USN";
+      if (perspective === "蓝方") return side === "IJN";
       return false;
     });
   }, [ratings, perspective]);
@@ -238,9 +240,9 @@ function ThreatLevelChart({
   }, [filtered]);
 
   const label =
-    perspective === "蓝方"
-      ? "威胁目标排序（蓝方视角）"
-      : "威胁目标排序（红方视角）";
+    perspective === "红方"
+      ? "威胁目标排序（红方/美视角）"
+      : "威胁目标排序（蓝方/日视角）";
 
   return (
     <div className="rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)] sm:col-span-2">
@@ -252,7 +254,7 @@ function ThreatLevelChart({
           </p>
         </div>
         <div className="flex overflow-hidden rounded-md text-[11px] ring-1 ring-[var(--line)]">
-          {(["蓝方", "红方"] as PerspectiveKey[]).map((p) => (
+          {(["红方", "蓝方"] as PerspectiveKey[]).map((p) => (
             <button
               key={p}
               type="button"
@@ -263,7 +265,7 @@ function ThreatLevelChart({
               }`}
               onClick={() => setPerspective(p)}
             >
-              {p}视角
+              {p === "红方" ? "红方（美）" : "蓝方（日）"}
             </button>
           ))}
         </div>

@@ -12,8 +12,8 @@
   --accent: #2f5d6e;
   --accent-fg: #f4efe4;
   --accent-2: #8b4d2a;
-  --usn: #3b82a8;
-  --ijn: #c45c4a;
+  --usn: #c45c4a;
+  --ijn: #3b82a8;
   --warn: #b45309;
 }
 
@@ -39,11 +39,11 @@ body {
 
 .kpi-usn {
   background: color-mix(in oklab, var(--usn) 16%, white);
-  color: #1e3a4c;
+  color: #5a2a22;
 }
 .kpi-ijn {
   background: color-mix(in oklab, var(--ijn) 16%, white);
-  color: #5a2a22;
+  color: #1e3a4c;
 }
 .kpi-warn {
   background: color-mix(in oklab, var(--warn) 18%, white);

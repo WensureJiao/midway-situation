@@ -59,8 +59,18 @@ function FitToSpec({
 
 function sideColor(side: string, damaged?: boolean): string {
   if (damaged) return "#d97706";
-  if (side === "IJN") return "#c45c4a";
-  return "#3b82a8";
+  if (side === "IJN") return "#3b82a8";
+  return "#c45c4a";
+}
+
+function airIcon(side: string) {
+  const color = side === "IJN" ? "#6eb0d0" : "#e07a6a";
+  return L.divIcon({
+    className: "",
+    iconSize: [8, 8],
+    iconAnchor: [4, 4],
+    html: `<div style="width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:8px solid ${color};filter:drop-shadow(0 0 1px #000)"></div>`,
+  });
 }
 
 function shipIcon(side: string, damaged?: boolean, highlight?: boolean) {
@@ -71,16 +81,6 @@ function shipIcon(side: string, damaged?: boolean, highlight?: boolean) {
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
     html: `<div style="width:${size}px;height:${size}px;border-radius:2px;background:${color};border:1px solid rgba(255,255,255,.85);box-shadow:0 0 0 ${highlight ? 3 : 0}px rgba(212,175,55,.45);transform:rotate(45deg)"></div>`,
-  });
-}
-
-function airIcon(side: string) {
-  const color = side === "IJN" ? "#e07a6a" : "#6eb0d0";
-  return L.divIcon({
-    className: "",
-    iconSize: [8, 8],
-    iconAnchor: [4, 4],
-    html: `<div style="width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:8px solid ${color};filter:drop-shadow(0 0 1px #000)"></div>`,
   });
 }
 
@@ -187,14 +187,14 @@ export function SituationMap({
                 z.level === "紧急"
                   ? "#b45309"
                   : z.side === "IJN"
-                    ? "#c45c4a"
-                    : "#3b82a8",
+                    ? "#3b82a8"
+                    : "#c45c4a",
               fillColor:
                 z.level === "紧急"
                   ? "#f59e0b"
                   : z.side === "IJN"
-                    ? "#c45c4a"
-                    : "#3b82a8",
+                    ? "#3b82a8"
+                    : "#c45c4a",
               fillOpacity: 0.12,
               weight: 1.5,
               dashArray: z.level === "紧急" ? undefined : "4 6",
@@ -211,7 +211,7 @@ export function SituationMap({
             key={a.id}
             positions={[a.from, a.to]}
             pathOptions={{
-              color: a.side === "IJN" ? "#c45c4a" : "#3b82a8",
+              color: a.side === "IJN" ? "#3b82a8" : "#c45c4a",
               weight: 2,
               dashArray: "8 6",
               opacity: 0.85,

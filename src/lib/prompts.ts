@@ -9,12 +9,14 @@ export const SITUATION_SYSTEM_PROMPT = `你是海军战役「通用作战态势�
 
 硬性规则：
 1. 地图为主界面：给出 center、zoom、需要高亮的单位名 highlight_names、作战方向轴线 axes、威胁圈 threat_zones。
-2. 统计图固定为：水面舰艇数量、在空飞机数量、蓝方舰载机就绪机型构成、红方舰载机就绪机型构成，另加威胁目标排序图（依赖 threat_ratings）。
-3. threat_ratings 必须按目标列出 perspective（蓝方看红方 / 红方看蓝方）、target、level、evidence。
+2. 统计图与 KPI 均由服务端用清洗数据固定覆盖，你无需自由设计指标：
+   KPI 固定为：美航母、日航母舰体、在空飞机、损伤舰艇；
+   统计图固定为：水面舰艇数量、在空飞机数量、红方（美）舰载机就绪构成、蓝方（日）舰载机就绪构成，另加威胁目标排序图（依赖 threat_ratings）。
+3. threat_ratings 必须按目标列出 perspective（可用「蓝方看红方/红方看蓝方」或「美方看日方/日方看美方」）、target、level、evidence。
 4. 禁止编造不存在的航母、交火或单位；经纬度必须来自输入数据。中途岛约 28.21°N, 177.38°W（longitude ≈ -177.38）。
-5. 红方=IJN（日），蓝方=USN（美含中途岛）。
+5. 红方=USN（美含中途岛，地图用红色），蓝方=IJN（日，地图用蓝色）。
 6. 若某切片舰体缺失（如飞龙），在 narrative 中标注“舰体未导出/未知”，不得当作已沉没定论。
-7. charts.series 的 value 必须是数字；kpis.value 可以是数字或短字符串。
+7. charts.series 的 value 必须是数字；kpis.value 必须是数字。
 8. intent_findings / threat_findings / priorities 请输出空数组 []（不展示文字研判面板）。`;
 
 export const SITUATION_OUTPUT_SCHEMA = `{
@@ -35,13 +37,16 @@ export const SITUATION_OUTPUT_SCHEMA = `{
     ]
   },
   "kpis": [
-    {"id":"k1","label":"美航母","value":3,"tone":"usn"}
+    {"id":"us-cv","label":"美航母","value":3,"tone":"usn"},
+    {"id":"ijn-cv","label":"日航母舰体","value":4,"tone":"ijn"},
+    {"id":"air","label":"在空飞机","value":0,"tone":"warn"},
+    {"id":"dmg","label":"损伤舰艇","value":0,"tone":"neutral"}
   ],
   "charts": [
     {"id":"ships","type":"bar","title":"水面舰艇数量","series":[{"name":"USN","value":28,"side":"USN"},{"name":"IJN","value":20,"side":"IJN"}]},
     {"id":"airborne","type":"bar","title":"在空飞机数量","series":[{"name":"USN","value":0,"side":"USN"},{"name":"IJN","value":0,"side":"IJN"}]},
-    {"id":"usn-embarked-class","type":"pie","title":"蓝方舰载机机型构成（就绪）","series":[{"name":"战斗机-野猫","value":79,"side":"USN"}]},
-    {"id":"ijn-embarked-class","type":"pie","title":"红方舰载机机型构成（就绪）","series":[{"name":"战斗机-零式","value":73,"side":"IJN"}]}
+    {"id":"usn-embarked-class","type":"pie","title":"红方舰载机机型构成（就绪）","series":[{"name":"战斗机-野猫","value":79,"side":"USN"}]},
+    {"id":"ijn-embarked-class","type":"pie","title":"蓝方舰载机机型构成（就绪）","series":[{"name":"战斗机-零式","value":73,"side":"IJN"}]}
   ],
   "intent_findings": [],
   "threat_findings": [],
@@ -82,8 +87,8 @@ ${ratingsBlock}
 只输出一个 SituationViewSpec JSON，结构如下：
 ${SITUATION_OUTPUT_SCHEMA}
 
-请根据兵力几何生成 map、title、narrative、kpis，并填写 threat_ratings（可蓝/红视角）。
-charts 可按示例填写（服务端会覆盖为固定四张数据图）。
+请根据兵力几何生成 map、title、narrative，并填写 threat_ratings（可蓝/红或美/日视角）。
+kpis 与 charts 可按示例填写（服务端会覆盖为固定四项 KPI 与四张数据图）。
 intent_findings、threat_findings、priorities 一律输出 []。`;
 }
 

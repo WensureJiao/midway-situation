@@ -6,6 +6,7 @@ import {
   buildFixedCharts,
   buildThreatRatingsFromPack,
   generateSituationLocal,
+  buildFixedKpis,
 } from "@/lib/localGenerator";
 import type {
   GenerateRequest,
@@ -103,13 +104,14 @@ export async function POST(req: Request) {
       spec = generateSituationLocal(pack, body.task_ids);
     }
 
-    // 固定四张数据图；威胁等级图用 pack/LLM 的 threat_ratings（缺则回退 pack）
+    // 固定 KPI + 四张数据图；威胁等级缺则回退 pack
     const ratings =
       spec.threat_ratings?.length
         ? spec.threat_ratings
         : buildThreatRatingsFromPack(pack);
     spec = {
       ...spec,
+      kpis: buildFixedKpis(pack),
       charts: buildFixedCharts(pack),
       intent_findings: [],
       threat_findings: [],

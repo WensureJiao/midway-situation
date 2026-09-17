@@ -249,10 +249,10 @@ export function SituationWorkbench() {
               </div>
               <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[var(--muted)]">
                 <span className="inline-flex items-center gap-1">
-                  <i className="legend-usn" /> 蓝方 USN
+                  <i className="legend-usn" /> 红方 USN（美）
                 </span>
                 <span className="inline-flex items-center gap-1">
-                  <i className="legend-ijn" /> 红方 IJN
+                  <i className="legend-ijn" /> 蓝方 IJN（日）
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <i className="legend-dmg" /> 损伤

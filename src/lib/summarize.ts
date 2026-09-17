@@ -74,14 +74,14 @@ export function summarizePackForPrompt(pack: SlicePack): string {
   const ijn = pack.sides.IJN;
   const sections: string[] = [];
 
-  sections.push(`### 蓝方 USN 摘要
+  sections.push(`### 红方 USN（美）摘要
 ${JSON.stringify(usn.summary)}
 关键平台:
 ${keyShips(usn.units).map(shipLine).join("\n")}
 在空样本:
 ${airborneSample(usn.units)}`);
 
-  sections.push(`### 红方 IJN 摘要
+  sections.push(`### 蓝方 IJN（日）摘要
 ${JSON.stringify(ijn.summary)}
 关键平台:
 ${keyShips(ijn.units).map(shipLine).join("\n")}

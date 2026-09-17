@@ -55,7 +55,7 @@ export function buildFixedCharts(pack: SlicePack): ChartSpec[] {
     {
       id: "usn-embarked-class",
       type: "pie",
-      title: "蓝方舰载机机型构成（就绪）",
+      title: "红方舰载机机型构成（就绪）",
       series: usReadyClass.length
         ? usReadyClass.map((row) => ({
             name: row.key.replace(/\|ready_min=\d+/, ""),
@@ -67,7 +67,7 @@ export function buildFixedCharts(pack: SlicePack): ChartSpec[] {
     {
       id: "ijn-embarked-class",
       type: "pie",
-      title: "红方舰载机机型构成（就绪）",
+      title: "蓝方舰载机机型构成（就绪）",
       series: ijReadyClass.length
         ? ijReadyClass.map((row) => ({
             name: row.key.replace(/\|ready_min=\d+/, ""),
@@ -201,6 +201,11 @@ function buildMap(pack: SlicePack): SituationViewSpec["map"] {
 }
 
 function buildKpis(pack: SlicePack): SituationViewSpec["kpis"] {
+  return buildFixedKpis(pack);
+}
+
+/** 固定四项 KPI，本地 / LLM 一致，禁止自由发挥。 */
+export function buildFixedKpis(pack: SlicePack): SituationViewSpec["kpis"] {
   const us = pack.sides.USN.summary;
   const ij = pack.sides.IJN.summary;
   return [
