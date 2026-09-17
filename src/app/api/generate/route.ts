@@ -3,6 +3,8 @@ import { promises as fs } from "fs";
 import path from "path";
 import {
   buildPromptBundle,
+  buildFixedCharts,
+  buildThreatRatingsFromPack,
   generateSituationLocal,
 } from "@/lib/localGenerator";
 import type {
@@ -100,6 +102,20 @@ export async function POST(req: Request) {
     } else {
       spec = generateSituationLocal(pack, body.task_ids);
     }
+
+    // 固定四张数据图；威胁等级图用 pack/LLM 的 threat_ratings（缺则回退 pack）
+    const ratings =
+      spec.threat_ratings?.length
+        ? spec.threat_ratings
+        : buildThreatRatingsFromPack(pack);
+    spec = {
+      ...spec,
+      charts: buildFixedCharts(pack),
+      intent_findings: [],
+      threat_findings: [],
+      priorities: [],
+      threat_ratings: ratings,
+    };
 
     const payload: GenerateResponse = {
       ok: true,

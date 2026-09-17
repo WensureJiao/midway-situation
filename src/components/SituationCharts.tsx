@@ -1,5 +1,6 @@
 "use client";
 
+import type { ChartSpec, SituationViewSpec } from "@/lib/types";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -14,12 +15,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { ChartSpec, SituationViewSpec } from "@/lib/types";
 
 const USN = "#3b82a8";
 const IJN = "#c45c4a";
 
-/** 足够长，保证「几个图例几个色」且相邻不重复 */
 const TYPE_PALETTE = [
   "#3b82a8",
   "#c45c4a",
@@ -37,6 +36,125 @@ const TYPE_PALETTE = [
   "#9c6644",
   "#8338ec",
 ];
+
+function isCompositionChart(chart: ChartSpec): boolean {
+  if (chart.type === "pie") return true;
+  return /机型|构成|就绪构成|舰载机/.test(chart.title);
+}
+
+function isSideAggregateName(name: string): boolean {
+  return (
+    /^(USN|IJN|美|日)([·・]|$)/.test(name) || name === "USN" || name === "IJN"
+  );
+}
+
+function seriesColor(
+  chart: ChartSpec,
+  name: string,
+  side: string | undefined,
+  index: number,
+): string {
+  if (isCompositionChart(chart) && !isSideAggregateName(name)) {
+    return TYPE_PALETTE[index % TYPE_PALETTE.length];
+  }
+  if (
+    name === "美·就绪" ||
+    (name.includes("就绪") &&
+      !name.includes("未") &&
+      isSideAggregateName(name))
+  ) {
+    return "#2a9d8f";
+  }
+  if (name.includes("未就绪")) return "#9ca3af";
+  if (side === "USN" || name === "USN" || /^美/.test(name)) return USN;
+  if (side === "IJN" || name === "IJN" || /^日/.test(name)) return IJN;
+  return TYPE_PALETTE[index % TYPE_PALETTE.length];
+}
+
+function ChartCard({ chart }: { chart: ChartSpec }) {
+  const data = (chart.series ?? []).map((s, i) => ({
+    ...s,
+    fill: seriesColor(chart, s.name, s.side, i),
+  }));
+  const pieLabels = chart.type === "pie" && isCompositionChart(chart);
+  const barLabels = chart.type !== "pie";
+
+  return (
+    <div className="rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)]">
+      <div className="mb-2">
+        <h3 className="text-sm font-semibold text-[var(--ink)]">{chart.title}</h3>
+        {chart.description && (
+          <p className="text-xs text-[var(--muted)]">{chart.description}</p>
+        )}
+      </div>
+      <div className={pieLabels || barLabels ? "h-56" : "h-52"}>
+        {chart.type === "pie" ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+              <Pie
+                data={data}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={32}
+                outerRadius={58}
+                paddingAngle={2}
+                label={pieLabels ? ({ value }) => `${value}` : false}
+                labelLine={pieLabels ? { strokeWidth: 1 } : false}
+              >
+                {data.map((s, i) => (
+                  <Cell key={`${s.name}-${i}`} fill={s.fill} />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value, name) => [`${value} 架`, String(name)]}
+              />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+            </PieChart>
+          </ResponsiveContainer>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={data}
+              margin={{ top: 20, right: 8, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#d6d3ce" />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 10, fill: "#5c584f" }}
+                interval={0}
+                angle={-20}
+                textAnchor="end"
+                height={52}
+              />
+              <YAxis tick={{ fontSize: 10, fill: "#5c584f" }} width={28} />
+              <Tooltip />
+              <Bar
+                dataKey="value"
+                radius={[3, 3, 0, 0]}
+                label={
+                  barLabels
+                    ? { position: "top", fontSize: 11, fill: "#3d3a34" }
+                    : false
+                }
+              >
+                {data.map((s, i) => (
+                  <Cell key={`${s.name}-${i}`} fill={s.fill} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const FIXED_IDS = [
+  "ships",
+  "airborne",
+  "usn-embarked-class",
+  "ijn-embarked-class",
+] as const;
 
 const THREAT_COLORS: Record<string, string> = {
   紧急: "#b45309",
@@ -74,120 +192,16 @@ function levelScore(level: string): number {
   return 1;
 }
 
-function isCompositionChart(chart: ChartSpec): boolean {
-  if (chart.type === "pie") return true;
-  return /机型|构成|就绪构成|舰载机/.test(chart.title);
-}
-
-function isSideAggregateName(name: string): boolean {
-  return /^(USN|IJN|美|日)([·・]|$)/.test(name) || name === "USN" || name === "IJN";
-}
-
-/** 每个系列一项一色；饼图/机型构成强制按序号取色，避免同 side 同色 */
-function seriesColor(chart: ChartSpec, name: string, side: string | undefined, index: number): string {
-  if (isCompositionChart(chart) && !isSideAggregateName(name)) {
-    return TYPE_PALETTE[index % TYPE_PALETTE.length];
-  }
-  if (name === "美·就绪" || (name.includes("就绪") && !name.includes("未") && isSideAggregateName(name))) {
-    return "#2a9d8f";
-  }
-  if (name.includes("未就绪")) return "#9ca3af";
-  if (side === "USN" || name === "USN" || /^美/.test(name)) return USN;
-  if (side === "IJN" || name === "IJN" || /^日/.test(name)) return IJN;
-  return TYPE_PALETTE[index % TYPE_PALETTE.length];
-}
-
-function isThreatDistChart(chart: ChartSpec): boolean {
-  return /威胁.*等级|等级.*分布|threat.*level/i.test(chart.title);
-}
-
-type PerspectiveKey = "蓝方" | "红方" | "全部";
+type PerspectiveKey = "蓝方" | "红方";
 
 function normalizePerspective(p: string): "蓝方" | "红方" | "其他" {
-  if (/蓝方看|美方看|蓝方视角|USN/.test(p) && !/红方看|日方看/.test(p)) return "蓝方";
-  if (/红方看|日方看|红方视角|IJN/.test(p) && !/蓝方看|美方看/.test(p)) return "红方";
+  if (/蓝方看|美方看|蓝方视角|USN/.test(p) && !/红方看|日方看/.test(p))
+    return "蓝方";
+  if (/红方看|日方看|红方视角|IJN/.test(p) && !/蓝方看|美方看/.test(p))
+    return "红方";
   if (/蓝|美/.test(p) && !/红|日/.test(p)) return "蓝方";
   if (/红|日/.test(p) && !/蓝|美/.test(p)) return "红方";
   return "其他";
-}
-
-function ChartCard({ chart }: { chart: ChartSpec }) {
-  const data = (chart.series ?? []).map((s, i) => ({
-    ...s,
-    fill: seriesColor(chart, s.name, s.side, i),
-  }));
-  const pieLabels = chart.type === "pie" && isCompositionChart(chart);
-  const barLabels = chart.type !== "pie";
-
-  return (
-    <div className="rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)]">
-      <div className="mb-2">
-        <h3 className="text-sm font-semibold text-[var(--ink)]">{chart.title}</h3>
-        {chart.description && (
-          <p className="text-xs text-[var(--muted)]">{chart.description}</p>
-        )}
-      </div>
-      <div className={pieLabels || barLabels ? "h-56" : "h-52"}>
-        {chart.type === "pie" ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-              <Pie
-                data={data}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={32}
-                outerRadius={58}
-                paddingAngle={2}
-                label={
-                  pieLabels
-                    ? ({ value }) => `${value}`
-                    : false
-                }
-                labelLine={pieLabels ? { strokeWidth: 1 } : false}
-              >
-                {data.map((s, i) => (
-                  <Cell key={`${s.name}-${i}`} fill={s.fill} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value, name) => [`${value} 架`, String(name)]}
-              />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-            </PieChart>
-          </ResponsiveContainer>
-        ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#d6d3ce" />
-              <XAxis
-                dataKey="name"
-                tick={{ fontSize: 10, fill: "#5c584f" }}
-                interval={0}
-                angle={-20}
-                textAnchor="end"
-                height={52}
-              />
-              <YAxis tick={{ fontSize: 10, fill: "#5c584f" }} width={28} />
-              <Tooltip />
-              <Bar
-                dataKey="value"
-                radius={[3, 3, 0, 0]}
-                label={
-                  barLabels
-                    ? { position: "top", fontSize: 11, fill: "#3d3a34" }
-                    : false
-                }
-              >
-                {data.map((s, i) => (
-                  <Cell key={`${s.name}-${i}`} fill={s.fill} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-    </div>
-  );
 }
 
 function ThreatLevelChart({
@@ -198,16 +212,14 @@ function ThreatLevelChart({
   const [perspective, setPerspective] = useState<PerspectiveKey>("蓝方");
 
   const filtered = useMemo(() => {
-    if (perspective === "全部") return ratings;
     return ratings.filter((r) => {
       const n = normalizePerspective(r.perspective);
       if (perspective === "蓝方") return n === "蓝方";
       if (perspective === "红方") return n === "红方";
-      return true;
+      return false;
     });
   }, [ratings, perspective]);
 
-  /** 按目标列出等级分值，谁威胁高一目了然 */
   const rows = useMemo(() => {
     return filtered
       .filter((r) => Boolean(r.target))
@@ -217,19 +229,18 @@ function ThreatLevelChart({
         level: r.level,
         score: levelScore(r.level),
         evidence: r.evidence,
-        perspective: r.perspective,
         fill: threatColor(r.level),
-        label: `${r.target}`,
       }))
-      .sort((a, b) => b.score - a.score || a.target.localeCompare(b.target, "zh"));
+      .sort(
+        (a, b) =>
+          b.score - a.score || a.target.localeCompare(b.target, "zh"),
+      );
   }, [filtered]);
 
   const label =
     perspective === "蓝方"
       ? "威胁目标排序（蓝方视角）"
-      : perspective === "红方"
-        ? "威胁目标排序（红方视角）"
-        : "威胁目标排序（全部）";
+      : "威胁目标排序（红方视角）";
 
   return (
     <div className="rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)] sm:col-span-2">
@@ -237,11 +248,11 @@ function ThreatLevelChart({
         <div>
           <h3 className="text-sm font-semibold text-[var(--ink)]">{label}</h3>
           <p className="text-xs text-[var(--muted)]">
-            横轴为威胁强度（紧急&gt;高&gt;中&gt;低）；柱旁标注目标，颜色=等级
+            横轴为威胁强度（紧急&gt;高&gt;中&gt;低）；颜色表示等级
           </p>
         </div>
         <div className="flex overflow-hidden rounded-md text-[11px] ring-1 ring-[var(--line)]">
-          {(["蓝方", "红方", "全部"] as PerspectiveKey[]).map((p) => (
+          {(["蓝方", "红方"] as PerspectiveKey[]).map((p) => (
             <button
               key={p}
               type="button"
@@ -252,7 +263,7 @@ function ThreatLevelChart({
               }`}
               onClick={() => setPerspective(p)}
             >
-              {p === "全部" ? "全部" : `${p}视角`}
+              {p}视角
             </button>
           ))}
         </div>
@@ -290,10 +301,15 @@ function ThreatLevelChart({
                   domain={[0, 4]}
                   ticks={[0, 1, 2, 3, 4]}
                   tickFormatter={(v) =>
-                    ({ 0: "无", 1: "低", 2: "中", 3: "高", 4: "紧急" } as Record<
-                      number,
-                      string
-                    >)[v] ?? String(v)
+                    (
+                      {
+                        0: "无",
+                        1: "低",
+                        2: "中",
+                        3: "高",
+                        4: "紧急",
+                      } as Record<number, string>
+                    )[v] ?? String(v)
                   }
                   tick={{ fontSize: 10, fill: "#5c584f" }}
                 />
@@ -372,11 +388,13 @@ export function SituationCharts({
   charts?: ChartSpec[];
   threatRatings?: SituationViewSpec["threat_ratings"];
 }) {
-  const regular = (charts ?? []).filter((c) => !isThreatDistChart(c));
-  const showThreat =
-    (threatRatings?.length ?? 0) > 0 || (charts ?? []).some(isThreatDistChart);
+  const byId = new Map((charts ?? []).map((c) => [c.id, c]));
+  const fixed = FIXED_IDS.map((id) => byId.get(id)).filter(
+    (c): c is ChartSpec => Boolean(c),
+  );
+  const list = fixed.length > 0 ? fixed : (charts ?? []);
 
-  if (!regular.length && !showThreat) {
+  if (!list.length && !(threatRatings?.length > 0)) {
     return (
       <div className="p-4 text-sm text-[var(--muted)]">暂无图表数据</div>
     );
@@ -384,29 +402,10 @@ export function SituationCharts({
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      {regular.map((chart) => (
+      {list.map((chart) => (
         <ChartCard key={chart.id || chart.title} chart={chart} />
       ))}
-      {showThreat && (
-        <ThreatLevelChart
-          ratings={
-            threatRatings.length
-              ? threatRatings
-              : charts
-                  .filter(isThreatDistChart)
-                  .flatMap((c) =>
-                    c.series.map((s) => ({
-                      perspective: /红|日/.test(c.title)
-                        ? "红方看蓝方"
-                        : "蓝方看红方",
-                      target: s.name,
-                      level: String(s.value),
-                      evidence: "",
-                    })),
-                  )
-          }
-        />
-      )}
+      <ThreatLevelChart ratings={threatRatings ?? []} />
     </div>
   );
 }
