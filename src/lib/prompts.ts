@@ -84,8 +84,8 @@ function buildVmmpGuidanceBlock(
 - highlight_names：突出与假设验证相关的关键实体
 - threat_zones：仅在有空间聚集或关键活动区时使用，勿伪造交火圈
 - narrative：点明佯动/真实、方向、阶段判断依据（仍保持 2–4 句）
-- threat_ratings：可较少，但须有证据字段；勿喧宾夺主
-- charts（若允许自由设计）：优先阶段对比、航向/编队状态、证据相关数量关系（bar/pie/stacked_bar）`
+- threat_ratings：意图任务下可输出空数组 []（前端不展示威胁等级图）
+- charts（若允许自由设计）：必须含阶段/航向/编队状态类图；禁止以威胁排序为主图`
       : `地图侧重（威胁）：
 - highlight_names：优先高亮筛选出的关键威胁目标（Salience / Screening）
 - threat_zones：按威胁等级表达空间威胁/关注区（Hierarchy / Salience）
@@ -155,14 +155,19 @@ ${focusLine}
 ## 兵力与几何摘要（由清洗数据压缩）
 ${dataSummary}
 
-## 威胁等级参考（用于 threat_ratings / 威胁目标排序图）
+## 威胁等级参考（威胁任务用于 threat_ratings；意图任务仅作背景，勿做成主图）
 ${ratingsBlock}
 ${vmmpBlock}
 ## 输出要求
 只输出一个 SituationViewSpec JSON，结构如下：
 ${SITUATION_OUTPUT_SCHEMA}
 
-请根据兵力几何生成 map、title、narrative，并填写 threat_ratings（可蓝/红或美/日视角）。
+${
+  taskFocus === "intent"
+    ? `请根据兵力几何生成 map（务必含 axes 作战指向）、title、narrative（含阶段/佯动判断）。
+threat_ratings 可输出 []。意图任务前端展示阶段条与方向证据，不展示威胁等级图。`
+    : `请根据兵力几何生成 map、title、narrative，并填写 threat_ratings（可蓝/红或美/日视角）。`
+}
 ${chartOutHint}
 intent_findings、threat_findings、priorities 一律输出 []。`;
 }
@@ -174,7 +179,9 @@ export const PROMPT_TEMPLATE_MARKDOWN = `# 中途岛战役态势界面生成提�
 \`\`\`
 输入 = 时间片清洗数据摘要 + 场景简述 + 威胁等级参考
      +（可选）VMMP_W 或 VMMP_I JSON（vmmp_mode=on）
-输出 = SituationViewSpec（JSON）→ 前端地图 + 固定统计图 + 威胁等级图
+输出 = SituationViewSpec（JSON）→ 前端地图 + 统计图
+  · 威胁任务：另加威胁目标排序图
+  · 意图任务：另加阶段/指向/证据面板（不展示威胁等级图）
 视觉 A/B：打开 /compare，左 A 无 VMMP、右 B 注入 VMMP
 \`\`\`
 

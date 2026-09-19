@@ -93,6 +93,7 @@ function setDiff(a: string[], b: string[]) {
 export function diffSpecs(
   a: SituationViewSpec,
   b: SituationViewSpec,
+  focus: TaskFocus = "threat",
 ): SpecDiff {
   const ha = a.map.highlight_names ?? [];
   const hb = b.map.highlight_names ?? [];
@@ -123,25 +124,44 @@ export function diffSpecs(
   }
   if (axesA.join("|") !== axesB.join("|")) {
     summaryLines.push(
-      `轴线：A「${axesA.join("；") || "无"}」↔ B「${axesB.join("；") || "无"}」`,
+      `轴线/指向：A「${axesA.join("；") || "无"}」↔ B「${axesB.join("；") || "无"}」`,
     );
   } else {
     summaryLines.push(`轴线标签：相同（${axesA.join("；") || "无"}）`);
   }
-  if (zonesA.join("|") !== zonesB.join("|")) {
-    summaryLines.push(
-      `威胁圈：A「${zonesA.join("；") || "无"}」↔ B「${zonesB.join("；") || "无"}」`,
-    );
+
+  if (focus === "intent") {
+    const phaseA = inferCampaignPhase("", a);
+    const phaseB = inferCampaignPhase("", b);
+    if (phaseA !== phaseB || a.phase_label !== b.phase_label) {
+      summaryLines.push(
+        `阶段：A「${phaseA}/${a.phase_label}」↔ B「${phaseB}/${b.phase_label}」`,
+      );
+    } else {
+      summaryLines.push(`阶段判断：相同（${phaseA}）`);
+    }
+    if (zonesA.join("|") !== zonesB.join("|")) {
+      summaryLines.push(
+        `活动区：A「${zonesA.join("；") || "无"}」↔ B「${zonesB.join("；") || "无"}」`,
+      );
+    }
   } else {
-    summaryLines.push(`威胁圈：相同或近似（${zonesA.length} 个）`);
+    if (zonesA.join("|") !== zonesB.join("|")) {
+      summaryLines.push(
+        `威胁圈：A「${zonesA.join("；") || "无"}」↔ B「${zonesB.join("；") || "无"}」`,
+      );
+    } else {
+      summaryLines.push(`威胁圈：相同或近似（${zonesA.length} 个）`);
+    }
+    if (ratingOrderA.join("|") !== ratingOrderB.join("|")) {
+      summaryLines.push(
+        `威胁排序前部：A「${ratingOrderA.slice(0, 3).join(" → ")}」↔ B「${ratingOrderB.slice(0, 3).join(" → ")}」`,
+      );
+    } else {
+      summaryLines.push("威胁等级列表顺序：A/B 相同或高度相似");
+    }
   }
-  if (ratingOrderA.join("|") !== ratingOrderB.join("|")) {
-    summaryLines.push(
-      `威胁排序前部：A「${ratingOrderA.slice(0, 3).join(" → ")}」↔ B「${ratingOrderB.slice(0, 3).join(" → ")}」`,
-    );
-  } else {
-    summaryLines.push("威胁等级列表顺序：A/B 相同或高度相似");
-  }
+
   if (a.title !== b.title) {
     summaryLines.push(`标题：A「${a.title}」↔ B「${b.title}」`);
   }
@@ -162,21 +182,18 @@ export function diffSpecs(
 export function intentEvidenceItems(spec: SituationViewSpec) {
   const items: { kind: string; text: string }[] = [];
   for (const ax of spec.map.axes ?? []) {
-    items.push({ kind: "方向/轴线", text: ax.label });
+    items.push({ kind: "方向", text: ax.label });
   }
-  for (const z of spec.map.threat_zones ?? []) {
-    items.push({ kind: "空间区", text: `${z.label}（${z.level}）` });
+  for (const name of (spec.map.highlight_names ?? []).slice(0, 4)) {
+    items.push({ kind: "关键实体", text: name });
   }
-  for (const r of sortedThreatRatings(spec).slice(0, 4)) {
-    items.push({
-      kind: "证据片段",
-      text: `${r.target}｜${r.level}｜${r.evidence}`,
-    });
+  for (const z of (spec.map.threat_zones ?? []).slice(0, 2)) {
+    items.push({ kind: "活动区", text: `${z.label}（${z.level}）` });
   }
-  if (!items.length && spec.narrative) {
-    items.push({ kind: "叙述", text: spec.narrative });
+  if (spec.narrative) {
+    items.push({ kind: "叙述依据", text: spec.narrative });
   }
-  return items.slice(0, 6);
+  return items.slice(0, 8);
 }
 
 export function meanScores(scores: Record<string, number>): number | null {

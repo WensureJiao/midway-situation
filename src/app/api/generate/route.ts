@@ -87,9 +87,10 @@ export async function POST(req: Request) {
     const timeSlice = body.time_slice || "T1";
     const pack = await loadPack(timeSlice);
     const lockCharts = body.lock_charts !== false;
+    const taskFocus = body.task_focus ?? "threat";
     const { system_prompt, prompt } = buildPromptBundle(pack, body.task_ids, {
       vmmp_mode: body.vmmp_mode ?? "off",
-      task_focus: body.task_focus ?? "threat",
+      task_focus: taskFocus,
       lock_charts: lockCharts,
     });
 
@@ -109,11 +110,13 @@ export async function POST(req: Request) {
       spec = generateSituationLocal(pack, body.task_ids);
     }
 
-    // KPI 固定；charts 可按 lock_charts 放开；威胁等级缺则回退 pack
+    // KPI 固定；charts 可按 lock_charts 放开；威胁任务缺等级时回退 pack
     const ratings =
-      spec.threat_ratings?.length
-        ? spec.threat_ratings
-        : buildThreatRatingsFromPack(pack);
+      taskFocus === "intent"
+        ? (spec.threat_ratings ?? [])
+        : spec.threat_ratings?.length
+          ? spec.threat_ratings
+          : buildThreatRatingsFromPack(pack);
     const charts =
       !lockCharts && spec.charts?.length
         ? spec.charts

@@ -1,6 +1,10 @@
 "use client";
 
-import type { ChartSpec, SituationViewSpec } from "@/lib/types";
+import type { ChartSpec, SituationViewSpec, TaskFocus } from "@/lib/types";
+import {
+  inferCampaignPhase,
+  intentEvidenceItems,
+} from "@/lib/vmmpCompare";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -15,6 +19,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+
+const INTENT_PHASES = ["集结", "搜索", "接触"] as const;
 
 const USN = "#c45c4a";
 const IJN = "#3b82a8";
@@ -383,20 +389,146 @@ function ThreatLevelChart({
   );
 }
 
+function IntentFocusPanel({
+  spec,
+  packPhase,
+}: {
+  spec: SituationViewSpec;
+  packPhase?: string;
+}) {
+  const phase = inferCampaignPhase(packPhase ?? "", spec);
+  const axes = spec.map.axes ?? [];
+  const evidence = intentEvidenceItems(spec);
+
+  return (
+    <div className="rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)] sm:col-span-2">
+      <div className="mb-2">
+        <h3 className="text-sm font-semibold text-[var(--ink)]">
+          意图研判焦点
+        </h3>
+        <p className="text-xs text-[var(--muted)]">
+          阶段进度 · 作战指向 · 证据片段（替代威胁等级图）
+        </p>
+      </div>
+
+      <div className="mb-3">
+        <div className="mb-1 text-[11px] font-medium text-[var(--muted)]">
+          战役阶段
+        </div>
+        <div className="flex overflow-hidden rounded-md text-xs ring-1 ring-[var(--line)]">
+          {INTENT_PHASES.map((p, i) => {
+            const active = p === phase;
+            return (
+              <div
+                key={p}
+                className={`flex-1 px-2 py-2 text-center ${
+                  active
+                    ? "bg-[var(--panel-3)] font-semibold text-[var(--ink)]"
+                    : "bg-[var(--panel-2)] text-[var(--muted)]"
+                }`}
+              >
+                {p}
+                {active ? " · 当前" : ""}
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-1 text-[11px] text-[var(--muted)]">
+          依据：{spec.phase_label || packPhase || "未标注"}
+        </p>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-2">
+        <div>
+          <div className="mb-1 text-[11px] font-medium text-[var(--muted)]">
+            作战指向 / 轴线
+          </div>
+          {axes.length ? (
+            <ul className="space-y-1.5 text-xs">
+              {axes.map((ax) => (
+                <li
+                  key={ax.id || ax.label}
+                  className="rounded-md bg-[var(--panel-2)] px-2 py-1.5"
+                >
+                  <span className="font-medium text-[var(--ink)]">
+                    {ax.label}
+                  </span>
+                  {ax.side && (
+                    <span className="ml-2 text-[10px] text-[var(--muted)]">
+                      {ax.side}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="rounded-md bg-[var(--panel-2)] px-2 py-3 text-xs text-[var(--muted)]">
+              暂无轴线；请结合地图高亮与叙述判断方向
+            </div>
+          )}
+        </div>
+        <div>
+          <div className="mb-1 text-[11px] font-medium text-[var(--muted)]">
+            证据 → 假设
+          </div>
+          {evidence.length ? (
+            <ul className="max-h-[200px] space-y-1.5 overflow-auto text-xs">
+              {evidence.map((item, i) => (
+                <li
+                  key={`${item.kind}-${i}`}
+                  className="rounded-md bg-[var(--panel-2)] px-2 py-1.5"
+                >
+                  <span className="mr-1.5 text-[10px] font-semibold text-[var(--muted)]">
+                    {item.kind}
+                  </span>
+                  <span className="text-[var(--ink)]">{item.text}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="rounded-md bg-[var(--panel-2)] px-2 py-3 text-xs text-[var(--muted)]">
+              暂无结构化证据
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SituationCharts({
   charts = [],
   threatRatings = [],
+  taskFocus = "threat",
+  spec,
+  packPhase,
 }: {
   charts?: ChartSpec[];
   threatRatings?: SituationViewSpec["threat_ratings"];
+  /** 威胁：威胁等级图；意图：阶段/方向/证据面板 */
+  taskFocus?: TaskFocus;
+  /** 意图面板需要 map / phase / narrative */
+  spec?: SituationViewSpec;
+  packPhase?: string;
 }) {
   const byId = new Map((charts ?? []).map((c) => [c.id, c]));
   const fixed = FIXED_IDS.map((id) => byId.get(id)).filter(
     (c): c is ChartSpec => Boolean(c),
   );
-  const list = fixed.length > 0 ? fixed : (charts ?? []);
+  // 意图任务优先展示模型自设计的 charts，不被固定四图顶替
+  const list =
+    taskFocus === "intent"
+      ? (charts ?? [])
+      : fixed.length > 0
+        ? fixed
+        : (charts ?? []);
 
-  if (!list.length && !(threatRatings?.length > 0)) {
+  const showThreat = taskFocus !== "intent";
+  const showIntent = taskFocus === "intent" && Boolean(spec);
+  const hasFocusPanel =
+    (showThreat && (threatRatings?.length ?? 0) > 0) || showIntent;
+
+  if (!list.length && !hasFocusPanel) {
     return (
       <div className="p-4 text-sm text-[var(--muted)]">暂无图表数据</div>
     );
@@ -407,7 +539,11 @@ export function SituationCharts({
       {list.map((chart) => (
         <ChartCard key={chart.id || chart.title} chart={chart} />
       ))}
-      <ThreatLevelChart ratings={threatRatings ?? []} />
+      {showThreat ? (
+        <ThreatLevelChart ratings={threatRatings ?? []} />
+      ) : showIntent && spec ? (
+        <IntentFocusPanel spec={spec} packPhase={packPhase} />
+      ) : null}
     </div>
   );
 }

@@ -51,6 +51,7 @@ function VisPanel({
   spec,
   mapKey,
   blind,
+  taskFocus,
 }: {
   label: string;
   badge: string;
@@ -58,6 +59,7 @@ function VisPanel({
   spec: SituationViewSpec;
   mapKey: string;
   blind: boolean;
+  taskFocus: TaskFocus;
 }) {
   return (
     <section className="flex min-w-0 flex-col overflow-hidden rounded-lg bg-[var(--panel)] ring-1 ring-[var(--line)]">
@@ -95,6 +97,9 @@ function VisPanel({
         <SituationCharts
           charts={spec.charts}
           threatRatings={spec.threat_ratings}
+          taskFocus={taskFocus}
+          spec={spec}
+          packPhase={pack.phase_label}
         />
       </div>
     </section>
@@ -294,8 +299,8 @@ export function VmmpCompareWorkbench() {
   }, [pack, sliceId, taskFocus]);
 
   const diff = useMemo(
-    () => (specA && specB ? diffSpecs(specA, specB) : null),
-    [specA, specB],
+    () => (specA && specB ? diffSpecs(specA, specB, taskFocus) : null),
+    [specA, specB, taskFocus],
   );
 
   const chartDiffLines = useMemo(() => {
@@ -495,6 +500,7 @@ export function VmmpCompareWorkbench() {
                 spec={leftRight.left.spec}
                 mapKey={`left-${sliceId}-${taskFocus}-${leftRight.left.key}`}
                 blind={blind}
+                taskFocus={taskFocus}
               />
               <VisPanel
                 label={
@@ -505,6 +511,7 @@ export function VmmpCompareWorkbench() {
                 spec={leftRight.right.spec}
                 mapKey={`right-${sliceId}-${taskFocus}-${leftRight.right.key}`}
                 blind={blind}
+                taskFocus={taskFocus}
               />
             </div>
           </>
