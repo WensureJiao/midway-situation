@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import {
   centroid,
   findByNameHint,
@@ -9,6 +11,7 @@ import {
 import {
   SITUATION_SYSTEM_PROMPT,
   buildSituationUserPrompt,
+  type PromptVmmpOptions,
 } from "./prompts";
 import type {
   AnalysisTask,
@@ -16,7 +19,18 @@ import type {
   CompactUnit,
   SituationViewSpec,
   SlicePack,
+  TaskFocus,
+  VmmpMode,
 } from "./types";
+
+function loadVmmpJson(taskFocus: TaskFocus): string {
+  const file =
+    taskFocus === "intent"
+      ? "VMMP_I_intent_assessment.json"
+      : "VMMP_W_threat_analysis.json";
+  const full = path.join(process.cwd(), "data", "vmmp", file);
+  return fs.readFileSync(full, "utf8");
+}
 
 function carriers(units: CompactUnit[]): CompactUnit[] {
   return units.filter(
@@ -285,12 +299,27 @@ export function generateSituationLocal(
 export function buildPromptBundle(
   pack: SlicePack,
   taskIds?: string[],
+  options?: {
+    vmmp_mode?: VmmpMode;
+    task_focus?: TaskFocus;
+    lock_charts?: boolean;
+  },
 ): { system_prompt: string; prompt: string; tasks: AnalysisTask[] } {
   const tasks = selectTasks(pack, taskIds);
   const dataSummary = summarizePackForPrompt(pack);
+  const vmmp_mode: VmmpMode = options?.vmmp_mode ?? "off";
+  const task_focus: TaskFocus = options?.task_focus ?? "threat";
+  const lock_charts = options?.lock_charts !== false;
+  const promptOptions: PromptVmmpOptions = {
+    vmmp_mode,
+    task_focus,
+    lock_charts,
+    vmmp_json:
+      vmmp_mode === "on" ? loadVmmpJson(task_focus) : null,
+  };
   return {
     system_prompt: SITUATION_SYSTEM_PROMPT,
-    prompt: buildSituationUserPrompt(pack, tasks, dataSummary),
+    prompt: buildSituationUserPrompt(pack, tasks, dataSummary, promptOptions),
     tasks,
   };
 }

@@ -1,0 +1,300 @@
+{
+  "generated_by": "llm",
+  "time_slice": "T81",
+  "title": "机库危机：甲板换弹窗口",
+  "phase_label": "机库危机",
+  "narrative": "日军四航母（赤城、加贺、苍龙、飞龙）正集中于29.1°N/177.9°W附近，以10 kn航速向东北航行，甲板堆满未放飞的九七式鱼雷机与九九式俯冲轰炸机，大量ready=0，处于高脆弱换弹窗口；美军三航母（企业、大黄蜂、约克城）位于其东南约120–150海里处，航速仅0–2 kn，舰载机整备中；在空美机30架（含20架野猫CAP）与6架日零式呈东西对峙态势，但美方攻击力量已开始投弹，南云编队上空出现航弹轨迹。",
+  "map": {
+    "center": [
+      29.1,
+      -177.9
+    ],
+    "zoom": 6,
+    "highlight_names": [
+      "IJN Akagi",
+      "IJN Kaga",
+      "IJN Soryu",
+      "CVA-6 Enterprise",
+      "CVA-7 Hornet",
+      "CVA-5 Yorktown"
+    ],
+    "axes": [
+      {
+        "id": "a1",
+        "from": [
+          29.09,
+          -177.86
+        ],
+        "to": [
+          29.54,
+          -178.47
+        ],
+        "label": "美舰突击轴",
+        "side": "USN"
+      },
+      {
+        "id": "a2",
+        "from": [
+          29.1,
+          -177.9
+        ],
+        "to": [
+          28.65,
+          -178.86
+        ],
+        "label": "日零式拦截轴",
+        "side": "IJN"
+      }
+    ],
+    "threat_zones": [
+      {
+        "id": "z1",
+        "center": [
+          29.1,
+          -177.9
+        ],
+        "radius_nm": 35,
+        "level": "紧急",
+        "label": "日军航母换弹核心区",
+        "side": "IJN"
+      }
+    ]
+  },
+  "kpis": [
+    {
+      "id": "us-cv",
+      "label": "美航母",
+      "value": 3,
+      "tone": "usn"
+    },
+    {
+      "id": "ijn-cv",
+      "label": "日航母舰体",
+      "value": 3,
+      "tone": "ijn"
+    },
+    {
+      "id": "air",
+      "label": "在空飞机",
+      "value": 36,
+      "tone": "warn"
+    },
+    {
+      "id": "dmg",
+      "label": "损伤舰艇",
+      "value": 0,
+      "tone": "neutral"
+    }
+  ],
+  "charts": [
+    {
+      "id": "ships",
+      "type": "bar",
+      "title": "水面舰艇数量",
+      "description": "不含岸基设施",
+      "series": [
+        {
+          "name": "USN",
+          "value": 28,
+          "side": "USN"
+        },
+        {
+          "name": "IJN",
+          "value": 20,
+          "side": "IJN"
+        }
+      ]
+    },
+    {
+      "id": "airborne",
+      "type": "bar",
+      "title": "在空飞机数量",
+      "series": [
+        {
+          "name": "USN",
+          "value": 30,
+          "side": "USN"
+        },
+        {
+          "name": "IJN",
+          "value": 6,
+          "side": "IJN"
+        }
+      ]
+    },
+    {
+      "id": "usn-embarked-class",
+      "type": "pie",
+      "title": "红方舰载机机型构成（就绪）",
+      "series": [
+        {
+          "name": "俯冲轰炸机-无畏",
+          "value": 11,
+          "side": "USN"
+        },
+        {
+          "name": "俯冲轰炸机-无畏",
+          "value": 1,
+          "side": "USN"
+        },
+        {
+          "name": "俯冲轰炸机-无畏",
+          "value": 1,
+          "side": "USN"
+        },
+        {
+          "name": "鱼雷机-毁灭者",
+          "value": 5,
+          "side": "USN"
+        },
+        {
+          "name": "战斗机-野猫",
+          "value": 11,
+          "side": "USN"
+        },
+        {
+          "name": "战斗机-野猫",
+          "value": 2,
+          "side": "USN"
+        },
+        {
+          "name": "战斗机-野猫",
+          "value": 2,
+          "side": "USN"
+        },
+        {
+          "name": "战斗机-野猫",
+          "value": 1,
+          "side": "USN"
+        },
+        {
+          "name": "战斗机-野猫",
+          "value": 1,
+          "side": "USN"
+        },
+        {
+          "name": "战斗机-野猫",
+          "value": 1,
+          "side": "USN"
+        }
+      ]
+    },
+    {
+      "id": "ijn-embarked-class",
+      "type": "pie",
+      "title": "蓝方舰载机机型构成（就绪）",
+      "series": [
+        {
+          "name": "俯冲轰炸机-九九式/彗星",
+          "value": 28,
+          "side": "IJN"
+        },
+        {
+          "name": "舰载侦察机-水上飞机",
+          "value": 9,
+          "side": "IJN"
+        },
+        {
+          "name": "鱼雷机-九七式",
+          "value": 39,
+          "side": "IJN"
+        },
+        {
+          "name": "战斗机-零式",
+          "value": 3,
+          "side": "IJN"
+        },
+        {
+          "name": "战斗机-零式",
+          "value": 1,
+          "side": "IJN"
+        },
+        {
+          "name": "战斗机-零式",
+          "value": 1,
+          "side": "IJN"
+        },
+        {
+          "name": "战斗机-零式",
+          "value": 1,
+          "side": "IJN"
+        },
+        {
+          "name": "战斗机-零式",
+          "value": 1,
+          "side": "IJN"
+        },
+        {
+          "name": "战斗机-零式",
+          "value": 1,
+          "side": "IJN"
+        },
+        {
+          "name": "战斗机-零式",
+          "value": 1,
+          "side": "IJN"
+        },
+        {
+          "name": "战斗机-零式",
+          "value": 1,
+          "side": "IJN"
+        },
+        {
+          "name": "战斗机-零式",
+          "value": 1,
+          "side": "IJN"
+        },
+        {
+          "name": "战斗机-零式",
+          "value": 1,
+          "side": "IJN"
+        },
+        {
+          "name": "战斗机-零式",
+          "value": 1,
+          "side": "IJN"
+        },
+        {
+          "name": "战斗机-零式",
+          "value": 1,
+          "side": "IJN"
+        }
+      ]
+    }
+  ],
+  "intent_findings": [],
+  "threat_findings": [],
+  "priorities": [],
+  "threat_ratings": [
+    {
+      "perspective": "美方看日方",
+      "target": "赤城/加贺/苍龙（换弹窗口）",
+      "level": "紧急",
+      "evidence": "攻击机高度为 0 且大量 ready=0，弹药在舰；编队上空已有弹幕/航弹，命中即高后果。"
+    },
+    {
+      "perspective": "日方看美方",
+      "target": "南云上空残存攻击与航弹",
+      "level": "紧急",
+      "evidence": "与己方航母同区，且正值甲板无法灵活起降。"
+    },
+    {
+      "perspective": "美方看日方",
+      "target": "6 架高空零式",
+      "level": "中",
+      "evidence": "能拦截，但数量少、位置偏西，不是对美舰的打击力量。"
+    },
+    {
+      "perspective": "日方看美方",
+      "target": "在空辩护者/B-17",
+      "level": "高",
+      "evidence": "仍在空、可对舰；数量有限但窗口极度敏感。"
+    },
+    {
+      "perspective": "日方看美方",
+      "target": "企业号/大黄蜂号/约克城号",
+      "level": "中",
+      "evidence": "航速 0–2 kn 表明飞行作业/回收，短期再出击弱于 T21，仍是战役重心。"
+    }
+  ]
+}

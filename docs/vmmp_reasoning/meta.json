@@ -1,0 +1,166 @@
+{
+  "model": "qwen-plus",
+  "paths": {
+    "threat": "Identify → Locate → Filter → Compare → Aggregate → Assess → Rank → Verify",
+    "intent": "Identify → Trace → Compare → Relate → Infer → Verify"
+  },
+  "jobs": [
+    {
+      "slice": "T1",
+      "taskType": "threat",
+      "condition": "A",
+      "id": "T1-threat-A",
+      "skipped": true
+    },
+    {
+      "slice": "T1",
+      "taskType": "threat",
+      "condition": "B",
+      "id": "T1-threat-B",
+      "skipped": true
+    },
+    {
+      "slice": "T1",
+      "taskType": "intent",
+      "condition": "A",
+      "id": "T1-intent-A",
+      "skipped": true
+    },
+    {
+      "slice": "T1",
+      "taskType": "intent",
+      "condition": "B",
+      "id": "T1-intent-B",
+      "skipped": true
+    },
+    {
+      "slice": "T21",
+      "taskType": "threat",
+      "condition": "A",
+      "id": "T21-threat-A",
+      "model": "qwen-plus",
+      "ms": 5191
+    },
+    {
+      "slice": "T21",
+      "taskType": "threat",
+      "condition": "B",
+      "id": "T21-threat-B",
+      "model": "qwen-plus",
+      "ms": 15719
+    },
+    {
+      "slice": "T21",
+      "taskType": "intent",
+      "condition": "A",
+      "id": "T21-intent-A",
+      "model": "qwen-plus",
+      "ms": 4611
+    },
+    {
+      "slice": "T21",
+      "taskType": "intent",
+      "condition": "B",
+      "id": "T21-intent-B",
+      "model": "qwen-plus",
+      "ms": 11528
+    },
+    {
+      "slice": "T81",
+      "taskType": "threat",
+      "condition": "A",
+      "id": "T81-threat-A",
+      "model": "qwen-plus",
+      "ms": 4059
+    },
+    {
+      "slice": "T81",
+      "taskType": "threat",
+      "condition": "B",
+      "id": "T81-threat-B",
+      "model": "qwen-plus",
+      "ms": 15689
+    },
+    {
+      "slice": "T81",
+      "taskType": "intent",
+      "condition": "A",
+      "id": "T81-intent-A",
+      "model": "qwen-plus",
+      "ms": 3918
+    },
+    {
+      "slice": "T81",
+      "taskType": "intent",
+      "condition": "B",
+      "id": "T81-intent-B",
+      "model": "qwen-plus",
+      "ms": 14233
+    },
+    {
+      "slice": "T145",
+      "taskType": "threat",
+      "condition": "A",
+      "id": "T145-threat-A",
+      "model": "qwen-plus",
+      "ms": 4275
+    },
+    {
+      "slice": "T145",
+      "taskType": "threat",
+      "condition": "B",
+      "id": "T145-threat-B",
+      "model": "qwen-plus",
+      "ms": 15780
+    },
+    {
+      "slice": "T145",
+      "taskType": "intent",
+      "condition": "A",
+      "id": "T145-intent-A",
+      "model": "qwen-plus",
+      "ms": 4183
+    },
+    {
+      "slice": "T145",
+      "taskType": "intent",
+      "condition": "B",
+      "id": "T145-intent-B",
+      "model": "qwen-plus",
+      "ms": 12791
+    },
+    {
+      "slice": "T193",
+      "taskType": "threat",
+      "condition": "A",
+      "id": "T193-threat-A",
+      "model": "qwen-plus",
+      "ms": 4412
+    },
+    {
+      "slice": "T193",
+      "taskType": "threat",
+      "condition": "B",
+      "id": "T193-threat-B",
+      "model": "qwen-plus",
+      "ms": 13335
+    },
+    {
+      "slice": "T193",
+      "taskType": "intent",
+      "condition": "A",
+      "id": "T193-intent-A",
+      "model": "qwen-plus",
+      "ms": 3185
+    },
+    {
+      "slice": "T193",
+      "taskType": "intent",
+      "condition": "B",
+      "id": "T193-intent-B",
+      "model": "qwen-plus",
+      "ms": 9987
+    }
+  ],
+  "finished_at": "2026-09-19T10:44:25.173Z"
+}

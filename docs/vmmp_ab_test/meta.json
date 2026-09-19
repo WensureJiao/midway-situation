@@ -1,0 +1,72 @@
+{
+  "started_at": "2026-09-19T08:32:59.672Z",
+  "scenario": "T1",
+  "note": "预实验：助手按 E 指标评分；非正式盲评专家结果",
+  "runs": [
+    {
+      "id": "T1-threat-A",
+      "taskType": "threat",
+      "condition": "A",
+      "model": "qwen-plus",
+      "latency_ms": 51011,
+      "usage": {
+        "total_tokens": 3186,
+        "completion_tokens": 2294,
+        "prompt_tokens": 892,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response_file": "T1-threat-A_response.md"
+    },
+    {
+      "id": "T1-threat-B",
+      "taskType": "threat",
+      "condition": "B",
+      "model": "qwen-plus",
+      "latency_ms": 61117,
+      "usage": {
+        "total_tokens": 4722,
+        "completion_tokens": 2763,
+        "prompt_tokens": 1959,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response_file": "T1-threat-B_response.md"
+    },
+    {
+      "id": "T1-intent-A",
+      "taskType": "intent",
+      "condition": "A",
+      "model": "qwen-plus",
+      "latency_ms": 38166,
+      "usage": {
+        "total_tokens": 2601,
+        "completion_tokens": 1720,
+        "prompt_tokens": 881,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response_file": "T1-intent-A_response.md"
+    },
+    {
+      "id": "T1-intent-B",
+      "taskType": "intent",
+      "condition": "B",
+      "model": "qwen-plus",
+      "latency_ms": 79047,
+      "usage": {
+        "total_tokens": 5559,
+        "completion_tokens": 3561,
+        "prompt_tokens": 1998,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response_file": "T1-intent-B_response.md"
+    }
+  ],
+  "finished_at": "2026-09-19T08:36:49.035Z"
+}

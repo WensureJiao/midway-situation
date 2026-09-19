@@ -1,0 +1,68 @@
+{
+  "experiment": "VMMP_AB_pretest",
+  "date": "2026-09-19",
+  "scenario": "T1",
+  "model": "qwen-plus",
+  "temperature": 0.2,
+  "rater": "assistant_pretest_not_blind",
+  "disclaimer": "预实验评分，非正式专家盲评",
+  "threat": {
+    "A": {
+      "SpatialFit": 4,
+      "ComparisonFit": 4,
+      "AggregationFit": 3,
+      "HierarchyFit": 3,
+      "ScreeningFit": 4,
+      "RankingFit": 3,
+      "UncertaintyFit": 4,
+      "ConsistencyFit": 4,
+      "mean": 3.625,
+      "reasoning_fit": 2,
+      "task_fit": 3
+    },
+    "B": {
+      "SpatialFit": 4,
+      "ComparisonFit": 5,
+      "AggregationFit": 5,
+      "HierarchyFit": 4,
+      "ScreeningFit": 5,
+      "RankingFit": 5,
+      "UncertaintyFit": 5,
+      "ConsistencyFit": 4,
+      "mean": 4.625,
+      "reasoning_fit": 5,
+      "task_fit": 5
+    },
+    "delta_mean_B_minus_A": 1.0
+  },
+  "intent": {
+    "A": {
+      "SpatialFit": 4,
+      "TemporalFit": 2,
+      "RelationFit": 3,
+      "ComparisonFit": 4,
+      "EvidenceFit": 3,
+      "SequenceFit": 3,
+      "UncertaintyFit": 4,
+      "ConsistencyFit": 4,
+      "mean": 3.375,
+      "reasoning_fit": 2,
+      "task_fit": 3
+    },
+    "B": {
+      "SpatialFit": 5,
+      "TemporalFit": 4,
+      "RelationFit": 5,
+      "ComparisonFit": 5,
+      "EvidenceFit": 5,
+      "SequenceFit": 5,
+      "UncertaintyFit": 5,
+      "ConsistencyFit": 4,
+      "mean": 4.75,
+      "reasoning_fit": 5,
+      "task_fit": 5
+    },
+    "delta_mean_B_minus_A": 1.375
+  },
+  "conclusion": "预实验显示附带 VMMP 的 B 组在威胁与意图任务上 E 均分均高于 A 组；需盲评与重复采样后才能作正式结论。"
+}

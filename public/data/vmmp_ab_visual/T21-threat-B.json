@@ -1,0 +1,246 @@
+{
+  "generated_by": "llm",
+  "time_slice": "T21",
+  "title": "中途岛战役：广域搜索临界点",
+  "phase_label": "广域搜索",
+  "narrative": "美海军TF16/17已前出至29.5°N/177.5°W一线，舰载机群（尤其无畏式与野猫）正压向南云机动部队经度带（179°W附近），局部交火已发生；日方赤城、加贺、苍龙、飞龙四航母集群位于28.9°N/179.2°W区域，九七式与九九式机群已进入中距接触扇区；PBY与零式水侦在高空对向渗透，双方发现窗口急剧收窄。",
+  "map": {
+    "center": [
+      29.2,
+      -178.3
+    ],
+    "zoom": 6,
+    "highlight_names": [
+      "CVA-5 Yorktown",
+      "CVA-6 Enterprise",
+      "CVA-7 Hornet",
+      "IJN Akagi",
+      "IJN Kaga",
+      "IJN Soryu",
+      "IJN Hiryu",
+      "Yorktown Thatch Wildcats #11",
+      "Hiryu Mori Zero #16",
+      "Soryu Abe Kate #1"
+    ],
+    "axes": [
+      {
+        "id": "a1",
+        "from": [
+          29.55,
+          -177.5
+        ],
+        "to": [
+          28.92,
+          -179.12
+        ],
+        "label": "美打击轴（约克城→赤城）",
+        "side": "USN"
+      },
+      {
+        "id": "a2",
+        "from": [
+          28.92,
+          -179.12
+        ],
+        "to": [
+          29.55,
+          -177.5
+        ],
+        "label": "日侦察轴（赤城→TF16）",
+        "side": "IJN"
+      }
+    ],
+    "threat_zones": [
+      {
+        "id": "z1",
+        "center": [
+          29,
+          -179.2
+        ],
+        "radius_nm": 35,
+        "level": "高",
+        "label": "南云机动部队核心区（含四航母）",
+        "side": "IJN"
+      },
+      {
+        "id": "z2",
+        "center": [
+          29.55,
+          -177.5
+        ],
+        "radius_nm": 25,
+        "level": "高",
+        "label": "TF16/17联合打击枢纽（企业/大黄蜂）",
+        "side": "USN"
+      },
+      {
+        "id": "z3",
+        "center": [
+          29.77,
+          -177.6
+        ],
+        "radius_nm": 18,
+        "level": "紧急",
+        "label": "野猫-无畏协同空战区（已交火）",
+        "side": "USN"
+      }
+    ]
+  },
+  "kpis": [
+    {
+      "id": "us-cv",
+      "label": "美航母",
+      "value": 3,
+      "tone": "usn"
+    },
+    {
+      "id": "ijn-cv",
+      "label": "日航母舰体",
+      "value": 3,
+      "tone": "ijn"
+    },
+    {
+      "id": "air",
+      "label": "在空飞机",
+      "value": 176,
+      "tone": "warn"
+    },
+    {
+      "id": "dmg",
+      "label": "损伤舰艇",
+      "value": 0,
+      "tone": "neutral"
+    }
+  ],
+  "charts": [
+    {
+      "id": "ships",
+      "type": "bar",
+      "title": "水面舰艇数量对比",
+      "series": [
+        {
+          "name": "USN",
+          "value": 28,
+          "side": "USN"
+        },
+        {
+          "name": "IJN",
+          "value": 20,
+          "side": "IJN"
+        }
+      ]
+    },
+    {
+      "id": "airborne",
+      "type": "bar",
+      "title": "在空飞机数量对比",
+      "series": [
+        {
+          "name": "USN",
+          "value": 140,
+          "side": "USN"
+        },
+        {
+          "name": "IJN",
+          "value": 36,
+          "side": "IJN"
+        }
+      ]
+    },
+    {
+      "id": "threat-priority",
+      "type": "bar",
+      "title": "威胁目标优先级排序（按证据强度归一化）",
+      "series": [
+        {
+          "name": "美机压近南云舰队",
+          "value": 95,
+          "side": "IJN"
+        },
+        {
+          "name": "日水侦逼近TF16",
+          "value": 92,
+          "side": "USN"
+        },
+        {
+          "name": "PBY草莓号低空抵近",
+          "value": 87,
+          "side": "IJN"
+        },
+        {
+          "name": "B-17编队滞留中途岛",
+          "value": 63,
+          "side": "IJN"
+        }
+      ]
+    },
+    {
+      "id": "ijn-embarked-class",
+      "type": "pie",
+      "title": "蓝方舰载机就绪构成",
+      "series": [
+        {
+          "name": "鱼雷机-九七式",
+          "value": 16,
+          "side": "IJN"
+        },
+        {
+          "name": "俯冲轰炸机-九九式/彗星",
+          "value": 13,
+          "side": "IJN"
+        },
+        {
+          "name": "战斗机-零式",
+          "value": 2,
+          "side": "IJN"
+        },
+        {
+          "name": "舰载侦察机-水上飞机",
+          "value": 5,
+          "side": "IJN"
+        }
+      ]
+    }
+  ],
+  "intent_findings": [],
+  "threat_findings": [],
+  "priorities": [],
+  "threat_ratings": [
+    {
+      "perspective": "日方看美方",
+      "target": "已压至约 179°W 附近的无畏式及伴随野猫",
+      "level": "紧急",
+      "evidence": "与南云舰位同经度带，且原数据中该空域出现对空弹幕，说明正在交火。"
+    },
+    {
+      "perspective": "日方看美方",
+      "target": "企业号/大黄蜂号/约克城号",
+      "level": "高",
+      "evidence": "航母本身未与南云进入舰炮射程，但已放出打击与护航兵力，是后续波次源。"
+    },
+    {
+      "perspective": "日方看美方",
+      "target": "PBY 草莓号",
+      "level": "高",
+      "evidence": "低空前出到南云经度附近，发现即等于引导。"
+    },
+    {
+      "perspective": "美方看日方",
+      "target": "赤城/加贺/苍龙",
+      "level": "高",
+      "evidence": "位置已大致可被前出飞机接触，是必须摧毁的重心；本时刻未必每艘都在被瞄准，但暴露度高。"
+    },
+    {
+      "perspective": "美方看日方",
+      "target": "杰克式水侦",
+      "level": "紧急",
+      "evidence": "11 km 高空、扇区已伸到中途岛经度以北，直接威胁 TF16/17 的隐蔽。"
+    },
+    {
+      "perspective": "美方看日方",
+      "target": "贴着本队的九七式/九九式",
+      "level": "中",
+      "evidence": "具备对舰/对岛载荷潜力，但航向未收敛，立即突击概率低于已接触的美机对日舰。"
+    }
+  ]
+}

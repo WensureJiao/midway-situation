@@ -1,0 +1,207 @@
+{
+  "VMMP_W": {
+    "task": "威胁分析",
+    "C_W": {
+      "name": "认知元素",
+      "elements": [
+        "CombatEntity",
+        "Capability",
+        "State",
+        "Behavior",
+        "Space",
+        "Time",
+        "Evidence",
+        "ThreatLevel",
+        "Priority",
+        "Confidence"
+      ]
+    },
+    "R_W": {
+      "name": "认知关系",
+      "relations": [
+        "Spatial",
+        "Temporal",
+        "Comparative",
+        "Associative",
+        "Hierarchical",
+        "Ordering",
+        "Support"
+      ]
+    },
+    "O_W": {
+      "name": "认知操作",
+      "operations": [
+        "Identify",
+        "Locate",
+        "Filter",
+        "Compare",
+        "Aggregate",
+        "Assess",
+        "Rank",
+        "Verify"
+      ],
+      "reasoning_path": [
+        "Identify",
+        "Locate",
+        "Filter",
+        "Compare",
+        "Aggregate",
+        "Assess",
+        "Rank",
+        "Verify"
+      ]
+    },
+    "T_W": {
+      "name": "视觉拓扑",
+      "topology": [
+        "Position",
+        "Alignment",
+        "Grouping",
+        "Hierarchy",
+        "Salience",
+        "Ordering",
+        "Consistency",
+        "Uncertainty"
+      ]
+    },
+    "M_W": {
+      "name": "认知—视觉映射规则",
+      "rules": [
+        {
+          "relation": "Spatial",
+          "operation": "Locate",
+          "visual_topology": [
+            "Position"
+          ]
+        },
+        {
+          "relation": "Comparative",
+          "operation": "Compare",
+          "visual_topology": [
+            "Alignment"
+          ]
+        },
+        {
+          "relation": "Associative",
+          "operation": "Aggregate",
+          "visual_topology": [
+            "Grouping"
+          ]
+        },
+        {
+          "relation": "Hierarchical",
+          "operation": "Assess",
+          "visual_topology": [
+            "Hierarchy"
+          ]
+        },
+        {
+          "relation": "Comparative",
+          "operation": "Filter",
+          "visual_topology": [
+            "Salience"
+          ]
+        },
+        {
+          "relation": "Ordering",
+          "operation": "Rank",
+          "visual_topology": [
+            "Ordering",
+            "Salience"
+          ]
+        },
+        {
+          "relation": "Support",
+          "operation": "Verify",
+          "visual_topology": [
+            "Connection",
+            "Salience"
+          ]
+        },
+        {
+          "cognitive_element": "Confidence",
+          "operation": "Verify",
+          "visual_topology": [
+            "Uncertainty"
+          ]
+        }
+      ]
+    },
+    "E_W": {
+      "name": "认知—视觉匹配评价",
+      "criteria": [
+        "SpatialFit",
+        "ComparisonFit",
+        "AggregationFit",
+        "HierarchyFit",
+        "ScreeningFit",
+        "RankingFit",
+        "UncertaintyFit",
+        "ConsistencyFit"
+      ],
+      "weight_constraints": {
+        "sum": 1.0,
+        "nonnegative": true,
+        "note": "具体权重可通过专家评价或用户实验确定"
+      }
+    },
+    "subtasks": {
+      "关键威胁目标筛选": {
+        "key_relations": [
+          "Comparative",
+          "Spatial",
+          "Associative"
+        ],
+        "key_operations": [
+          "Identify",
+          "Compare",
+          "Filter"
+        ],
+        "cognitive_path": [
+          "CombatEntity Observation",
+          "Feature Comparison",
+          "Threat Relevance Assessment",
+          "Candidate Screening"
+        ]
+      },
+      "威胁等级评估": {
+        "key_relations": [
+          "Associative",
+          "Comparative",
+          "Hierarchical",
+          "Support"
+        ],
+        "key_operations": [
+          "Aggregate",
+          "Compare",
+          "Assess",
+          "Verify"
+        ],
+        "cognitive_path": [
+          "Threat Features",
+          "Multi-factor Aggregation",
+          "Threat Assessment",
+          "Level Assignment"
+        ]
+      },
+      "目标优先级排序": {
+        "key_relations": [
+          "Comparative",
+          "Ordering",
+          "Hierarchical"
+        ],
+        "key_operations": [
+          "Compare",
+          "Assess",
+          "Rank"
+        ],
+        "cognitive_path": [
+          "Threat Level",
+          "Comparative Assessment",
+          "Ordering",
+          "Priority Ranking"
+        ]
+      }
+    }
+  }
+}

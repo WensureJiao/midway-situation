@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SituationCharts } from "@/components/SituationCharts";
@@ -14,6 +15,7 @@ import { normalizeSituationSpec } from "@/lib/utils";
 import { SITUATION_SYSTEM_PROMPT } from "@/lib/prompts";
 import {
   AlertTriangle,
+  ArrowLeftRight,
   Loader2,
   Map as MapIcon,
   Sparkles,
@@ -139,6 +141,13 @@ export function SituationWorkbench() {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            <Link
+              href="/compare"
+              className="inline-flex items-center gap-1 rounded-md bg-[var(--panel-2)] px-2.5 py-1.5 text-xs ring-1 ring-[var(--line)] hover:bg-[var(--panel-3)]"
+            >
+              <ArrowLeftRight className="h-3.5 w-3.5" />
+              VMMP 视觉对比
+            </Link>
             <div className="flex overflow-hidden rounded-md text-xs ring-1 ring-[var(--line)]">
               <button
                 className={`px-2.5 py-1.5 ${mode === "local" ? "bg-[var(--panel-3)] font-semibold" : "bg-[var(--panel-2)]"}`}

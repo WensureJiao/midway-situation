@@ -159,11 +159,25 @@ export interface SituationViewSpec {
   }[];
 }
 
+/** VMMP A/B：off=对照；on=附带对应任务范式 JSON */
+export type VmmpMode = "off" | "on";
+/** 视觉对比时的任务焦点，决定注入哪份 VMMP、偏重地图编码 */
+export type TaskFocus = "threat" | "intent";
+
 export interface GenerateRequest {
   time_slice: string;
   mode: "local" | "llm";
   task_ids?: string[];
   model?: string;
+  /** 是否注入 VMMP JSON（默认 off） */
+  vmmp_mode?: VmmpMode;
+  /** 威胁分析 / 意图研判（默认 threat） */
+  task_focus?: TaskFocus;
+  /**
+   * 是否锁定统计图为固定四张。
+   * 默认 true（主生成台）；对比页传 false，允许模型按任务设计 charts。
+   */
+  lock_charts?: boolean;
 }
 
 export interface GenerateResponse {

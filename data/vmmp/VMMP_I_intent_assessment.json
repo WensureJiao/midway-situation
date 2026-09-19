@@ -1,0 +1,224 @@
+{
+  "VMMP_I": {
+    "task": "意图研判",
+    "C_I": {
+      "name": "认知元素",
+      "elements": [
+        "CombatEntity",
+        "Behavior",
+        "Event",
+        "State",
+        "Space",
+        "Time",
+        "Evidence",
+        "Hypothesis",
+        "Intention",
+        "Confidence"
+      ]
+    },
+    "R_I": {
+      "name": "认知关系",
+      "relations": [
+        "Temporal",
+        "Spatial",
+        "Directional",
+        "Associative",
+        "Comparative",
+        "Evolutionary",
+        "Transition",
+        "Support",
+        "Refutation"
+      ]
+    },
+    "O_I": {
+      "name": "认知操作",
+      "operations": [
+        "Identify",
+        "Locate",
+        "Trace",
+        "Compare",
+        "Relate",
+        "Explain",
+        "Infer",
+        "Verify"
+      ],
+      "reasoning_path": [
+        "Identify",
+        "Trace",
+        "Compare",
+        "Relate",
+        "Infer",
+        "Verify"
+      ]
+    },
+    "T_I": {
+      "name": "视觉拓扑",
+      "topology": [
+        "Position",
+        "Continuity",
+        "Connection",
+        "Proximity",
+        "Alignment",
+        "Hierarchy",
+        "Salience",
+        "Consistency",
+        "Uncertainty"
+      ]
+    },
+    "M_I": {
+      "name": "认知—视觉映射规则",
+      "rules": [
+        {
+          "relation": "Spatial",
+          "operation": "Locate",
+          "visual_topology": [
+            "Position"
+          ]
+        },
+        {
+          "relation": "Temporal",
+          "operation": "Trace",
+          "visual_topology": [
+            "Continuity"
+          ]
+        },
+        {
+          "relation": "Directional",
+          "operation": [
+            "Trace",
+            "Infer"
+          ],
+          "visual_topology": [
+            "Position",
+            "Continuity"
+          ]
+        },
+        {
+          "relation": "Comparative",
+          "operation": "Compare",
+          "visual_topology": [
+            "Alignment"
+          ]
+        },
+        {
+          "relation": "Associative",
+          "operation": "Relate",
+          "visual_topology": [
+            "Connection",
+            "Proximity"
+          ]
+        },
+        {
+          "relation": [
+            "Evolutionary",
+            "Transition"
+          ],
+          "operation": [
+            "Trace",
+            "Infer"
+          ],
+          "visual_topology": [
+            "Continuity",
+            "Hierarchy"
+          ]
+        },
+        {
+          "relation": [
+            "Support",
+            "Refutation"
+          ],
+          "operation": [
+            "Explain",
+            "Verify"
+          ],
+          "visual_topology": [
+            "Connection",
+            "Salience"
+          ]
+        },
+        {
+          "cognitive_element": "Confidence",
+          "operation": "Verify",
+          "visual_topology": [
+            "Uncertainty"
+          ]
+        }
+      ]
+    },
+    "E_I": {
+      "name": "认知—视觉匹配评价",
+      "criteria": [
+        "SpatialFit",
+        "TemporalFit",
+        "RelationFit",
+        "ComparisonFit",
+        "EvidenceFit",
+        "SequenceFit",
+        "UncertaintyFit",
+        "ConsistencyFit"
+      ],
+      "weight_constraints": {
+        "sum": 1.0,
+        "nonnegative": true,
+        "note": "具体权重可通过专家评价或用户实验确定"
+      }
+    },
+    "subtasks": {
+      "佯动与真实打击区分": {
+        "key_relations": [
+          "Comparative",
+          "Associative",
+          "Support",
+          "Refutation"
+        ],
+        "key_operations": [
+          "Compare",
+          "Relate",
+          "Verify"
+        ],
+        "cognitive_path": [
+          "Behavior Observation",
+          "Pattern Comparison",
+          "Evidence Association",
+          "Hypothesis Verification"
+        ]
+      },
+      "作战方向判断": {
+        "key_relations": [
+          "Spatial",
+          "Directional",
+          "Temporal"
+        ],
+        "key_operations": [
+          "Locate",
+          "Trace",
+          "Infer"
+        ],
+        "cognitive_path": [
+          "Spatial Position",
+          "Motion Trace",
+          "Directional Relation",
+          "Direction Inference"
+        ]
+      },
+      "行动阶段推断": {
+        "key_relations": [
+          "Temporal",
+          "Evolutionary",
+          "Transition"
+        ],
+        "key_operations": [
+          "Trace",
+          "Compare",
+          "Infer"
+        ],
+        "cognitive_path": [
+          "State Observation",
+          "Temporal Evolution",
+          "Transition Recognition",
+          "Stage Inference"
+        ]
+      }
+    }
+  }
+}

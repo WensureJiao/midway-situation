@@ -1,8 +1,13 @@
-import type { AnalysisTask, SlicePack } from "./types";
+import type {
+  AnalysisTask,
+  SlicePack,
+  TaskFocus,
+  VmmpMode,
+} from "./types";
 
 /** System prompt: COP layout from cleaned force data. */
 export const SITUATION_SYSTEM_PROMPT = `你是海军战役「通用作战态势图（COP）」布局生成器。
-输入是清洗后的单位态势数据与场景说明（可含威胁等级参考）。
+输入是清洗后的单位态势数据与场景说明（可含威胁等级参考；可选附带 VMMP 范式）。
 你的唯一输出必须是合法 JSON（不要 Markdown 围栏，不要解释文字），符合 SituationViewSpec 结构。
 
 目标：生成态势地图布局、关键指标叙述，以及威胁等级列表 threat_ratings；统计柱状/饼图由服务端用清洗数据固定覆盖。
@@ -17,7 +22,17 @@ export const SITUATION_SYSTEM_PROMPT = `你是海军战役「通用作战态势�
 5. 红方=USN（美含中途岛，地图用红色），蓝方=IJN（日，地图用蓝色）。
 6. 若某切片舰体缺失（如飞龙），在 narrative 中标注“舰体未导出/未知”，不得当作已沉没定论。
 7. charts.series 的 value 必须是数字；kpis.value 必须是数字。
-8. intent_findings / threat_findings / priorities 请输出空数组 []（不展示文字研判面板）。`;
+8. intent_findings / threat_findings / priorities 请输出空数组 []（不展示文字研判面板）。
+9. 若用户消息含 VMMP：先按 C/R/O 组织认知，再按 M 映射到 map（highlight/axes/threat_zones）与 threat_ratings，最后用 E 自检；仍只输出 SituationViewSpec JSON。`;
+
+export type PromptVmmpOptions = {
+  vmmp_mode?: VmmpMode;
+  task_focus?: TaskFocus;
+  /** 已序列化的 VMMP JSON 全文；仅 vmmp_mode=on 时传入 */
+  vmmp_json?: string | null;
+  /** true=服务端覆盖固定四图；false=由模型设计 charts（对比实验） */
+  lock_charts?: boolean;
+};
 
 export const SITUATION_OUTPUT_SCHEMA = `{
   "generated_by": "llm",
@@ -57,11 +72,49 @@ export const SITUATION_OUTPUT_SCHEMA = `{
   ]
 }`;
 
+function buildVmmpGuidanceBlock(
+  taskFocus: TaskFocus,
+  vmmpJson: string,
+): string {
+  const focusLabel = taskFocus === "intent" ? "意图研判（VMMP_I）" : "威胁分析（VMMP_W）";
+  const mapHints =
+    taskFocus === "intent"
+      ? `地图侧重（意图）：
+- axes：用作战方向/运动指向表达 Directional + Continuity
+- highlight_names：突出与假设验证相关的关键实体
+- threat_zones：仅在有空间聚集或关键活动区时使用，勿伪造交火圈
+- narrative：点明佯动/真实、方向、阶段判断依据（仍保持 2–4 句）
+- threat_ratings：可较少，但须有证据字段；勿喧宾夺主
+- charts（若允许自由设计）：优先阶段对比、航向/编队状态、证据相关数量关系（bar/pie/stacked_bar）`
+      : `地图侧重（威胁）：
+- highlight_names：优先高亮筛选出的关键威胁目标（Salience / Screening）
+- threat_zones：按威胁等级表达空间威胁/关注区（Hierarchy / Salience）
+- axes：可选，用于进击轴或发现几何
+- threat_ratings：按优先级排序列出（Ordering / Ranking），level 与 evidence 必填
+- narrative：点明筛选—评估—排序要点（仍保持 2–4 句）
+- charts（若允许自由设计）：优先威胁等级对比、目标优先级条形、多因素聚合（bar/pie/stacked_bar）`;
+
+  return `## VMMP 范式约束（必须遵循）
+任务焦点: ${focusLabel}
+请严格依据下列 VMMP 推理后再生成界面：
+1) 先从 C/R/O 明确要认知的对象、关系与操作（可参考 reasoning_path）
+2) 再按 M 映射到视觉组织，并落实到 map.highlight_names / map.axes / map.threat_zones 与 threat_ratings
+3) 最后按 E 的评价维度自检（空间、比较、筛选/证据、排序/顺序、不确定性等）
+不要只复述 JSON；把映射结果写进 SituationViewSpec 字段。
+
+${mapHints}
+
+### VMMP JSON
+${vmmpJson}
+`;
+}
+
 /** Build the user prompt from slice pack + data summary. */
 export function buildSituationUserPrompt(
   pack: SlicePack,
   _tasks: AnalysisTask[],
   dataSummary: string,
+  options?: PromptVmmpOptions,
 ): string {
   const ratingTask = (pack.threat?.tasks ?? []).find(
     (t) => t.reference_ratings?.length,
@@ -70,10 +123,32 @@ export function buildSituationUserPrompt(
     ? JSON.stringify(ratingTask.reference_ratings, null, 2)
     : "（本切片无参考威胁等级，请根据兵力几何自行给出合理 threat_ratings）";
 
+  const vmmpMode = options?.vmmp_mode ?? "off";
+  const taskFocus = options?.task_focus ?? "threat";
+  const vmmpBlock =
+    vmmpMode === "on" && options?.vmmp_json
+      ? `\n${buildVmmpGuidanceBlock(taskFocus, options.vmmp_json)}\n`
+      : "";
+
+  const focusLine =
+    vmmpMode === "on"
+      ? `任务焦点: ${taskFocus === "intent" ? "意图研判" : "威胁分析"}（已注入 VMMP）`
+      : `任务焦点: ${taskFocus === "intent" ? "意图研判" : "威胁分析"}（对照组，无 VMMP）`;
+
+  const lockCharts = options?.lock_charts !== false;
+  const chartOutHint = lockCharts
+    ? `kpis 与 charts 可按示例填写（服务端会覆盖为固定四项 KPI 与四张数据图）。`
+    : `请为当前任务自行设计 2～4 张 charts（type 仅限 bar / pie / stacked_bar），数字必须来自输入数据：
+- 威胁任务：至少含目标比较或威胁强度相关图
+- 意图任务：至少含方向/阶段/状态相关图
+- 每张图要有清晰 title；series.value 必须是数字
+服务端不会覆盖 charts；kpis 仍可能被覆盖为固定四项。`;
+
   return `## 场景
 战役: ${pack.scenario}
 时间片: ${pack.time_slice}
 阶段: ${pack.phase_label}
+${focusLine}
 态势简述: ${pack.intent.situation_brief ?? ""}
 威胁语境: ${pack.threat.threat_context ?? ""}
 
@@ -82,13 +157,13 @@ ${dataSummary}
 
 ## 威胁等级参考（用于 threat_ratings / 威胁目标排序图）
 ${ratingsBlock}
-
+${vmmpBlock}
 ## 输出要求
 只输出一个 SituationViewSpec JSON，结构如下：
 ${SITUATION_OUTPUT_SCHEMA}
 
 请根据兵力几何生成 map、title、narrative，并填写 threat_ratings（可蓝/红或美/日视角）。
-kpis 与 charts 可按示例填写（服务端会覆盖为固定四项 KPI 与四张数据图）。
+${chartOutHint}
 intent_findings、threat_findings、priorities 一律输出 []。`;
 }
 
@@ -98,7 +173,9 @@ export const PROMPT_TEMPLATE_MARKDOWN = `# 中途岛战役态势界面生成提�
 ## 用法
 \`\`\`
 输入 = 时间片清洗数据摘要 + 场景简述 + 威胁等级参考
+     +（可选）VMMP_W 或 VMMP_I JSON（vmmp_mode=on）
 输出 = SituationViewSpec（JSON）→ 前端地图 + 固定统计图 + 威胁等级图
+视觉 A/B：打开 /compare，左 A 无 VMMP、右 B 注入 VMMP
 \`\`\`
 
 ## System
