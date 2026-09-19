@@ -3,7 +3,6 @@ import { promises as fs } from "fs";
 import path from "path";
 import {
   buildPromptBundle,
-  buildFixedCharts,
   buildThreatRatingsFromPack,
   generateSituationLocal,
   buildFixedKpis,
@@ -110,7 +109,7 @@ export async function POST(req: Request) {
       spec = generateSituationLocal(pack, body.task_ids);
     }
 
-    // KPI 固定；charts 可按 lock_charts 放开；威胁任务缺等级时回退 pack
+    // KPI 固定；默认不再注入四张兵力统计图；对比页 lock_charts=false 时保留模型 charts
     const ratings =
       taskFocus === "intent"
         ? (spec.threat_ratings ?? [])
@@ -119,8 +118,13 @@ export async function POST(req: Request) {
           : buildThreatRatingsFromPack(pack);
     const charts =
       !lockCharts && spec.charts?.length
-        ? spec.charts
-        : buildFixedCharts(pack);
+        ? spec.charts.filter(
+            (c) =>
+              !["ships", "airborne", "usn-embarked-class", "ijn-embarked-class"].includes(
+                c.id,
+              ),
+          )
+        : [];
     spec = {
       ...spec,
       kpis: buildFixedKpis(pack),

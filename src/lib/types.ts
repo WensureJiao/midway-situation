@@ -174,8 +174,9 @@ export interface GenerateRequest {
   /** 威胁分析 / 意图研判（默认 threat） */
   task_focus?: TaskFocus;
   /**
-   * 是否锁定统计图为固定四张。
-   * 默认 true（主生成台）；对比页传 false，允许模型按任务设计 charts。
+   * 是否锁定 charts（默认 true）。
+   * true：主生成台清空 charts，不注入四张兵力统计图；
+   * false：对比页保留模型按任务设计的 charts（仍会过滤掉那四张通用图）。
    */
   lock_charts?: boolean;
 }

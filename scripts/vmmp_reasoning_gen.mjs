@@ -69,7 +69,7 @@ function summarizePack(pack) {
 function buildPrompt({ taskType, condition, scenario, vmmp, pathLine }) {
   const task =
     taskType === "threat"
-      ? "威胁分析（筛选关键目标、评等级、排优先级）。视角：蓝方看红方。"
+      ? "威胁分析（筛选关键目标、评等级、排优先级）。视角：红方（美）看蓝方（日）。"
       : "意图研判（佯动还是真打、作战方向、行动阶段）。";
 
   if (condition === "A") {

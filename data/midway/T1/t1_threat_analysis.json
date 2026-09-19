@@ -7,26 +7,26 @@
     "t1_midway_cleaned_United_States_Navy.json"
   ],
   "opening_order_of_battle": {
-    "red_ijn_carriers": {
+    "blue_ijn_carriers": {
       "count": 4,
       "names": ["Akagi", "Kaga", "Soryu", "Hiryu"],
       "embarked_approx": "赤城 55、加贺 63、苍龙 56、飞龙 54"
     },
-    "blue_usn_carriers": {
+    "red_usn_carriers": {
       "count": 3,
       "names": ["Enterprise", "Hornet", "Yorktown"],
       "embarked_approx": "企业号 79、大黄蜂号 80、约克城号 75"
     },
-    "blue_midway": "完整岸基：机场+高炮，PBY/水牛/辩护者/B-17/B-26/复仇者停放",
+    "red_midway": "完整岸基：机场+高炮，PBY/水牛/辩护者/B-17/B-26/复仇者停放",
     "contact": "无；威胁全部是潜在战役威胁，不是正在交火的紧急威胁"
   },
-  "threat_context": "T1 的威胁分析应做“开战潜力排序”，不要用接触后的紧急等级。红方重心是四艘航母指向中途岛；蓝方重心是三艘航母加岛屿。谁先发现谁，将决定后续搜索阶段的主动权。",
+  "threat_context": "T1 的威胁分析应做“开战潜力排序”，不要用接触后的紧急等级。蓝方重心是四艘航母指向中途岛；红方重心是三艘航母加岛屿。谁先发现谁，将决定后续搜索阶段的主动权。",
   "tasks": [
     {
       "task_id": "T1-THR-01",
       "category": "威胁分析",
       "capability": "关键威胁目标筛选",
-      "prompt": "分别从红（日）、蓝（美含中途岛）视角筛选开战关键目标。此时没有在空接触，筛选依据是战役价值与相对几何，而不是弹幕。必须把飞龙列入（T1 舰体存在）。不要把停泊中的驱逐舰抬到航母之前。",
+      "prompt": "分别从蓝（日）、红（美含中途岛）视角筛选开战关键目标。此时没有在空接触，筛选依据是战役价值与相对几何，而不是弹幕。必须把飞龙列入（T1 舰体存在）。不要把停泊中的驱逐舰抬到航母之前。",
       "usn_view_key_threats": [
         { "target": "赤城、加贺、苍龙、飞龙", "reason": "南云全部舰队航母在场，是对中途岛的核心突击平台。" },
         { "target": "利根、筑摩", "reason": "即将提供扇区搜索，决定日方能否发现美舰队。" },
@@ -36,11 +36,11 @@
       "ijn_view_key_threats": [
         { "target": "中途岛主跑道及岸基航空", "reason": "既定战役目标，也是能先发现南云的岸基搜索/打击源。" },
         { "target": "企业号、大黄蜂号（TF16）", "reason": "美方最大舰载航空兵力，位于岛北。" },
-        { "target": "约克城号（TF17）", "reason": "第三艘美航母，与 TF16 分置，漏判会低估蓝方。" },
+        { "target": "约克城号（TF17）", "reason": "第三艘美航母，与 TF16 分置，漏判会低估红方。" },
         { "target": "PBY（虽未起飞）", "reason": "一旦顶出即是远程发现链，T1 已在岛上就绪。" }
       ],
       "do_not_overweight": ["航速为 0 的护航舰单体", "尚未升空的 CAP", "把集结停泊当成已经丧失战斗力"],
-      "evaluation_points": ["四航母而非三航母", "中途岛与美航母并列蓝方重心", "无接触仍要列出发现链单位"]
+      "evaluation_points": ["四航母而非三航母", "中途岛与美航母并列红方重心", "无接触仍要列出发现链单位"]
     },
     {
       "task_id": "T1-THR-02",
@@ -49,12 +49,12 @@
       "prompt": "开战时刻用高/中/低即可，慎用紧急（没有交火）。说明：潜在威胁可以是高，但不等于正在致伤。集结停泊的加贺/苍龙威胁等级不因航速 0 而降为低。",
       "rating_scale": ["紧急", "高", "中", "低"],
       "reference_ratings": [
-        { "perspective": "蓝方看红方", "target": "南云四航母", "level": "高", "evidence": "完整甲板、指向中途岛；尚未放飞故不是紧急。" },
-        { "perspective": "蓝方看红方", "target": "利根/筑摩水侦", "level": "高（发现链）", "evidence": "仍在舰上，但开战即可能弹射。" },
-        { "perspective": "蓝方看红方", "target": "护航驱逐舰", "level": "低", "evidence": "不改变航空战役结构。" },
-        { "perspective": "红方看蓝方", "target": "中途岛机场", "level": "高", "evidence": "既定目标且岸基机已就绪。" },
-        { "perspective": "红方看蓝方", "target": "TF16 两航母", "level": "高", "evidence": "舰载机数量最大；日方 T1 未必已定位。" },
-        { "perspective": "红方看蓝方", "target": "TF17 约克城", "level": "高", "evidence": "分置的第三艘航母。" },
+        { "perspective": "红方看蓝方", "target": "南云四航母", "level": "高", "evidence": "完整甲板、指向中途岛；尚未放飞故不是紧急。" },
+        { "perspective": "红方看蓝方", "target": "利根/筑摩水侦", "level": "高（发现链）", "evidence": "仍在舰上，但开战即可能弹射。" },
+        { "perspective": "红方看蓝方", "target": "护航驱逐舰", "level": "低", "evidence": "不改变航空战役结构。" },
+        { "perspective": "蓝方看红方", "target": "中途岛机场", "level": "高", "evidence": "既定目标且岸基机已就绪。" },
+        { "perspective": "蓝方看红方", "target": "TF16 两航母", "level": "高", "evidence": "舰载机数量最大；日方 T1 未必已定位。" },
+        { "perspective": "蓝方看红方", "target": "TF17 约克城", "level": "高", "evidence": "分置的第三艘航母。" },
         { "perspective": "任一方", "target": "正在交火的单位", "level": "无/不适用", "evidence": "T1 无武器实体、无在空飞机。" }
       ],
       "evaluation_points": ["不用紧急套在无接触目标上", "0 kn 航母不降级", "发现链单独给高"]
@@ -63,7 +63,7 @@
       "task_id": "T1-THR-03",
       "category": "威胁分析",
       "capability": "目标优先级排序",
-      "prompt": "给出开战预案式优先级：（1）蓝方守卫/截击应先盯谁；（2）红方进攻应先打谁。规则：先保护/先摧毁航空重心，再安排侦察，护航舰靠后。这是计划顺序，不是正在射击的顺序。",
+      "prompt": "给出开战预案式优先级：（1）红方守卫/截击应先盯谁；（2）蓝方进攻应先打谁。规则：先保护/先摧毁航空重心，再安排侦察，护航舰靠后。这是计划顺序，不是正在射击的顺序。",
       "usn_priority_order": [
         { "rank": 1, "target": "尽早发现南云（针对四航母所在群）", "action": "PBY 与舰载侦察准备顶出，这是守卫战第一优先。" },
         { "rank": 2, "target": "赤城", "action": "旗舰，截击预案的核心甲板。" },
@@ -81,7 +81,7 @@
         { "rank": 6, "target": "齐速加贺/苍龙与护航", "action": "集结未完成前不宜把部分航母当已展开战力。" }
       ],
       "tie_break_rule": "开战无接触时，优先关闭侦察不确定性，再打航空重心；不要对 0 kn 的同群航母降序到护航舰之后。",
-      "evaluation_points": ["蓝方先发现再打航母", "红方对岛优先但须搜索防侧击", "飞龙进入前三"]
+      "evaluation_points": ["红方先发现再打航母", "蓝方对岛优先但须搜索防侧击", "飞龙进入前三"]
     }
   ]
 }

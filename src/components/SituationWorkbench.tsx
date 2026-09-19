@@ -189,7 +189,7 @@ export function SituationWorkbench() {
       <main className="mx-auto max-w-[1600px] space-y-4 px-4 py-4">
         <div className="rounded-lg bg-[var(--panel)] px-3 py-2 text-xs text-[var(--muted)] ring-1 ring-[var(--line)]">
           当前阶段：{pack?.phase_label ?? "加载中…"} · 输入为清洗兵力数据 +
-          提示词，输出为态势地图、固定统计图与威胁等级图
+          提示词，输出为态势地图与威胁等级图（默认不含四张兵力统计图）
         </div>
 
         {(error || fallbackNote) && (

@@ -1,12 +1,12 @@
 {
   "generated_by": "llm",
   "time_slice": "T1",
-  "title": "中途岛战役：南云集结与美舰队展开",
-  "phase_label": "初始态势",
-  "narrative": "T1为战役初始兵力展开阶段，红方（USN）三支航母特混舰队呈扇形分布于中途岛东南至东北方向，TF16双航母靠北、TF17单航母靠南，均以15节航速向西偏南航行；蓝方（IJN）南云机动部队四艘航母集结于中途岛西北约230海里处（29.15°N, 179.75°W），航向112.5°，尚未放飞侦察机。双方均无在空单位，战场静默，威胁本质是‘发现先机’——谁率先完成搜索并定位对方航母集群，将主导后续攻击节奏。",
+  "title": "中途岛战役初始态势：南云集结 vs 美军隐蔽接敌",
+  "phase_label": "初始态势：兵力展开与机动部队集结",
+  "narrative": "红方（USN）三艘航母（Enterprise、Hornet、Yorktown）呈松散梯队部署于中途岛东南约200–250海里，航向西南，尚未完成编队齐速；蓝方（IJN）四艘航母（Akagi、Kaga、Soryu、Hiryu）集中于中途岛西北约300海里，以Akagi-Hiryu为前导缓慢东进，其余两艘停泊待命。双方均无在空单位，战场处于静默搜索前夜。中途岛岸基航空力量完整就绪但未起飞。",
   "map": {
     "center": [
-      29.5,
+      29.4,
       -178.5
     ],
     "zoom": 6,
@@ -31,7 +31,7 @@
           28.21,
           -177.38
         ],
-        "label": "进击轴",
+        "label": "进击轴：南云指向中途岛",
         "side": "IJN"
       },
       {
@@ -44,7 +44,7 @@
           28.21,
           -177.38
         ],
-        "label": "打击轴",
+        "label": "攻击轴：TF16指向中途岛",
         "side": "USN"
       }
     ],
@@ -55,7 +55,7 @@
           29.15,
           -179.75
         ],
-        "radius_nm": 40,
+        "radius_nm": 60,
         "level": "高",
         "label": "南云机动部队集结区（四航母+侦察巡洋舰）",
         "side": "IJN"
@@ -63,12 +63,12 @@
       {
         "id": "z2",
         "center": [
-          29.97,
-          -177.22
+          29.85,
+          -177.23
         ],
-        "radius_nm": 35,
+        "radius_nm": 50,
         "level": "高",
-        "label": "TF16双航母编队（Enterprise/Hornet）",
+        "label": "TF16双航母集群（Enterprise+Hornet）",
         "side": "USN"
       },
       {
@@ -78,19 +78,8 @@
           -176.9
         ],
         "radius_nm": 30,
-        "level": "高",
-        "label": "TF17单航母编队（Yorktown）",
-        "side": "USN"
-      },
-      {
-        "id": "z4",
-        "center": [
-          28.21,
-          -177.38
-        ],
-        "radius_nm": 15,
-        "level": "高",
-        "label": "中途岛岸基航空兵与防空阵地",
+        "level": "中",
+        "label": "TF17单航母（Yorktown）",
         "side": "USN"
       }
     ]
@@ -125,8 +114,7 @@
     {
       "id": "ships",
       "type": "bar",
-      "title": "水面舰艇数量",
-      "description": "不含岸基设施",
+      "title": "水面舰艇总数对比",
       "series": [
         {
           "name": "USN",
@@ -141,18 +129,18 @@
       ]
     },
     {
-      "id": "airborne",
+      "id": "embarked-ready",
       "type": "bar",
-      "title": "在空飞机数量",
+      "title": "双方舰载机就绪总数",
       "series": [
         {
           "name": "USN",
-          "value": 0,
+          "value": 234,
           "side": "USN"
         },
         {
           "name": "IJN",
-          "value": 0,
+          "value": 235,
           "side": "IJN"
         }
       ]
@@ -212,40 +200,34 @@
   "priorities": [],
   "threat_ratings": [
     {
-      "perspective": "蓝方看红方",
+      "perspective": "红方看蓝方",
       "target": "南云四航母",
       "level": "高",
       "evidence": "完整甲板、指向中途岛；尚未放飞故不是紧急，但构成开战核心打击力量。"
     },
     {
-      "perspective": "红方看蓝方",
+      "perspective": "蓝方看红方",
       "target": "中途岛机场",
       "level": "高",
-      "evidence": "既定战略目标，岸基PBY、B-17、F4F等已就位待命，具备首轮远程侦察与反击能力。"
+      "evidence": "既定首要目标，岸基航空兵（PBY、B-17、F4F等）全部在位待命，具备即时反击能力。"
     },
     {
       "perspective": "红方看蓝方",
-      "target": "TF16两航母",
+      "target": "TF16双航母集群（Enterprise+Hornet）",
       "level": "高",
-      "evidence": "美海军最大舰载航空战力集群（159架就绪），位置靠北且航向稳定，对日军搜索链构成不对称压力。"
+      "evidence": "美海军最大舰载机投送单元（159架就绪），位置隐蔽且航向指向中途岛，威胁发现链主导权。"
     },
     {
-      "perspective": "红方看蓝方",
+      "perspective": "蓝方看红方",
       "target": "TF17约克城号",
       "level": "高",
-      "evidence": "第三艘作战航母，独立部署于南翼，扩大日军侦察覆盖盲区，增加其定位难度。"
+      "evidence": "独立部署的第三艘美航母（75架就绪），位置偏东，构成侧翼突击潜力。"
     },
     {
-      "perspective": "蓝方看红方",
+      "perspective": "红方看蓝方",
       "target": "利根/筑摩水侦",
       "level": "中",
-      "evidence": "虽未升空，但搭载于侦察巡洋舰，具备快速弹射能力，是日军首轮搜索主力，威胁等级取决于其起飞时机。"
-    },
-    {
-      "perspective": "蓝方看红方",
-      "target": "护航驱逐舰",
-      "level": "低",
-      "evidence": "不参与航空作战决策链，仅提供反潜/防空屏障，当前无交火风险。"
+      "evidence": "虽未升空，但搭载于侦察巡洋舰，开机即具备200+海里搜索半径，是南云早期预警关键节点。"
     }
   ]
 }

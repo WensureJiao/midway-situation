@@ -53,7 +53,7 @@ export function sortedThreatRatings(spec: SituationViewSpec) {
 
 export function quizForFocus(focus: TaskFocus, sliceId: string): string {
   if (focus === "threat") {
-    return `【小题·威胁】在 ${sliceId}，从蓝方（美）视角，当前最高优先级威胁目标前三是谁？先看图再作答（可写在纸上/笔记）。`;
+    return `【小题·威胁】在 ${sliceId}，从红方（美）视角，当前最高优先级威胁目标前三是谁？先看图再作答（可写在纸上/笔记）。`;
   }
   return `【小题·意图】在 ${sliceId}，南云主要作战指向哪里？当前更接近哪一阶段（集结/搜索/接触）？有无佯动分兵迹象？`;
 }

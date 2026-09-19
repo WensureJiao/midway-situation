@@ -10,13 +10,12 @@ export const SITUATION_SYSTEM_PROMPT = `你是海军战役「通用作战态势�
 输入是清洗后的单位态势数据与场景说明（可含威胁等级参考；可选附带 VMMP 范式）。
 你的唯一输出必须是合法 JSON（不要 Markdown 围栏，不要解释文字），符合 SituationViewSpec 结构。
 
-目标：生成态势地图布局、关键指标叙述，以及威胁等级列表 threat_ratings；统计柱状/饼图由服务端用清洗数据固定覆盖。
+目标：生成态势地图布局、关键指标叙述，以及威胁等级列表 threat_ratings（威胁任务）或阶段/方向相关编码（意图任务）。默认不强制四张兵力统计图。
 
 硬性规则：
 1. 地图为主界面：给出 center、zoom、需要高亮的单位名 highlight_names、作战方向轴线 axes、威胁圈 threat_zones。
-2. 统计图与 KPI 均由服务端用清洗数据固定覆盖，你无需自由设计指标：
-   KPI 固定为：美航母、日航母舰体、在空飞机、损伤舰艇；
-   统计图固定为：水面舰艇数量、在空飞机数量、红方（美）舰载机就绪构成、蓝方（日）舰载机就绪构成，另加威胁目标排序图（依赖 threat_ratings）。
+2. KPI 由服务端用清洗数据固定覆盖：美航母、日航母舰体、在空飞机、损伤舰艇。
+   默认不展示水面舰艇/在空飞机/舰载机构成四张统计图；若允许自由设计 charts，再按任务补 0～4 张任务相关图。
 3. threat_ratings 必须按目标列出 perspective（可用「蓝方看红方/红方看蓝方」或「美方看日方/日方看美方」）、target、level、evidence。
 4. 禁止编造不存在的航母、交火或单位；经纬度必须来自输入数据。中途岛约 28.21°N, 177.38°W（longitude ≈ -177.38）。
 5. 红方=USN（美含中途岛，地图用红色），蓝方=IJN（日，地图用蓝色）。
@@ -67,8 +66,8 @@ export const SITUATION_OUTPUT_SCHEMA = `{
   "threat_findings": [],
   "priorities": [],
   "threat_ratings": [
-    {"perspective":"蓝方看红方","target":"南云四航母","level":"高","evidence":"..."},
-    {"perspective":"红方看蓝方","target":"中途岛机场","level":"高","evidence":"..."}
+    {"perspective":"红方看蓝方","target":"南云四航母","level":"高","evidence":"..."},
+    {"perspective":"蓝方看红方","target":"中途岛机场","level":"高","evidence":"..."}
   ]
 }`;
 
@@ -137,12 +136,14 @@ export function buildSituationUserPrompt(
 
   const lockCharts = options?.lock_charts !== false;
   const chartOutHint = lockCharts
-    ? `kpis 与 charts 可按示例填写（服务端会覆盖为固定四项 KPI 与四张数据图）。`
-    : `请为当前任务自行设计 2～4 张 charts（type 仅限 bar / pie / stacked_bar），数字必须来自输入数据：
-- 威胁任务：至少含目标比较或威胁强度相关图
-- 意图任务：至少含方向/阶段/状态相关图
+    ? `kpis 可按示例填写（服务端会覆盖为固定四项 KPI）。charts 默认留空数组 []（界面不展示四张兵力统计图）。`
+    : `请为当前任务自行设计 0～4 张 charts（type 仅限 bar / pie / stacked_bar），数字必须来自输入数据：
+- 威胁任务：优先目标比较或威胁强度相关图
+- 意图任务：优先方向/阶段/状态相关图
+- 不要再输出水面舰艇数量、在空飞机数量、红/蓝舰载机就绪构成、双方舰载机就绪总数这类通用图
+- 不要输出「威胁目标优先级排序」类条形图（威胁排序已由界面单独展示）
 - 每张图要有清晰 title；series.value 必须是数字
-服务端不会覆盖 charts；kpis 仍可能被覆盖为固定四项。`;
+服务端不会用固定四图覆盖；kpis 仍可能被覆盖为固定四项。`;
 
   return `## 场景
 战役: ${pack.scenario}
@@ -179,9 +180,10 @@ export const PROMPT_TEMPLATE_MARKDOWN = `# 中途岛战役态势界面生成提�
 \`\`\`
 输入 = 时间片清洗数据摘要 + 场景简述 + 威胁等级参考
      +（可选）VMMP_W 或 VMMP_I JSON（vmmp_mode=on）
-输出 = SituationViewSpec（JSON）→ 前端地图 + 统计图
-  · 威胁任务：另加威胁目标排序图
-  · 意图任务：另加阶段/指向/证据面板（不展示威胁等级图）
+输出 = SituationViewSpec（JSON）→ 前端地图
+  · 威胁任务：威胁目标排序图
+  · 意图任务：阶段/指向/证据面板
+  · 默认不展示四张兵力统计图
 视觉 A/B：打开 /compare，左 A 无 VMMP、右 B 注入 VMMP
 \`\`\`
 
@@ -190,7 +192,7 @@ export const PROMPT_TEMPLATE_MARKDOWN = `# 中途岛战役态势界面生成提�
 
 ## 设计意图
 1. **地图主界面**：LLM 产出布局与标注；渲染由 Leaflet 完成。
-2. **固定统计图**：水面舰艇、在空飞机、蓝/红舰载机就绪构成 + 威胁目标排序。
-3. **不展示意图/威胁文字研判面板**，但保留威胁等级图表。
+2. **任务主图**：威胁用排序；意图用阶段与证据；不默认挂通用兵力四图。
+3. **不展示意图/威胁文字研判面板**。
 4. **防幻觉**：schema + 清洗摘要双约束。
 `;

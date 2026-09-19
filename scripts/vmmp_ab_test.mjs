@@ -44,7 +44,7 @@ function summarizePack(pack) {
 function buildPrompt({ taskType, condition, scenario, vmmp }) {
   const taskLine =
     taskType === "threat"
-      ? "任务：威胁分析（关键威胁目标筛选、威胁等级评估、目标优先级排序）。视角：蓝方（美军）看红方（日军）。"
+      ? "任务：威胁分析（关键威胁目标筛选、威胁等级评估、目标优先级排序）。视角：红方（美军）看蓝方（日军）。"
       : "任务：意图研判（佯动与真实打击区分、作战方向判断、行动阶段推断）。";
 
   const commonOut = `请输出中文，结构如下：

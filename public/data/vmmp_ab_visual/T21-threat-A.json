@@ -213,37 +213,37 @@
   "priorities": [],
   "threat_ratings": [
     {
-      "perspective": "蓝方看红方",
+      "perspective": "红方看蓝方",
       "target": "已压至179°W附近的无畏式及伴随野猫",
       "level": "紧急",
       "evidence": "与南云舰位同经度带，且原数据中该空域出现对空弹幕，说明正在交火。"
     },
     {
-      "perspective": "蓝方看红方",
+      "perspective": "红方看蓝方",
       "target": "企业号/大黄蜂号/约克城号",
       "level": "高",
       "evidence": "航母本身未与南云进入舰炮射程，但已放出打击与护航兵力，是后续波次源。"
     },
     {
-      "perspective": "蓝方看红方",
+      "perspective": "红方看蓝方",
       "target": "PBY 草莓号",
       "level": "高",
       "evidence": "低空前出到南云经度附近，发现即等于引导。"
     },
     {
-      "perspective": "红方看蓝方",
+      "perspective": "蓝方看红方",
       "target": "赤城/加贺/苍龙/飞龙",
       "level": "高",
       "evidence": "位置已大致可被前出飞机接触，是必须摧毁的重心；本时刻未必每艘都在被瞄准，但暴露度高。"
     },
     {
-      "perspective": "红方看蓝方",
+      "perspective": "蓝方看红方",
       "target": "杰克式水侦",
       "level": "紧急",
       "evidence": "11 km 高空、扇区已伸到中途岛经度以北，直接威胁 TF16/17 的隐蔽。"
     },
     {
-      "perspective": "红方看蓝方",
+      "perspective": "蓝方看红方",
       "target": "贴着本队的九七式/九九式",
       "level": "中",
       "evidence": "具备对舰/对岛载荷潜力，但航向未收敛，立即突击概率低于已接触的美机对日舰。"

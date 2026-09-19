@@ -190,37 +190,37 @@
   "priorities": [],
   "threat_ratings": [
     {
-      "perspective": "蓝方看红方",
+      "perspective": "红方看蓝方",
       "target": "南云四航母",
       "level": "高",
       "evidence": "完整甲板、指向中途岛；尚未放飞故不是紧急。"
     },
     {
-      "perspective": "蓝方看红方",
+      "perspective": "红方看蓝方",
       "target": "利根/筑摩水侦",
       "level": "高（发现链）",
       "evidence": "仍在舰上，但开战即可能弹射。"
     },
     {
-      "perspective": "蓝方看红方",
+      "perspective": "红方看蓝方",
       "target": "护航驱逐舰",
       "level": "低",
       "evidence": "不改变航空战役结构。"
     },
     {
-      "perspective": "红方看蓝方",
+      "perspective": "蓝方看红方",
       "target": "中途岛机场",
       "level": "高",
       "evidence": "既定目标且岸基机已就绪。"
     },
     {
-      "perspective": "红方看蓝方",
+      "perspective": "蓝方看红方",
       "target": "TF16 两航母",
       "level": "高",
       "evidence": "舰载机数量最大；日方 T1 未必已定位。"
     },
     {
-      "perspective": "红方看蓝方",
+      "perspective": "蓝方看红方",
       "target": "TF17 约克城",
       "level": "高",
       "evidence": "分置的第三艘航母。"

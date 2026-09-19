@@ -263,7 +263,7 @@ export function buildThreatRatingsFromPack(
   return ratingTask?.reference_ratings ?? [];
 }
 
-/** Deterministic local generator — map + KPIs + fixed charts + threat ratings. */
+/** Deterministic local generator — map + KPIs + threat ratings（不含四张兵力统计图）. */
 export function generateSituationLocal(
   pack: SlicePack,
   _taskIds?: string[],
@@ -288,7 +288,7 @@ export function generateSituationLocal(
       .join(" "),
     map: buildMap(pack),
     kpis: buildKpis(pack),
-    charts: buildCharts(pack),
+    charts: [],
     intent_findings: [],
     threat_findings: [],
     priorities: [],

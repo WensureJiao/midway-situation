@@ -162,6 +162,14 @@ const FIXED_IDS = [
   "ijn-embarked-class",
 ] as const;
 
+function isHiddenChart(chart: ChartSpec): boolean {
+  if ((FIXED_IDS as readonly string[]).includes(chart.id)) return true;
+  if (chart.id === "threat-priority") return true;
+  return /优先级排序|威胁目标优先级|证据强度归一化|舰载机就绪总数/.test(
+    chart.title ?? "",
+  );
+}
+
 const THREAT_COLORS: Record<string, string> = {
   紧急: "#b45309",
   高: "#c45c4a",
@@ -200,12 +208,12 @@ function levelScore(level: string): number {
 
 type PerspectiveKey = "红方" | "蓝方";
 
-/** pack 数据里仍写「蓝方看=美、红方看=日」；界面已改为红=美、蓝=日 */
+/** 红方=美（USN），蓝方=日（IJN）。「红方看…」即美方视角。 */
 function viewSideFromPerspective(p: string): "USN" | "IJN" | "其他" {
   if (/美方|USN/.test(p)) return "USN";
   if (/日方|IJN/.test(p)) return "IJN";
-  if (/蓝方看/.test(p)) return "USN";
-  if (/红方看/.test(p)) return "IJN";
+  if (/红方看/.test(p)) return "USN";
+  if (/蓝方看/.test(p)) return "IJN";
   if (/蓝|美/.test(p) && !/红|日/.test(p)) return "USN";
   if (/红|日/.test(p) && !/蓝|美/.test(p)) return "IJN";
   return "其他";
@@ -511,17 +519,7 @@ export function SituationCharts({
   spec?: SituationViewSpec;
   packPhase?: string;
 }) {
-  const byId = new Map((charts ?? []).map((c) => [c.id, c]));
-  const fixed = FIXED_IDS.map((id) => byId.get(id)).filter(
-    (c): c is ChartSpec => Boolean(c),
-  );
-  // 意图任务优先展示模型自设计的 charts，不被固定四图顶替
-  const list =
-    taskFocus === "intent"
-      ? (charts ?? [])
-      : fixed.length > 0
-        ? fixed
-        : (charts ?? []);
+  const list = (charts ?? []).filter((c) => !isHiddenChart(c));
 
   const showThreat = taskFocus !== "intent";
   const showIntent = taskFocus === "intent" && Boolean(spec);
