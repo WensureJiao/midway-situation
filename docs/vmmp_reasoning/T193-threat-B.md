@@ -1,13 +1,12 @@
-C：蓝方需识别红方残存低空零式与漂泊航母的意外威胁能力，而非主力决战态势  
-R：空间邻近性（零式贴赤城低空）与状态脆弱性（美Yorktown停航、日三航母漂泊）构成意外打击链关联  
-步骤名：Identify：从简报中提取“赤城 Itaya #7 已降至约 207 m、贴着赤城”和“CVA-5 Yorktown 停航 0kn/267.6° (29.69,-179.26)”作为高危实体对  
-步骤名：Locate：定位赤城坐标(29.13,-177.61)与Yorktown坐标(29.69,-179.26)，二者经度差1.65°、纬度差0.56°，处于同一作战扇区  
-步骤名：Filter：筛选出具备突防潜力的红方单位——仅Itaya #7零式（贴舰低空）与赤城（仍载31架但受损），排除其余高空零式及无攻击机波次  
-步骤名：Compare：对比Itaya #7与Yorktown状态——前者具机动性+隐蔽性，后者完全静止+仅5架舰载机待命，防御窗口极窄  
-步骤名：Aggregate：将Itaya #7、赤城、Yorktown三者纳入“低空突袭—静止高价值目标”威胁组，关联CAP覆盖缺口（177.4°–178.4°W未含Yorktown方位）  
-步骤名：Assess：判定该组威胁等级为High——满足“可执行单机突袭+目标无机动规避+防空响应延迟>30s”三项终局意外伤害判据  
-步骤名：Rank：Itaya #7 > 赤城 > Yorktown自身受损风险（因后者不构成对外威胁）  
-步骤名：Verify：对照vs_T145“美方无畏式退出高空清单，转入终局清场”，确认高空监视真空，支持Itaya #7低空突袭可行性  
-M：高亮聚焦Itaya #7与Yorktown的空间错位（Position+Salience），轴线沿29.6°N纬向展开，威胁圈以Yorktown为中心半径15nm内覆盖赤城与Itaya #7轨迹  
-M：排序严格按“可执行突袭实体→其依托平台→被袭平台”三级Hierarchy映射至Ordering视觉流  
-E：所有判断均锚定原始数据坐标、航速、高度、载机数及简报行为描述，未引入外部假设
+C：红方需聚焦残存日方零式战机与受损航母的意外打击能力，而非主力决战  
+R：空间邻近性（如Soryu Suganami Zero #7在29.11°N, 177.62°W距Yorktown仅16海里）与战备状态（ready_min=131）构成突发威胁关联  
+Identify：识别蓝方在空8架零式中仅3架处于低空（<3000m）、4架具备高战备（ready_min≥114）  
+Locate：Akagi Itaya Zero #7位于29.11°N, 177.62°W，距CVA-5 Yorktown停航位置（29.69°N, 179.26°W）直线距离约128km且无护航拦截圈覆盖  
+Filter：剔除全部高空零式（6架>10km）及ready_min=0的零式（2架），保留Akagi #7、Soryu #5、Soryu #9三架低空高战备目标  
+Compare：Akagi #7高度207.4m、航向257.6°，正朝Midway主跑道机场（28.21°N, 177.38°W）方向机动，威胁等级高于其他两架  
+Aggregate：将三架高危零式与美方受损舰USS New Orleans（damaged，航速2kn）、USS Benham（damaged）及Yorktown舰载机仅剩2架ready0=2关联为“低空突防—防空缺口—关键平台脆弱”链  
+Assess：Akagi Itaya Zero #7对中途岛主跑道机场构成高威胁（ThreatLevel=H），因机场无备用起降能力且AAA Bty（M16 12.7mm Quad x 4）射高不足500m  
+Rank：1. Akagi Itaya Zero #7｜2. Soryu Suganami Zero #9｜3. USS New Orleans（自身受损致编队防空响应延迟）  
+Verify：Akagi #7坐标与航向经PBY巡逻机（在空1架）和Yorktown Thatch Wildcats #5（29.84°N, 178.14°W）三角定位交叉确认  
+M：高亮映射至Salience（Akagi #7低空+高ready_min+指向机场）；轴线沿257.6°航向延伸至中途岛主跑道，构成威胁圈核心径向  
+E：所有排序依据均来自原始数据坐标、高度、ready_min值及设施射高参数，未引入外部假设

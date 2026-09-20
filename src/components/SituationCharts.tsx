@@ -162,8 +162,10 @@ const FIXED_IDS = [
   "ijn-embarked-class",
 ] as const;
 
-function isHiddenChart(chart: ChartSpec): boolean {
-  if ((FIXED_IDS as readonly string[]).includes(chart.id)) return true;
+function isHiddenChart(chart: ChartSpec, hideFixed: boolean): boolean {
+  if (hideFixed && (FIXED_IDS as readonly string[]).includes(chart.id)) {
+    return true;
+  }
   if (chart.id === "threat-priority") return true;
   return /优先级排序|威胁目标优先级|证据强度归一化|舰载机就绪总数/.test(
     chart.title ?? "",
@@ -414,9 +416,6 @@ function IntentFocusPanel({
         <h3 className="text-sm font-semibold text-[var(--ink)]">
           意图研判焦点
         </h3>
-        <p className="text-xs text-[var(--muted)]">
-          阶段进度 · 作战指向 · 证据片段（替代威胁等级图）
-        </p>
       </div>
 
       <div className="mb-3">
@@ -510,6 +509,7 @@ export function SituationCharts({
   taskFocus = "threat",
   spec,
   packPhase,
+  showFixedCharts = true,
 }: {
   charts?: ChartSpec[];
   threatRatings?: SituationViewSpec["threat_ratings"];
@@ -518,8 +518,10 @@ export function SituationCharts({
   /** 意图面板需要 map / phase / narrative */
   spec?: SituationViewSpec;
   packPhase?: string;
+  /** 主生成台展示四张兵力统计图；对比页关闭 */
+  showFixedCharts?: boolean;
 }) {
-  const list = (charts ?? []).filter((c) => !isHiddenChart(c));
+  const list = (charts ?? []).filter((c) => !isHiddenChart(c, !showFixedCharts));
 
   const showThreat = taskFocus !== "intent";
   const showIntent = taskFocus === "intent" && Boolean(spec);

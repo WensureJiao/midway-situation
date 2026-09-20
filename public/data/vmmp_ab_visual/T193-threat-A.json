@@ -1,0 +1,216 @@
+{
+  "generated_by": "llm",
+  "time_slice": "T193",
+  "title": "终局威胁评估：残存力量风险图",
+  "phase_label": "终局终结",
+  "narrative": "美方三航母（企业、大黄蜂、约克城）仍具航行与起降能力，其中约克城停航但舰载机仍可升空；日方南云机动部队四艘航母中三艘（赤城、苍龙、加贺）已受创漂泊，无航速、无放飞能力；飞龙号未在几何数据中出现，位置与状态未知；8架零式仍在空域活动，含1架低空贴舰飞行（207 m），构成局部中等威胁；中途岛主/短跑道及防空阵地完好，守岛态势稳固。",
+  "map": {
+    "center": [
+      29.4,
+      -178.3
+    ],
+    "zoom": 6,
+    "highlight_names": [
+      "IJN Akagi",
+      "IJN Soryu",
+      "IJN Kaga",
+      "Yorktown Thatch Wildcats #7",
+      "Akagi Itaya Zero  #7",
+      "USS Benham",
+      "USS New Orleans",
+      "USS Ellet"
+    ],
+    "axes": [
+      {
+        "id": "a1",
+        "from": [
+          29.15,
+          -177.65
+        ],
+        "to": [
+          28.21,
+          -177.38
+        ],
+        "label": "撤退轴",
+        "side": "IJN"
+      },
+      {
+        "id": "a2",
+        "from": [
+          29.62,
+          -179.18
+        ],
+        "to": [
+          28.21,
+          -177.38
+        ],
+        "label": "防御轴",
+        "side": "USN"
+      }
+    ],
+    "threat_zones": [
+      {
+        "id": "z1",
+        "center": [
+          29.13,
+          -177.61
+        ],
+        "radius_nm": 35,
+        "level": "中",
+        "label": "赤城残骸区（低航速/无放飞）",
+        "side": "IJN"
+      },
+      {
+        "id": "z2",
+        "center": [
+          28.85,
+          -179.23
+        ],
+        "radius_nm": 25,
+        "level": "中",
+        "label": "零式低空活动区（含贴舰目标）",
+        "side": "IJN"
+      },
+      {
+        "id": "z3",
+        "center": [
+          29.65,
+          -179.2
+        ],
+        "radius_nm": 30,
+        "level": "低",
+        "label": "TF16受损护航舰群（Benham/New Orleans/Ellet）",
+        "side": "USN"
+      }
+    ]
+  },
+  "kpis": [
+    {
+      "id": "us-cv",
+      "label": "美航母",
+      "value": 3,
+      "tone": "usn"
+    },
+    {
+      "id": "ijn-cv",
+      "label": "日航母舰体",
+      "value": 3,
+      "tone": "ijn"
+    },
+    {
+      "id": "air",
+      "label": "在空飞机",
+      "value": 35,
+      "tone": "warn"
+    },
+    {
+      "id": "dmg",
+      "label": "损伤舰艇",
+      "value": 6,
+      "tone": "warn"
+    }
+  ],
+  "charts": [
+    {
+      "id": "cmp-threat-levels",
+      "type": "bar",
+      "title": "威胁等级分布",
+      "description": "由 threat_ratings 统计",
+      "series": [
+        {
+          "name": "紧急",
+          "value": 0
+        },
+        {
+          "name": "高",
+          "value": 3
+        },
+        {
+          "name": "中",
+          "value": 3
+        },
+        {
+          "name": "低",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "cmp-threat-perspectives",
+      "type": "bar",
+      "title": "视角下目标数",
+      "description": "各视角列出的目标条数",
+      "series": [
+        {
+          "name": "红方看蓝方",
+          "value": 3
+        },
+        {
+          "name": "蓝方看红方",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "cmp-map-encoding",
+      "type": "bar",
+      "title": "地图编码量",
+      "description": "高亮 / 轴线 / 圈",
+      "series": [
+        {
+          "name": "高亮",
+          "value": 8
+        },
+        {
+          "name": "轴线",
+          "value": 2
+        },
+        {
+          "name": "圈",
+          "value": 3
+        }
+      ]
+    }
+  ],
+  "intent_findings": [],
+  "threat_findings": [],
+  "priorities": [],
+  "threat_ratings": [
+    {
+      "perspective": "红方看蓝方",
+      "target": "三艘伤航母残骸（赤城/苍龙/加贺）",
+      "level": "中（跟踪）",
+      "evidence": "全部0 kn、漂泊、无放飞能力，但舰体完整且位置明确，需持续监视防爆燃或误判。"
+    },
+    {
+      "perspective": "红方看蓝方",
+      "target": "残存零式战斗机",
+      "level": "中",
+      "evidence": "8架在空，其中1架距赤城仅207米、航向257.6°，具备突袭低空打击能力；其余多在2400–11000米高度游猎。"
+    },
+    {
+      "perspective": "红方看蓝方",
+      "target": "飞龙号航空母舰",
+      "level": "高（不确定性）",
+      "evidence": "清洗数据中无任何几何坐标、状态或搭载信息，既未确认沉没亦未定位，是当前最大战术盲区。"
+    },
+    {
+      "perspective": "蓝方看红方",
+      "target": "中途岛主跑道机场",
+      "level": "高（已失效）",
+      "evidence": "主跑道完好、防空阵地全效、PBY/B-26/辩护者仍可起降，日方已丧失夺取或压制该设施的任何平台与能力。"
+    },
+    {
+      "perspective": "蓝方看红方",
+      "target": "TF16（企业号/大黄蜂号）",
+      "level": "高（能力存续）",
+      "evidence": "双航母均以2 kn左右航速航行，舰载机就绪率超80%，野猫CAP覆盖半径达150 nm，对残存日机构成压倒性制空优势。"
+    },
+    {
+      "perspective": "蓝方看红方",
+      "target": "TF17约克城号",
+      "level": "中（脆弱但有效）",
+      "evidence": "停航但舰体完整，仍有5架舰载机可用，2架野猫在空巡逻，短时仍具有限反击与侦察能力；其静止位置构成易识别但难接近的目标。"
+    }
+  ]
+}

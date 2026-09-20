@@ -3,10 +3,12 @@ import { promises as fs } from "fs";
 import path from "path";
 import {
   buildPromptBundle,
+  buildFixedCharts,
   buildThreatRatingsFromPack,
   generateSituationLocal,
   buildFixedKpis,
 } from "@/lib/localGenerator";
+import { buildTaskCompareCharts } from "@/lib/compareCharts";
 import type {
   GenerateRequest,
   GenerateResponse,
@@ -109,22 +111,19 @@ export async function POST(req: Request) {
       spec = generateSituationLocal(pack, body.task_ids);
     }
 
-    // KPI 固定；默认不再注入四张兵力统计图；对比页 lock_charts=false 时保留模型 charts
+    // 主生成台锁定四张兵力统计图；对比页按任务从 ratings/map 生成固定图槽
     const ratings =
       taskFocus === "intent"
         ? (spec.threat_ratings ?? [])
         : spec.threat_ratings?.length
           ? spec.threat_ratings
           : buildThreatRatingsFromPack(pack);
-    const charts =
-      !lockCharts && spec.charts?.length
-        ? spec.charts.filter(
-            (c) =>
-              !["ships", "airborne", "usn-embarked-class", "ijn-embarked-class"].includes(
-                c.id,
-              ),
-          )
-        : [];
+    const charts = lockCharts
+      ? buildFixedCharts(pack)
+      : buildTaskCompareCharts(
+          { ...spec, threat_ratings: ratings },
+          taskFocus,
+        );
     spec = {
       ...spec,
       kpis: buildFixedKpis(pack),

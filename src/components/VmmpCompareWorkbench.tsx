@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SituationCharts } from "@/components/SituationCharts";
+import { MapAnnotationLegend } from "@/components/MapAnnotationLegend";
 import type {
   GenerateResponse,
   SituationViewSpec,
@@ -13,10 +14,10 @@ import type {
   TaskFocus,
 } from "@/lib/types";
 import { normalizeSituationSpec } from "@/lib/utils";
+import { buildTaskCompareCharts } from "@/lib/compareCharts";
 import {
   INTENT_E_CRITERIA,
   THREAT_E_CRITERIA,
-  diffSpecs,
   meanScores,
 } from "@/lib/vmmpCompare";
 import {
@@ -42,7 +43,7 @@ const SituationMap = dynamic(
 );
 
 type SideKey = "A" | "B";
-type ViewTab = "view" | "diff" | "score";
+type ViewTab = "view" | "score";
 
 function VisPanel({
   label,
@@ -52,6 +53,7 @@ function VisPanel({
   mapKey,
   blind,
   taskFocus,
+  reasoning,
 }: {
   label: string;
   badge: string;
@@ -60,6 +62,7 @@ function VisPanel({
   mapKey: string;
   blind: boolean;
   taskFocus: TaskFocus;
+  reasoning: string;
 }) {
   return (
     <section className="flex min-w-0 flex-col overflow-hidden rounded-lg bg-[var(--panel)] ring-1 ring-[var(--line)]">
@@ -84,22 +87,49 @@ function VisPanel({
           <br />
           轴 {spec.map.axes?.length ?? 0} · 圈{" "}
           {spec.map.threat_zones?.length ?? 0}
-          <br />
-          图 {spec.charts?.length ?? 0}
         </div>
       </div>
+
+      {spec.narrative ? (
+        <p className="border-b border-[var(--line)] px-3 py-2 text-sm leading-relaxed text-[var(--ink)]/90">
+          {spec.narrative}
+        </p>
+      ) : null}
 
       <div className="map-shell h-[min(46vh,460px)] overflow-hidden">
         <SituationMap pack={pack} spec={spec} instanceKey={mapKey} />
       </div>
 
+      {(spec.map.axes?.length ?? 0) > 0 ||
+      (spec.map.threat_zones?.length ?? 0) > 0 ? (
+        <div className="border-t border-[var(--line)] px-3 py-2">
+          <MapAnnotationLegend spec={spec} />
+        </div>
+      ) : null}
+
+      <div className="border-t border-[var(--line)] px-3 py-2">
+        <h3 className="mb-1 text-xs font-semibold text-[var(--ink)]">
+          推理过程
+        </h3>
+        {blind ? (
+          <p className="text-[11px] text-[var(--muted)]">
+            盲评中已隐藏，避免从步骤看出有无范式。
+          </p>
+        ) : (
+          <div className="max-h-52 overflow-auto whitespace-pre-wrap text-[12px] leading-relaxed text-[var(--ink)]">
+            {reasoning.trim() || "这一侧还没有推理记录。点「生成 A/B」会一起写出。"}
+          </div>
+        )}
+      </div>
+
       <div className="border-t border-[var(--line)] p-2">
         <SituationCharts
-          charts={spec.charts}
+          charts={buildTaskCompareCharts(spec, taskFocus)}
           threatRatings={spec.threat_ratings}
           taskFocus={taskFocus}
           spec={spec}
           packPhase={pack.phase_label}
+          showFixedCharts={false}
         />
       </div>
     </section>
@@ -154,10 +184,6 @@ function ScoreColumn({
   );
 }
 
-function chartTitles(spec: SituationViewSpec): string[] {
-  return (spec.charts ?? []).map((c) => c.title);
-}
-
 export function VmmpCompareWorkbench() {
   const [index, setIndex] = useState<SliceIndexItem[]>([]);
   const [sliceId, setSliceId] = useState("T1");
@@ -165,6 +191,8 @@ export function VmmpCompareWorkbench() {
   const [pack, setPack] = useState<SlicePack | null>(null);
   const [specA, setSpecA] = useState<SituationViewSpec | null>(null);
   const [specB, setSpecB] = useState<SituationViewSpec | null>(null);
+  const [reasonA, setReasonA] = useState("");
+  const [reasonB, setReasonB] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
@@ -192,6 +220,8 @@ export function VmmpCompareWorkbench() {
     setPack(null);
     setSpecA(null);
     setSpecB(null);
+    setReasonA("");
+    setReasonB("");
     setScoresA({});
     setScoresB({});
     fetch(item.path)
@@ -204,6 +234,19 @@ export function VmmpCompareWorkbench() {
     setScoresA({});
     setScoresB({});
   }, [taskFocus]);
+
+  const loadReasoning = useCallback(async () => {
+    const pull = async (side: "A" | "B") => {
+      const res = await fetch(
+        `/api/vmmp-reasoning?slice=${sliceId}&focus=${taskFocus}&side=${side}`,
+      );
+      const data = (await res.json()) as { ok?: boolean; text?: string };
+      return data.ok ? (data.text ?? "") : "";
+    };
+    const [a, b] = await Promise.all([pull("A"), pull("B")]);
+    setReasonA(a);
+    setReasonB(b);
+  }, [sliceId, taskFocus]);
 
   const tryLoadSaved = useCallback(async () => {
     const base = `/data/vmmp_ab_visual/${sliceId}-${taskFocus}`;
@@ -219,11 +262,12 @@ export function VmmpCompareWorkbench() {
       setSpecB(normalizeSituationSpec(b));
       setNotes([]);
       setSwapBlind(Math.random() < 0.5);
+      void loadReasoning();
       return true;
     } catch {
       return false;
     }
-  }, [sliceId, taskFocus]);
+  }, [sliceId, taskFocus, loadReasoning]);
 
   useEffect(() => {
     if (!pack) return;
@@ -266,10 +310,30 @@ export function VmmpCompareWorkbench() {
         return normalizeSituationSpec(data.spec);
       };
 
-      const a = await callOne("off");
-      const b = await callOne("on");
+      const callReason = async (side: "A" | "B") => {
+        const res = await fetch("/api/vmmp-reasoning", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            time_slice: sliceId,
+            task_focus: taskFocus,
+            side,
+          }),
+        });
+        const data = (await res.json()) as { ok?: boolean; text?: string; error?: string };
+        if (!res.ok || !data.ok) {
+          runNotes.push(`${side} 推理未写出：${data.error || "失败"}`);
+          return "";
+        }
+        return data.text ?? "";
+      };
+
+      const [a, textA] = await Promise.all([callOne("off"), callReason("A")]);
+      const [b, textB] = await Promise.all([callOne("on"), callReason("B")]);
       setSpecA(a);
       setSpecB(b);
+      setReasonA(textA);
+      setReasonB(textB);
       setSwapBlind(Math.random() < 0.5);
 
       try {
@@ -297,24 +361,6 @@ export function VmmpCompareWorkbench() {
       setLoading(false);
     }
   }, [pack, sliceId, taskFocus]);
-
-  const diff = useMemo(
-    () => (specA && specB ? diffSpecs(specA, specB, taskFocus) : null),
-    [specA, specB, taskFocus],
-  );
-
-  const chartDiffLines = useMemo(() => {
-    if (!specA || !specB) return [] as string[];
-    const ta = chartTitles(specA);
-    const tb = chartTitles(specB);
-    if (ta.join("|") === tb.join("|")) {
-      return [`图表标题相同：${ta.join("；") || "无"}`];
-    }
-    return [
-      `A 图表：${ta.join("；") || "无"}`,
-      `B 图表：${tb.join("；") || "无"}`,
-    ];
-  }, [specA, specB]);
 
   const leftRight = useMemo(() => {
     if (!specA || !specB) return null;
@@ -410,7 +456,6 @@ export function VmmpCompareWorkbench() {
             {(
               [
                 ["view", "看图"],
-                ["diff", "差异"],
                 ["score", "打分"],
               ] as const
             ).map(([id, label]) => (
@@ -479,7 +524,7 @@ export function VmmpCompareWorkbench() {
         {!pack || !specA || !specB || !leftRight ? (
           <div className="flex h-[60vh] items-center justify-center rounded-lg bg-[var(--panel)] text-sm text-[var(--muted)] ring-1 ring-[var(--line)]">
             {loading
-              ? "正在生成左右两套地图与图表（约 1–2 分钟）…"
+              ? "正在生成左右地图、图表和推理（约 2 分钟）…"
               : "点「生成 A/B」开始对比。左 A 无范式，右 B 有 VMMP。"}
           </div>
         ) : viewTab === "view" ? (
@@ -501,6 +546,7 @@ export function VmmpCompareWorkbench() {
                 mapKey={`left-${sliceId}-${taskFocus}-${leftRight.left.key}`}
                 blind={blind}
                 taskFocus={taskFocus}
+                reasoning={leftRight.left.key === "A" ? reasonA : reasonB}
               />
               <VisPanel
                 label={
@@ -512,34 +558,10 @@ export function VmmpCompareWorkbench() {
                 mapKey={`right-${sliceId}-${taskFocus}-${leftRight.right.key}`}
                 blind={blind}
                 taskFocus={taskFocus}
+                reasoning={leftRight.right.key === "A" ? reasonA : reasonB}
               />
             </div>
           </>
-        ) : viewTab === "diff" ? (
-          <section className="rounded-lg bg-[var(--panel)] p-4 ring-1 ring-[var(--line)]">
-            <h3 className="text-sm font-semibold">左右差在哪</h3>
-            <p className="mt-1 text-[11px] text-[var(--muted)]">
-              看完图再看这里，核对你肉眼看到的差别。
-            </p>
-            <ul className="mt-3 list-inside list-disc space-y-1 text-sm">
-              {(diff?.summaryLines ?? []).map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-              {chartDiffLines.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 text-xs">
-              <div className="rounded-md bg-[var(--panel-2)] p-3 ring-1 ring-[var(--line)]">
-                <div className="font-semibold">A 叙述</div>
-                <p className="mt-1 leading-relaxed">{specA.narrative}</p>
-              </div>
-              <div className="rounded-md bg-[var(--panel-2)] p-3 ring-1 ring-[var(--line)]">
-                <div className="font-semibold">B 叙述</div>
-                <p className="mt-1 leading-relaxed">{specB.narrative}</p>
-              </div>
-            </div>
-          </section>
         ) : (
           <section className="rounded-lg bg-[var(--panel)] p-4 ring-1 ring-[var(--line)]">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">

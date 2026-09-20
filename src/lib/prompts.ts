@@ -10,13 +10,17 @@ export const SITUATION_SYSTEM_PROMPT = `你是海军战役「通用作战态势�
 输入是清洗后的单位态势数据与场景说明（可含威胁等级参考；可选附带 VMMP 范式）。
 你的唯一输出必须是合法 JSON（不要 Markdown 围栏，不要解释文字），符合 SituationViewSpec 结构。
 
-目标：生成态势地图布局、关键指标叙述，以及威胁等级列表 threat_ratings（威胁任务）或阶段/方向相关编码（意图任务）。默认不强制四张兵力统计图。
+目标：生成态势地图布局、关键指标叙述，以及威胁等级列表 threat_ratings（威胁任务）或阶段/方向相关编码（意图任务）。主生成台的四张兵力统计图由服务端覆盖。
 
 硬性规则：
 1. 地图为主界面：给出 center、zoom、需要高亮的单位名 highlight_names、作战方向轴线 axes、威胁圈 threat_zones。
 2. KPI 由服务端用清洗数据固定覆盖：美航母、日航母舰体、在空飞机、损伤舰艇。
-   默认不展示水面舰艇/在空飞机/舰载机构成四张统计图；若允许自由设计 charts，再按任务补 0～4 张任务相关图。
-3. threat_ratings 必须按目标列出 perspective（可用「蓝方看红方/红方看蓝方」或「美方看日方/日方看美方」）、target、level、evidence。
+   主生成台另固定四张统计图：水面舰艇数量、在空飞机数量、红方（美）舰载机就绪构成、蓝方（日）舰载机就绪构成。对比页改用任务固定图槽（由 threat_ratings 与 map 推导），模型请输出 charts: []。
+3. threat_ratings 必须按目标列出 perspective、target、level、evidence。
+   perspective 只用「红方看蓝方」「蓝方看红方」（或「美方看日方」「日方看美方」）。
+   语义：前者=观察者红方（美）评估蓝方（日）目标；后者=观察者蓝方（日）评估红方（美）目标。
+   target 必须是对方兵力/设施，禁止把观察者己方单位写入该视角（例：红方看蓝方不得出现 TF16/约克城/中途岛；蓝方看红方不得出现南云四航母/利根筑摩）。
+   threat_zones 可圈己方与敌方关注区；threat_ratings 只排敌方威胁，二者勿混用。
 4. 禁止编造不存在的航母、交火或单位；经纬度必须来自输入数据。中途岛约 28.21°N, 177.38°W（longitude ≈ -177.38）。
 5. 红方=USN（美含中途岛，地图用红色），蓝方=IJN（日，地图用蓝色）。
 6. 若某切片舰体缺失（如飞龙），在 narrative 中标注“舰体未导出/未知”，不得当作已沉没定论。
@@ -29,7 +33,7 @@ export type PromptVmmpOptions = {
   task_focus?: TaskFocus;
   /** 已序列化的 VMMP JSON 全文；仅 vmmp_mode=on 时传入 */
   vmmp_json?: string | null;
-  /** true=服务端覆盖固定四图；false=由模型设计 charts（对比实验） */
+  /** true=服务端覆盖固定四图；false=对比页任务图槽由服务端从 ratings/map 生成 */
   lock_charts?: boolean;
 };
 
@@ -67,7 +71,10 @@ export const SITUATION_OUTPUT_SCHEMA = `{
   "priorities": [],
   "threat_ratings": [
     {"perspective":"红方看蓝方","target":"南云四航母","level":"高","evidence":"..."},
-    {"perspective":"蓝方看红方","target":"中途岛机场","level":"高","evidence":"..."}
+    {"perspective":"红方看蓝方","target":"利根/筑摩水侦","level":"中","evidence":"..."},
+    {"perspective":"蓝方看红方","target":"中途岛机场","level":"高","evidence":"..."},
+    {"perspective":"蓝方看红方","target":"TF16 两航母","level":"高","evidence":"..."},
+    {"perspective":"蓝方看红方","target":"TF17 约克城","level":"高","evidence":"..."}
   ]
 }`;
 
@@ -84,14 +91,14 @@ function buildVmmpGuidanceBlock(
 - threat_zones：仅在有空间聚集或关键活动区时使用，勿伪造交火圈
 - narrative：点明佯动/真实、方向、阶段判断依据（仍保持 2–4 句）
 - threat_ratings：意图任务下可输出空数组 []（前端不展示威胁等级图）
-- charts（若允许自由设计）：必须含阶段/航向/编队状态类图；禁止以威胁排序为主图`
+- charts：对比页由服务端按任务从 ratings/map 生成，此处请输出 []`
       : `地图侧重（威胁）：
 - highlight_names：优先高亮筛选出的关键威胁目标（Salience / Screening）
-- threat_zones：按威胁等级表达空间威胁/关注区（Hierarchy / Salience）
+- threat_zones：可标双方空间关注区（Hierarchy / Salience）；圈己方不等于把己方写入威胁排序
 - axes：可选，用于进击轴或发现几何
-- threat_ratings：按优先级排序列出（Ordering / Ranking），level 与 evidence 必填
+- threat_ratings：只排「观察者视角下的敌方目标」（Ordering / Ranking）；perspective 与 target 所属方必须相反；level 与 evidence 必填
 - narrative：点明筛选—评估—排序要点（仍保持 2–4 句）
-- charts（若允许自由设计）：优先威胁等级对比、目标优先级条形、多因素聚合（bar/pie/stacked_bar）`;
+- charts：对比页由服务端按任务从 ratings/map 生成，此处请输出 []`;
 
   return `## VMMP 范式约束（必须遵循）
 任务焦点: ${focusLabel}
@@ -136,14 +143,9 @@ export function buildSituationUserPrompt(
 
   const lockCharts = options?.lock_charts !== false;
   const chartOutHint = lockCharts
-    ? `kpis 可按示例填写（服务端会覆盖为固定四项 KPI）。charts 默认留空数组 []（界面不展示四张兵力统计图）。`
-    : `请为当前任务自行设计 0～4 张 charts（type 仅限 bar / pie / stacked_bar），数字必须来自输入数据：
-- 威胁任务：优先目标比较或威胁强度相关图
-- 意图任务：优先方向/阶段/状态相关图
-- 不要再输出水面舰艇数量、在空飞机数量、红/蓝舰载机就绪构成、双方舰载机就绪总数这类通用图
-- 不要输出「威胁目标优先级排序」类条形图（威胁排序已由界面单独展示）
-- 每张图要有清晰 title；series.value 必须是数字
-服务端不会用固定四图覆盖；kpis 仍可能被覆盖为固定四项。`;
+    ? `kpis 与 charts 可按示例填写（服务端会覆盖为固定四项 KPI 与四张兵力统计图）。`
+    : `对比页 charts 由服务端按任务从 threat_ratings 与 map（高亮/轴/圈）生成固定图槽，请输出 "charts": []。
+把可对比差异写在 threat_ratings 与 map.highlight_names / axes / threat_zones 上，不要自行设计统计图。`;
 
   return `## 场景
 战役: ${pack.scenario}
@@ -167,7 +169,8 @@ ${
   taskFocus === "intent"
     ? `请根据兵力几何生成 map（务必含 axes 作战指向）、title、narrative（含阶段/佯动判断）。
 threat_ratings 可输出 []。意图任务前端展示阶段条与方向证据，不展示威胁等级图。`
-    : `请根据兵力几何生成 map、title、narrative，并填写 threat_ratings（可蓝/红或美/日视角）。`
+    : `请根据兵力几何生成 map、title、narrative，并填写 threat_ratings。
+threat_ratings：红方看蓝方只列日方目标；蓝方看红方只列美方（含中途岛）目标；勿把己方写进观察者视角。`
 }
 ${chartOutHint}
 intent_findings、threat_findings、priorities 一律输出 []。`;

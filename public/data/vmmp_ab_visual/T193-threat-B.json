@@ -1,0 +1,214 @@
+{
+  "generated_by": "llm",
+  "time_slice": "T193",
+  "title": "终局威胁评估：残存力量风险扫描",
+  "phase_label": "终局终结",
+  "narrative": "战役终局，日方主力航母三艘（赤城、苍龙、加贺）均受创漂泊于29.1°N/177.6°W附近，航速为0，丧失作战能力；飞龙号未见任何几何数据，构成关键不确定性威胁。美方三航母（企业、大黄蜂、约克城）中两艘航行、一艘停航，27架野猫在空执行CAP，覆盖中途岛以西至178°W空域；8架零式分散于28.7–29.1°N、177.6–179.4°W，含一架贴舰低空（207 m）目标。损伤舰艇集中于美护航编队（Benham/New Orleans/Ellet），但未影响TF16持续机动能力。",
+  "map": {
+    "center": [
+      29.2,
+      -178
+    ],
+    "zoom": 6,
+    "highlight_names": [
+      "IJN Akagi",
+      "IJN Soryu",
+      "IJN Kaga",
+      "Soryu Suganami Zero #7",
+      "Akagi Itaya Zero #7",
+      "Yorktown Thatch Wildcats #6"
+    ],
+    "axes": [
+      {
+        "id": "a1",
+        "from": [
+          29.13,
+          -177.61
+        ],
+        "to": [
+          28.21,
+          -177.38
+        ],
+        "label": "返岛轴线",
+        "side": "IJN"
+      },
+      {
+        "id": "a2",
+        "from": [
+          29.62,
+          -179.18
+        ],
+        "to": [
+          28.21,
+          -177.38
+        ],
+        "label": "TF16-中途岛协同轴",
+        "side": "USN"
+      }
+    ],
+    "threat_zones": [
+      {
+        "id": "z1",
+        "center": [
+          29.13,
+          -177.61
+        ],
+        "radius_nm": 35,
+        "level": "中",
+        "label": "伤航母集群（赤城/苍龙/加贺）",
+        "side": "IJN"
+      },
+      {
+        "id": "z2",
+        "center": [
+          28.85,
+          -179
+        ],
+        "radius_nm": 25,
+        "level": "中",
+        "label": "零式活动高密度区（低空+高空混合）",
+        "side": "IJN"
+      },
+      {
+        "id": "z3",
+        "center": [
+          29.65,
+          -179.2
+        ],
+        "radius_nm": 15,
+        "level": "低",
+        "label": "美受损舰伴航区（New Orleans/Benham/Ellet）",
+        "side": "USN"
+      }
+    ]
+  },
+  "kpis": [
+    {
+      "id": "us-cv",
+      "label": "美航母",
+      "value": 3,
+      "tone": "usn"
+    },
+    {
+      "id": "ijn-cv",
+      "label": "日航母舰体",
+      "value": 3,
+      "tone": "ijn"
+    },
+    {
+      "id": "air",
+      "label": "在空飞机",
+      "value": 35,
+      "tone": "warn"
+    },
+    {
+      "id": "dmg",
+      "label": "损伤舰艇",
+      "value": 6,
+      "tone": "warn"
+    }
+  ],
+  "charts": [
+    {
+      "id": "cmp-threat-levels",
+      "type": "bar",
+      "title": "威胁等级分布",
+      "description": "由 threat_ratings 统计",
+      "series": [
+        {
+          "name": "紧急",
+          "value": 0
+        },
+        {
+          "name": "高",
+          "value": 4
+        },
+        {
+          "name": "中",
+          "value": 2
+        },
+        {
+          "name": "低",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "cmp-threat-perspectives",
+      "type": "bar",
+      "title": "视角下目标数",
+      "description": "各视角列出的目标条数",
+      "series": [
+        {
+          "name": "红方看蓝方",
+          "value": 3
+        },
+        {
+          "name": "蓝方看红方",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "cmp-map-encoding",
+      "type": "bar",
+      "title": "地图编码量",
+      "description": "高亮 / 轴线 / 圈",
+      "series": [
+        {
+          "name": "高亮",
+          "value": 6
+        },
+        {
+          "name": "轴线",
+          "value": 2
+        },
+        {
+          "name": "圈",
+          "value": 3
+        }
+      ]
+    }
+  ],
+  "intent_findings": [],
+  "threat_findings": [],
+  "priorities": [],
+  "threat_ratings": [
+    {
+      "perspective": "红方看蓝方",
+      "target": "三艘伤航母残骸（赤城/苍龙/加贺）",
+      "level": "中（跟踪）/ 低（打击）",
+      "evidence": "全部停航、无航速、舰载机就绪率下降但未归零；位置集中于29.1°N/177.6°W，距中途岛约120nm，无再起降能力。"
+    },
+    {
+      "perspective": "红方看蓝方",
+      "target": "残存零式战斗机（8架在空）",
+      "level": "中",
+      "evidence": "分布跨度达120nm，含一架207m超低空贴舰目标（Akagi Itaya Zero #7），具备突防与侦察潜力；其余多在万米高空，可能执行掩护或返航导航。"
+    },
+    {
+      "perspective": "红方看蓝方",
+      "target": "飞龙号航母",
+      "level": "高（不确定性）",
+      "evidence": "清洗数据中无任何几何、状态或通信痕迹；既未确认沉没，亦无漂泊/航行记录；按IJN编制应存在，构成最高置信度缺失威胁。"
+    },
+    {
+      "perspective": "蓝方看红方",
+      "target": "野猫CAP机群（约19架在空）",
+      "level": "高",
+      "evidence": "密集覆盖29.3–29.8°N/177.5–178.4°W空域，直接压制日方残存零式活动空间；Thatch/Waldcat编号显示多属经验机组，拦截效能高。"
+    },
+    {
+      "perspective": "蓝方看红方",
+      "target": "企业号与大黄蜂号航母",
+      "level": "高（能力）但不可兑现",
+      "evidence": "双舰均保持水面航行（2kn/1.8kn），舰载机就绪率高（16/12），但IJN已无可用放飞平台与有效侦察链，无法组织打击。"
+    },
+    {
+      "perspective": "蓝方看红方",
+      "target": "中途岛主跑道机场",
+      "level": "高（守备核心）",
+      "evidence": "固定设施完好，仍支持辩护者俯冲轰炸机与B-26中型轰炸机升空；PBY巡逻机与野猫CAP持续依托该节点轮换，是美方区域控制力的物理锚点。"
+    }
+  ]
+}

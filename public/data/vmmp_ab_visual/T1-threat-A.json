@@ -1,9 +1,9 @@
 {
   "generated_by": "llm",
   "time_slice": "T1",
-  "title": "中途岛战役初始态势：南云集结 vs 美军隐蔽接敌",
-  "phase_label": "初始态势：兵力展开与机动部队集结",
-  "narrative": "红方（USN）三艘航母（Enterprise、Hornet、Yorktown）呈松散梯队部署于中途岛东南约200–250海里，航向西南，尚未完成编队齐速；蓝方（IJN）四艘航母（Akagi、Kaga、Soryu、Hiryu）集中于中途岛西北约300海里，以Akagi-Hiryu为前导缓慢东进，其余两艘停泊待命。双方均无在空单位，战场处于静默搜索前夜。中途岛岸基航空力量完整就绪但未起飞。",
+  "title": "中途岛战役初始态势：南云集结与美舰队北向布防",
+  "phase_label": "初始态势：兵力展开与航母集结",
+  "narrative": "T1 阶段双方尚未接触，蓝方南云机动部队四艘航母（赤城、飞龙、苍龙、加贺）在东经179.7°W附近集结，航向112.5°指向中途岛；红方TF16（企业号、大黄蜂号）与TF17（约克城号）位于中途岛西北至正北海域，呈扇形布防，航速15节但护航舰未完全齐速；中途岛岸基航空力量全部停驻，无空中单位。战场处于‘发现前夜’状态。",
   "map": {
     "center": [
       29.4,
@@ -11,13 +11,13 @@
     ],
     "zoom": 6,
     "highlight_names": [
-      "CVA-5 Yorktown",
-      "CVA-6 Enterprise",
-      "CVA-7 Hornet",
       "IJN Akagi",
       "IJN Hiryu",
       "IJN Kaga",
       "IJN Soryu",
+      "CVA-5 Yorktown",
+      "CVA-6 Enterprise",
+      "CVA-7 Hornet",
       "Midway Installation"
     ],
     "axes": [
@@ -44,7 +44,7 @@
           28.21,
           -177.38
         ],
-        "label": "攻击轴：TF16指向中途岛",
+        "label": "防御轴：TF16至中途岛",
         "side": "USN"
       }
     ],
@@ -66,20 +66,9 @@
           29.85,
           -177.23
         ],
-        "radius_nm": 50,
+        "radius_nm": 45,
         "level": "高",
-        "label": "TF16双航母集群（Enterprise+Hornet）",
-        "side": "USN"
-      },
-      {
-        "id": "z3",
-        "center": [
-          29.7,
-          -176.9
-        ],
-        "radius_nm": 30,
-        "level": "中",
-        "label": "TF17单航母（Yorktown）",
+        "label": "TF16双航母作战半径核心区",
         "side": "USN"
       }
     ]
@@ -112,84 +101,67 @@
   ],
   "charts": [
     {
-      "id": "ships",
+      "id": "carrier-airpower",
       "type": "bar",
-      "title": "水面舰艇总数对比",
+      "title": "双方航母舰载机就绪总数对比",
       "series": [
         {
-          "name": "USN",
-          "value": 28,
-          "side": "USN"
-        },
-        {
-          "name": "IJN",
-          "value": 21,
-          "side": "IJN"
-        }
-      ]
-    },
-    {
-      "id": "embarked-ready",
-      "type": "bar",
-      "title": "双方舰载机就绪总数",
-      "series": [
-        {
-          "name": "USN",
+          "name": "USN（3艘）",
           "value": 234,
           "side": "USN"
         },
         {
-          "name": "IJN",
+          "name": "IJN（4艘）",
           "value": 235,
           "side": "IJN"
         }
       ]
     },
     {
-      "id": "usn-embarked-class",
-      "type": "pie",
-      "title": "红方舰载机机型构成（就绪）",
+      "id": "usn-carrier-distribution",
+      "type": "stacked_bar",
+      "title": "红方三航母舰载机分布（就绪）",
       "series": [
         {
-          "name": "俯冲轰炸机-无畏",
-          "value": 113,
+          "name": "CVA-5 Yorktown",
+          "value": 75,
           "side": "USN"
         },
         {
-          "name": "鱼雷机-毁灭者",
-          "value": 42,
-          "side": "USN"
-        },
-        {
-          "name": "战斗机-野猫",
+          "name": "CVA-6 Enterprise",
           "value": 79,
+          "side": "USN"
+        },
+        {
+          "name": "CVA-7 Hornet",
+          "value": 80,
           "side": "USN"
         }
       ]
     },
     {
-      "id": "ijn-embarked-class",
-      "type": "pie",
-      "title": "蓝方舰载机机型构成（就绪）",
+      "id": "ijn-carrier-distribution",
+      "type": "stacked_bar",
+      "title": "蓝方四航母舰载机分布（就绪）",
       "series": [
         {
-          "name": "俯冲轰炸机-九九式/彗星",
-          "value": 65,
+          "name": "IJN Akagi",
+          "value": 46,
           "side": "IJN"
         },
         {
-          "name": "舰载侦察机-水上飞机",
-          "value": 16,
+          "name": "IJN Hiryu",
+          "value": 54,
           "side": "IJN"
         },
         {
-          "name": "鱼雷机-九七式",
-          "value": 81,
+          "name": "IJN Kaga",
+          "value": 63,
           "side": "IJN"
         },
         {
-          "name": "战斗机-零式",
-          "value": 73,
+          "name": "IJN Soryu",
+          "value": 56,
           "side": "IJN"
         }
       ]
@@ -203,31 +175,31 @@
       "perspective": "红方看蓝方",
       "target": "南云四航母",
       "level": "高",
-      "evidence": "完整甲板、指向中途岛；尚未放飞故不是紧急，但构成开战核心打击力量。"
-    },
-    {
-      "perspective": "蓝方看红方",
-      "target": "中途岛机场",
-      "level": "高",
-      "evidence": "既定首要目标，岸基航空兵（PBY、B-17、F4F等）全部在位待命，具备即时反击能力。"
-    },
-    {
-      "perspective": "红方看蓝方",
-      "target": "TF16双航母集群（Enterprise+Hornet）",
-      "level": "高",
-      "evidence": "美海军最大舰载机投送单元（159架就绪），位置隐蔽且航向指向中途岛，威胁发现链主导权。"
-    },
-    {
-      "perspective": "蓝方看红方",
-      "target": "TF17约克城号",
-      "level": "高",
-      "evidence": "独立部署的第三艘美航母（75架就绪），位置偏东，构成侧翼突击潜力。"
+      "evidence": "完整甲板、集中部署、航向直指中途岛；开战潜力最大，决定首轮打击能力。"
     },
     {
       "perspective": "红方看蓝方",
       "target": "利根/筑摩水侦",
       "level": "中",
-      "evidence": "虽未升空，但搭载于侦察巡洋舰，开机即具备200+海里搜索半径，是南云早期预警关键节点。"
+      "evidence": "虽未放飞，但两舰各搭载5架水上飞机，具备即刻弹射能力，构成第一层远程搜索链。"
+    },
+    {
+      "perspective": "蓝方看红方",
+      "target": "中途岛机场",
+      "level": "高",
+      "evidence": "既定首要打击目标，拥有B-17、B-26、PBY等多型岸基机，可实施远程侦察与反舰攻击。"
+    },
+    {
+      "perspective": "蓝方看红方",
+      "target": "TF16 两航母",
+      "level": "高",
+      "evidence": "美海军主力航母集群，舰载机总数达159架，是日方最需优先定位与压制的海上机动打击力量。"
+    },
+    {
+      "perspective": "蓝方看红方",
+      "target": "TF17 约克城",
+      "level": "高",
+      "evidence": "第三艘美航母，虽受损修复后参战，但舰载机满编75架，构成独立打击群，威胁日方侧翼与补给线。"
     }
   ]
 }

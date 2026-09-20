@@ -1,11 +1,12 @@
-C：红方四艘航母（Akagi、Hiryu、Soryu、Kaga）构成南云机动部队完整编成基线，蓝方三艘航母（Yorktown、Enterprise、Hornet）为中途岛防御核心  
-R：红方航母舰载机总数219架（46+54+56+63）远超蓝方234架（75+79+80），但蓝方航母全部在航且航速15kn，红方仅Akagi与Hiryu在航（12kn），Soryu与Kaga停泊，机动性与起飞准备度呈反向关联  
-步骤名：Identify：从T1态势中识别出红方四艘航母与蓝方三艘航母为唯一具备远程打击能力的CombatEntity  
-步骤名：Locate：Akagi（29.15,-179.76）、Hiryu（29.17,-179.74）、Soryu（29.12,-179.92）、Kaga（29.20,-179.72）均位于中途岛西偏南约200海里，Yorktown（29.70,-176.90）、Enterprise（30.01,-177.25）、Hornet（29.97,-177.22）位于中途岛北至西北150–180海里  
-步骤名：Filter：剔除红方非航母平台（Kirishima、Tone等舰载≤5架），因其无独立航空战力；保留蓝方全部三艘航母，因舰载机合计234架且全部就绪  
-步骤名：Compare：红方Kaga舰载63架最多但停泊，Soryu舰载56架亦停泊；蓝方Yorktown舰载75架且航行中，Enterprise与Hornet舰载共159架且同步航行，整体出动窗口更早  
-步骤名：Aggregate：红方在航航母仅2艘（Akagi+Hiryu=100架），蓝方3艘全在航（234架），且蓝方位置更靠近中途岛，侦察半径覆盖红方集结区  
-步骤名：Assess：红方Soryu与Kaga停泊状态导致首轮搜索延迟，蓝方三舰航向汇聚、航速一致，具备协同放飞侦察机能力，开战潜力等级高于红方  
-步骤名：Rank：Yorktown > Enterprise > Hornet > Akagi > Hiryu > Kaga > Soryu（按首轮侦察发起能力与舰载机就绪度加权排序）  
-步骤名：Verify：T1简报明确“红方四艘航母都在导出中”“蓝方尚未放出侦察机”，印证所有平台当前均未进入接触阶段，排序依据仅为开战潜力  
-M：高亮聚焦于“在航+高舰载数”组合——Yorktown（75架/15kn）最突出；轴线沿中途岛—红方集结区连线，蓝方三舰位置更优形成
+C：红方USN以三艘航母（Enterprise、Hornet、Yorktown）与中途岛岸基航空兵为认知对象，蓝方IJN以南云机动部队四艘航母（Akagi、Kaga、Soryu、Hiryu）为认知对象  
+R：双方航母集群在空间上呈西北—东南对峙（29.97°–30.01°N vs 29.12°–29.20°N），时间上均处于未放飞侦察机的“开战前静默”状态，能力上美日舰载机总数相近（234 vs 235），但美舰载机已全部ready（0未就绪），日舰载机虽全数在舰但部分处于停泊状态影响响应速度  
+O：Identify：识别出红方三艘在航航母（Enterprise、Hornet、Yorktown）与蓝方四艘航母（Akagi、Kaga、Soryu、Hiryu）为对等作战单元  
+Locate：Enterprise（30.01°N,177.25°W）、Hornet（29.97°N,177.22°W）、Yorktown（29.70°N,176.90°W）呈西北扇形分布；Akagi（29.15°N,179.76°W）、Hiryu（29.17°N,179.74°W）在航，Kaga（29.20°N,179.72°W）、Soryu（29.12°N,179.92°W）停泊，整体位于红方东南约300海里  
+Filter：剔除蓝方停泊且无空中预警能力的Kaga、Soryu（航速0、无水侦起飞记录），剔除红方停泊的中途岛机场（无在空单位、B-17/B-26未出动）  
+Compare：Enterprise+Hornet（159架ready）vs Akagi+Hiryu（100架ready，含46+54）；红方TF16两舰齐速15kn/245°，蓝方仅Akagi/Hiryu齐速12kn/112.5°，其余19艘舰停泊——红方编队完成度更高  
+Aggregate：将Akagi与Hiryu聚合为“高威胁先导打击组”，Enterprise与Hornet聚合为“高响应主攻组”，Yorktown单列为“次响应后备组”  
+Assess：Akagi/Hiryu构成最高威胁等级（T1级），因其位置最前、航速唯一持续、舰载机总数过百且零式占比高；Enterprise/Hornet次之（T2级），虽ready数多但分散且TF16护航未齐速；Yorktown（T3级）单独前出、航速匹配但载机量最低（75）  
+Rank：1. IJN Akagi｜2. IJN Hiryu｜3. CVA-6 Enterprise｜4. CVA-7 Hornet｜5. CVA-5 Yorktown  
+Verify：所有排序依据均来自T1切片原始数据——Akagi/Hiryu是蓝方唯二在航航母且ready数明确（46/54），Enterprise/Hornet坐标相邻、航速/航向一致，Yorktown坐标孤立、载机量唯一标定为75  
+M：高亮聚焦于“在航+ready>45”的航母；轴线沿29.1°–30.0°N纬度带展开，凸显红蓝主力纵向错位；威胁圈以300海里搜索半径覆盖Akagi/Hiryu与Enterprise/Hornet，排除Kaga/Soryu及中途岛岸基  
+E：所有排序未引入T2+数据，未使用“飞龙消失”等后续切片信息，严格锚定

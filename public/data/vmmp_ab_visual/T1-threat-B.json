@@ -1,9 +1,9 @@
 {
   "generated_by": "llm",
   "time_slice": "T1",
-  "title": "中途岛战役初始态势：南云集结与美舰队隐蔽接敌",
+  "title": "中途岛战役初始态势：南云集结与美舰队隐蔽展开",
   "phase_label": "初始态势：兵力展开与机动部队集结",
-  "narrative": "T1 阶段双方尚未接触，红方（USN）三支航母特混舰队呈扇形分布于中途岛东南至东北海域，TF16 与 TF17 向西北航进，约克城单舰前出；蓝方（IJN）南云机动部队四艘航母集结于中途岛西北约 500 海里处（29.15°N, 179.75°W），航向 112.5°，尚未放飞侦察机。双方在空飞机为零，威胁本质是‘发现潜力’而非即时交火——谁先定位对方航母集群，将主导后续搜索与第一波攻击节奏。",
+  "narrative": "T1 阶段双方尚未接触，无空中单位，战场处于静默状态。红方三艘航母（TF16双舰、TF17单舰）呈西北—北弧线分布于中途岛以北200–250海里，航向西南，尚未释放侦察机；蓝方南云机动部队四航母集中于东经179.7°附近，航向112.5°指向中途岛，处于集结未完成状态。威胁本质是‘发现先手权’——双方均具备完整航空打击能力，但位置、航向与舰载机就绪度构成不对称的开战潜力梯度。",
   "map": {
     "center": [
       29.4,
@@ -31,20 +31,20 @@
           28.21,
           -177.38
         ],
-        "label": "IJN 进击轴（指向中途岛）",
+        "label": "南云进击轴（指向中途岛）",
         "side": "IJN"
       },
       {
         "id": "a2",
         "from": [
-          29.97,
-          -177.22
+          29.99,
+          -177.24
         ],
         "to": [
           28.21,
           -177.38
         ],
-        "label": "USN 反向接敌轴（TF16 指向中途岛）",
+        "label": "TF16—中途岛协同轴",
         "side": "USN"
       }
     ],
@@ -57,40 +57,18 @@
         ],
         "radius_nm": 60,
         "level": "高",
-        "label": "南云机动部队集结区（四航母+侦察巡洋舰）",
+        "label": "南云机动部队集结区（含四航母）",
         "side": "IJN"
       },
       {
         "id": "z2",
         "center": [
           29.85,
-          -177.23
+          -177.2
         ],
-        "radius_nm": 50,
+        "radius_nm": 80,
         "level": "高",
-        "label": "TF16 双航母集群（Enterprise+Hornet）",
-        "side": "USN"
-      },
-      {
-        "id": "z3",
-        "center": [
-          29.7,
-          -176.9
-        ],
-        "radius_nm": 30,
-        "level": "中",
-        "label": "TF17 单航母（Yorktown）前出位置",
-        "side": "USN"
-      },
-      {
-        "id": "z4",
-        "center": [
-          28.21,
-          -177.38
-        ],
-        "radius_nm": 15,
-        "level": "高",
-        "label": "中途岛岸基航空兵与防空阵地",
+        "label": "美特混舰队前沿搜索扇区（TF16+TF17覆盖带）",
         "side": "USN"
       }
     ]
@@ -123,62 +101,67 @@
   ],
   "charts": [
     {
-      "id": "ships",
+      "id": "carrier-strike-potential",
       "type": "bar",
-      "title": "水面舰艇数量对比",
+      "title": "双方航母舰载机就绪总量对比（T1）",
       "series": [
         {
-          "name": "USN",
-          "value": 28,
-          "side": "USN"
-        },
-        {
-          "name": "IJN",
-          "value": 21,
-          "side": "IJN"
-        }
-      ]
-    },
-    {
-      "id": "embarked-ready",
-      "type": "stacked_bar",
-      "title": "双方舰载机就绪总数构成",
-      "series": [
-        {
-          "name": "USN 舰载机就绪",
+          "name": "USN 舰载机就绪数",
           "value": 234,
           "side": "USN"
         },
         {
-          "name": "IJN 舰载机就绪",
+          "name": "IJN 舰载机就绪数",
           "value": 235,
           "side": "IJN"
         }
       ]
     },
     {
-      "id": "threat-priority",
-      "type": "bar",
-      "title": "关键威胁目标优先级（按开战潜力排序）",
+      "id": "cv-distribution",
+      "type": "stacked_bar",
+      "title": "航母空间分布密度（纬度带 29.0°–30.5°N）",
       "series": [
         {
-          "name": "南云四航母（蓝方视角）",
-          "value": 95,
-          "side": "IJN"
+          "name": "USN 航母（3艘）",
+          "value": 3,
+          "side": "USN",
+          "subgroups": [
+            {
+              "name": "TF16（2艘）",
+              "value": 2
+            },
+            {
+              "name": "TF17（1艘）",
+              "value": 1
+            }
+          ]
         },
         {
-          "name": "中途岛机场（红方视角）",
-          "value": 90,
-          "side": "USN"
-        },
+          "name": "IJN 航母（4艘）",
+          "value": 4,
+          "side": "IJN",
+          "subgroups": [
+            {
+              "name": "集结停泊（3艘）",
+              "value": 3
+            },
+            {
+              "name": "水面航行（1艘）",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "embarked-readiness-ratio",
+      "type": "pie",
+      "title": "蓝方舰载机就绪率（全就绪，100%）",
+      "series": [
         {
-          "name": "TF16 双航母（蓝方视角）",
-          "value": 85,
-          "side": "IJN"
-        },
-        {
-          "name": "TF17 约克城（蓝方视角）",
-          "value": 80,
+          "name": "已就绪",
+          "value": 235,
           "side": "IJN"
         }
       ]
@@ -192,31 +175,31 @@
       "perspective": "红方看蓝方",
       "target": "南云四航母",
       "level": "高",
-      "evidence": "完整甲板、齐备舰载机、指向中途岛；未放飞故属‘开战潜力’最高层级，非紧急但决定战役主动权。"
+      "evidence": "完整甲板、集中部署、航向直指中途岛；舰载机全部就绪，构成最大航空突击集群。"
+    },
+    {
+      "perspective": "红方看蓝方",
+      "target": "利根/筑摩水侦",
+      "level": "中",
+      "evidence": "虽未升空，但两舰各搭载5架水上侦察机，属日方首轮搜索主力，开机即进入发现链前端。"
     },
     {
       "perspective": "蓝方看红方",
       "target": "中途岛机场",
       "level": "高",
-      "evidence": "既定打击目标，岸基PBY、B-17、F4F等已就位跑道与掩体，具备首轮反制与持续侦察能力。"
-    },
-    {
-      "perspective": "红方看蓝方",
-      "target": "TF16 两航母（Enterprise+Hornet）",
-      "level": "高",
-      "evidence": "美最大舰载机投送集群（159架），位置较TF17更靠近南云编队，T1虽未被定位，但其存在构成最紧迫的潜在反击力量。"
-    },
-    {
-      "perspective": "红方看蓝方",
-      "target": "TF17 约克城",
-      "level": "高",
-      "evidence": "第三艘美航母，独立部署于TF16东南侧，形成夹角态势，增加日方搜索与防御纵深压力。"
+      "evidence": "固定目标但岸基航空兵满编待命（PBY/B-17/B-26等），是日方第一波攻击核心目标。"
     },
     {
       "perspective": "蓝方看红方",
-      "target": "利根/筑摩水侦",
-      "level": "中",
-      "evidence": "虽未升空，但两舰各携5架水上飞机，属日方唯一远程侦察手段，其弹射即标志搜索阶段启动。"
+      "target": "TF16 两航母",
+      "level": "高",
+      "evidence": "美最大舰载航空力量（159架就绪），位置靠西且航向隐蔽，日方T1尚无可靠定位证据。"
+    },
+    {
+      "perspective": "蓝方看红方",
+      "target": "TF17 约克城",
+      "level": "高",
+      "evidence": "第三艘美航母，独立部署于TF16东南侧，构成侧翼突袭潜力，增加日方搜索不确定性。"
     }
   ]
 }

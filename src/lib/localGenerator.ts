@@ -288,7 +288,7 @@ export function generateSituationLocal(
       .join(" "),
     map: buildMap(pack),
     kpis: buildKpis(pack),
-    charts: [],
+    charts: buildFixedCharts(pack),
     intent_findings: [],
     threat_findings: [],
     priorities: [],
