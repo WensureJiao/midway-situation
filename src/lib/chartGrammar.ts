@@ -10,6 +10,38 @@ function levelScore(level: string): number {
   return 0;
 }
 
+const THREAT_LEVEL_KEYS = ["紧急", "高", "中", "低"] as const;
+type ThreatLevelKey = (typeof THREAT_LEVEL_KEYS)[number];
+
+function isRedPerspective(perspective: string): boolean {
+  return /红方看蓝方|美方看日方|红方看|美方看/.test(perspective);
+}
+
+function isBluePerspective(perspective: string): boolean {
+  return /蓝方看红方|日方看美方|蓝方看|日方看/.test(perspective);
+}
+
+function countThreatLevels(
+  ratings: { perspective?: string; level: string }[],
+  matchPerspective: (p: string) => boolean,
+): Record<ThreatLevelKey, number> {
+  const counts: Record<ThreatLevelKey, number> = {
+    紧急: 0,
+    高: 0,
+    中: 0,
+    低: 0,
+  };
+  for (const r of ratings) {
+    if (!matchPerspective(r.perspective ?? "")) continue;
+    const lv = String(r.level);
+    if (/紧急/.test(lv)) counts.紧急 += 1;
+    else if (/高/.test(lv)) counts.高 += 1;
+    else if (/中/.test(lv)) counts.中 += 1;
+    else if (/低/.test(lv)) counts.低 += 1;
+  }
+  return counts;
+}
+
 function cleanClassKey(key: string): string {
   return key.replace(/\|ready_min=\d+/g, "");
 }
@@ -41,8 +73,10 @@ export type SliceGrammarInput = {
 export type ChartGrammarGroups = {
   /** 仅当前选中时间片 */
   sliceCharts: ChartSpec[];
-  /** T1→T193 跨切片 */
+  /** T1→T193 · 随 A/B 的认知走势 */
   timelineCharts: ChartSpec[];
+  /** T1→T193 · 兵力基线（pack 事实，与 A/B 无关） */
+  forceTimelineCharts: ChartSpec[];
 };
 
 function pickSpecs(bundle: SliceGrammarInput, side: AbSide) {
@@ -88,9 +122,7 @@ export function buildSliceGrammarCharts(
     : [{ name: "暂无就绪机型", value: 0, side: "IJN" as const }];
 
   const redView = (threatSpec.threat_ratings ?? [])
-    .filter((r) =>
-      /红方看蓝方|美方看日方|红方看|美方看/.test(r.perspective ?? ""),
-    )
+    .filter((r) => isRedPerspective(r.perspective ?? ""))
     .map((r) => ({
       name: r.target,
       value: levelScore(String(r.level)),
@@ -100,9 +132,7 @@ export function buildSliceGrammarCharts(
     .slice(0, 8);
 
   const blueView = (threatSpec.threat_ratings ?? [])
-    .filter((r) =>
-      /蓝方看红方|日方看美方|蓝方看|日方看/.test(r.perspective ?? ""),
-    )
+    .filter((r) => isBluePerspective(r.perspective ?? ""))
     .map((r) => ({
       name: r.target,
       value: levelScore(String(r.level)),
@@ -121,7 +151,10 @@ export function buildSliceGrammarCharts(
     {
       id: "grammar-grouped",
       type: "grouped_bar",
-      title: "视角目标数",
+      title: "双视角威胁条目",
+      description:
+        perspectiveBar?.description ??
+        "红看蓝＝美方列出的日方目标数；蓝看红＝日方列出的美方目标数（只计条数，不是威胁高低）",
       series: perspectiveBar?.series ?? [],
     },
     {
@@ -161,10 +194,114 @@ export function buildSliceGrammarCharts(
   ];
 }
 
-/** 跨切片：T1→T193 走势（与上方「当前片」分开） */
+/** 跨切片：随 A/B 的威胁/意图认知走势 */
 export function buildTimelineGrammarCharts(
   timeline: SliceGrammarInput[],
   side: AbSide = "B",
+): ChartSpec[] {
+  const ordered = orderedTimeline(timeline);
+
+  const phaseArea = ordered.map((s) => {
+    const { intentSpec: is } = pickSpecs(s, side);
+    const phase = inferCampaignPhase(is.phase_label ?? s.pack.phase_label, is);
+    return {
+      name: s.id,
+      value: phase === "接触" ? 3 : phase === "搜索" ? 2 : 1,
+    };
+  });
+
+  const highThreatBySide = ordered.flatMap((s) => {
+    const { threatSpec } = pickSpecs(s, side);
+    const ratings = threatSpec.threat_ratings ?? [];
+    const redN = ratings.filter(
+      (r) =>
+        isRedPerspective(r.perspective ?? "") &&
+        /紧急|高/.test(String(r.level)),
+    ).length;
+    const blueN = ratings.filter(
+      (r) =>
+        isBluePerspective(r.perspective ?? "") &&
+        /紧急|高/.test(String(r.level)),
+    ).length;
+    return [
+      {
+        name: s.id,
+        value: redN,
+        group: "红看蓝",
+        side: "USN" as const,
+      },
+      {
+        name: s.id,
+        value: blueN,
+        group: "蓝看红",
+        side: "IJN" as const,
+      },
+    ];
+  });
+
+  const threatLevelRed = ordered.flatMap((s) => {
+    const { threatSpec } = pickSpecs(s, side);
+    const counts = countThreatLevels(
+      threatSpec.threat_ratings ?? [],
+      isRedPerspective,
+    );
+    return THREAT_LEVEL_KEYS.map((k) => ({
+      name: s.id,
+      value: counts[k],
+      group: k,
+      side: "USN" as const,
+    }));
+  });
+
+  const threatLevelBlue = ordered.flatMap((s) => {
+    const { threatSpec } = pickSpecs(s, side);
+    const counts = countThreatLevels(
+      threatSpec.threat_ratings ?? [],
+      isBluePerspective,
+    );
+    return THREAT_LEVEL_KEYS.map((k) => ({
+      name: s.id,
+      value: counts[k],
+      group: k,
+      side: "IJN" as const,
+    }));
+  });
+
+  return [
+    {
+      id: "grammar-threat-high",
+      type: "multi_line",
+      title: "高威胁目标数",
+      description: "紧急+高：红看蓝 / 蓝看红（随所选 A/B）",
+      series: highThreatBySide,
+    },
+    {
+      id: "grammar-threat-levels-red",
+      type: "multi_line",
+      title: "红看蓝 · 威胁等级",
+      description: "美方视角下紧急/高/中/低条数",
+      series: threatLevelRed,
+    },
+    {
+      id: "grammar-threat-levels-blue",
+      type: "multi_line",
+      title: "蓝看红 · 威胁等级",
+      description: "日方视角下紧急/高/中/低条数",
+      series: threatLevelBlue,
+    },
+    {
+      id: "grammar-area",
+      type: "area",
+      title: "意图阶段",
+      description: "纵轴：1=集结 · 2=搜索 · 3=接触",
+      series: phaseArea,
+    },
+  ];
+}
+
+/** 跨切片：兵力基线（与 A/B 无关） */
+export function buildForceTimelineCharts(
+  timeline: SliceGrammarInput[],
 ): ChartSpec[] {
   const ordered = orderedTimeline(timeline);
 
@@ -180,22 +317,15 @@ export function buildTimelineGrammarCharts(
       name: s.id,
       value: s.pack.sides.USN.summary.airborne_aircraft_count ?? 0,
       side: "USN" as const,
+      group: "USN",
     },
     {
       name: s.id,
       value: s.pack.sides.IJN.summary.airborne_aircraft_count ?? 0,
       side: "IJN" as const,
+      group: "IJN",
     },
   ]);
-
-  const phaseArea = ordered.map((s) => {
-    const { intentSpec: is } = pickSpecs(s, side);
-    const phase = inferCampaignPhase(is.phase_label ?? s.pack.phase_label, is);
-    return {
-      name: s.id,
-      value: phase === "接触" ? 3 : phase === "搜索" ? 2 : 1,
-    };
-  });
 
   const shipLine = ordered.map((s) => ({
     name: s.id,
@@ -209,24 +339,21 @@ export function buildTimelineGrammarCharts(
       id: "grammar-line",
       type: "line",
       title: "在空飞机总数",
+      description: "兵力事实，切 A/B 不变",
       series: airborneLine,
     },
     {
       id: "grammar-multi-line",
       type: "multi_line",
       title: "美/日在空数",
+      description: "兵力事实，切 A/B 不变",
       series: multiLine,
-    },
-    {
-      id: "grammar-area",
-      type: "area",
-      title: "意图阶段编码",
-      series: phaseArea,
     },
     {
       id: "grammar-ships-line",
       type: "line",
       title: "水面舰艇总数",
+      description: "兵力事实，切 A/B 不变",
       series: shipLine,
     },
   ];
@@ -240,5 +367,6 @@ export function buildChartGrammarFromReal(
   return {
     sliceCharts: buildSliceGrammarCharts(current, side),
     timelineCharts: buildTimelineGrammarCharts(timeline, side),
+    forceTimelineCharts: buildForceTimelineCharts(timeline),
   };
 }

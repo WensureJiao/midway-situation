@@ -16,7 +16,7 @@ export const CHART_TYPE_CATALOG: readonly CatalogEntry[] = [
   {
     type: "grouped_bar",
     label: "分组柱状",
-    use: "两视角目标数；美/日作战轴线数",
+    use: "双视角威胁条目数；美/日作战轴线数",
   },
   {
     type: "hbar",
@@ -26,17 +26,17 @@ export const CHART_TYPE_CATALOG: readonly CatalogEntry[] = [
   {
     type: "line",
     label: "折线图",
-    use: "跨切片在空总数、舰数走势",
+    use: "跨切片在空/舰数",
   },
   {
     type: "multi_line",
     label: "多序列折线",
-    use: "跨切片美/日在空对比",
+    use: "跨切片美/日在空；红看蓝/蓝看红威胁走势",
   },
   {
     type: "area",
     label: "面积图",
-    use: "跨切片意图阶段编码",
+    use: "跨切片意图阶段（1集结/2搜索/3接触）",
   },
   {
     type: "pie",

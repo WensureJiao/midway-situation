@@ -7,7 +7,7 @@ function sideName(side?: string) {
 }
 
 function zoneColor(level: string, side?: string) {
-  if (level === "紧急") return "#b45309";
+  if (level === "紧急") return "#9f1239";
   if (side === "IJN") return "#3b82a8";
   return "#c45c4a";
 }

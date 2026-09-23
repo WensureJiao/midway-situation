@@ -96,7 +96,7 @@ export function ChartGrammarWorkbench() {
 
   const charts = useMemo(() => {
     if (!current || !timeline.length) {
-      return { sliceCharts: [], timelineCharts: [] };
+      return { sliceCharts: [], timelineCharts: [], forceTimelineCharts: [] };
     }
     return buildChartGrammarFromReal(current, timeline, abSide);
   }, [current, timeline, abSide]);
@@ -198,18 +198,36 @@ export function ChartGrammarWorkbench() {
           加载中…
         </div>
       ) : viewMode === "timeline" ? (
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-[var(--ink)]">
-            跨切片时间线 · T1→T193
-            {" · "}
-            {abSide === "A" ? "A·无范式" : "B·有VMMP"}
-          </h2>
-          <SituationCharts
-            charts={charts.timelineCharts}
-            showFixedCharts
-            showFocusPanels={false}
-          />
-        </section>
+        <div className="space-y-6">
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold text-[var(--ink)]">
+              认知走势 · T1→T193
+              {" · "}
+              {abSide === "A" ? "A·无范式" : "B·有VMMP"}
+            </h2>
+            <p className="text-[11px] text-[var(--muted)]">
+              威胁等级与意图阶段随 A/B 变化，便于对照范式效果
+            </p>
+            <SituationCharts
+              charts={charts.timelineCharts}
+              showFixedCharts
+              showFocusPanels={false}
+            />
+          </section>
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold text-[var(--ink)]">
+              兵力基线 · T1→T193
+            </h2>
+            <p className="text-[11px] text-[var(--muted)]">
+              来自切片 pack 的兵力事实，切 A/B 不变，作场景上下文
+            </p>
+            <SituationCharts
+              charts={charts.forceTimelineCharts}
+              showFixedCharts
+              showFocusPanels={false}
+            />
+          </section>
+        </div>
       ) : (
         <section className="space-y-2">
           <h2 className="text-sm font-semibold text-[var(--ink)]">

@@ -110,6 +110,8 @@ export interface ChartSpec {
     name: string;
     value: number;
     side?: SideId | "both";
+    /** 多序列折线的序列名（如威胁等级）；缺省用 side */
+    group?: string;
     /** 悬停提示用，如证据条目明细 */
     detail?: string;
   }[];

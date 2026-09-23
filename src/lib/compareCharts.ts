@@ -34,6 +34,63 @@ function countByKey(keys: string[], values: string[]): ChartSpec["series"] {
   return keys.map((name) => ({ name, value: counts[name] ?? 0 }));
 }
 
+/** 威胁等级分布：计数 + 悬停明细（目标 / 视角 / 证据） */
+function threatLevelDistributionSeries(
+  ratings: SituationViewSpec["threat_ratings"],
+): ChartSpec["series"] {
+  const keys = ["紧急", "高", "中", "低"] as const;
+  return keys.map((name) => {
+    const items = (ratings ?? []).filter(
+      (r) => normalizeCompareLevel(String(r.level)) === name,
+    );
+    const detail = items.length
+      ? items
+          .map((r, i) => {
+            const bucket = perspectiveBucket(r.perspective ?? "");
+            const view =
+              bucket === "红方看蓝方"
+                ? "红看蓝"
+                : bucket === "蓝方看红方"
+                  ? "蓝看红"
+                  : (r.perspective || "视角未标");
+            const ev = r.evidence?.trim();
+            return `${i + 1}. [${view}] ${r.target}${ev ? ` — ${ev}` : ""}`;
+          })
+          .join("\n")
+      : "暂无该等级目标";
+    return { name, value: items.length, detail };
+  });
+}
+
+/** 双视角威胁条目：计数 + 悬停明细 */
+function threatPerspectiveSeries(
+  ratings: SituationViewSpec["threat_ratings"],
+): ChartSpec["series"] {
+  const keys = [
+    {
+      name: "红看蓝",
+      match: (p: string) => perspectiveBucket(p) === "红方看蓝方",
+    },
+    {
+      name: "蓝看红",
+      match: (p: string) => perspectiveBucket(p) === "蓝方看红方",
+    },
+  ] as const;
+  return keys.map(({ name, match }) => {
+    const items = (ratings ?? []).filter((r) => match(r.perspective ?? ""));
+    const detail = items.length
+      ? items
+          .map((r, i) => {
+            const lv = normalizeCompareLevel(String(r.level)) ?? r.level;
+            const ev = r.evidence?.trim();
+            return `${i + 1}. [${lv}] ${r.target}${ev ? ` — ${ev}` : ""}`;
+          })
+          .join("\n")
+      : "暂无该视角条目";
+    return { name, value: items.length, detail };
+  });
+}
+
 /** 证据构成：计数 + 悬停明细 */
 function evidenceCompositionSeries(
   spec: SituationViewSpec,
@@ -54,6 +111,44 @@ function evidenceCompositionSeries(
   });
 }
 
+/** 作战指向：按方计数 + 悬停列出轴线标签与起终点 */
+function intentAxesSeries(
+  axes: NonNullable<SituationViewSpec["map"]>["axes"],
+): ChartSpec["series"] {
+  const fmt = (p: [number, number]) => {
+    const [lat, lon] = p;
+    const ns = lat >= 0 ? "N" : "S";
+    const ew = lon >= 0 ? "E" : "W";
+    return `${Math.abs(lat).toFixed(2)}°${ns} ${Math.abs(lon).toFixed(2)}°${ew}`;
+  };
+  const buckets = [
+    {
+      name: "美方",
+      side: "USN" as const,
+      match: (s?: string) => s === "USN",
+    },
+    {
+      name: "日方",
+      side: "IJN" as const,
+      match: (s?: string) => s === "IJN",
+    },
+  ] as const;
+
+  return buckets.map(({ name, side, match }) => {
+    const items = (axes ?? []).filter((a) => match(a.side));
+    const detail = items.length
+      ? items
+          .map((a, i) => {
+            const route =
+              a.from && a.to ? `\n   ${fmt(a.from)} → ${fmt(a.to)}` : "";
+            return `${i + 1}. ${a.label || a.id || "未命名轴线"}${route}`;
+          })
+          .join("\n")
+      : "暂无该方作战轴线";
+    return { name, value: items.length, side, detail };
+  });
+}
+
 /**
  * 对比页认知图槽：左右同构。
  * 威胁：等级柱、视角分组柱、地图编码饼图
@@ -71,27 +166,13 @@ export function buildTaskCompareCharts(
   const axes = map.axes ?? [];
 
   if (taskFocus === "intent") {
-    const axisSides = axes.map((a) =>
-      a.side === "IJN" ? "IJN" : a.side === "USN" ? "USN" : "其他",
-    );
-
     return [
       {
         id: "cmp-intent-axes",
         type: "grouped_bar",
         title: "作战指向",
-        series: [
-          {
-            name: "USN",
-            value: axisSides.filter((s) => s === "USN").length,
-            side: "USN",
-          },
-          {
-            name: "IJN",
-            value: axisSides.filter((s) => s === "IJN").length,
-            side: "IJN",
-          },
-        ],
+        description: "各方地图轴线条数；悬停可看轴线名称与起终点",
+        series: intentAxesSeries(axes),
       },
       {
         id: "cmp-intent-evidence",
@@ -103,14 +184,7 @@ export function buildTaskCompareCharts(
   }
 
   const ratings = spec.threat_ratings ?? [];
-  const levels = ratings
-    .map((r) => normalizeCompareLevel(String(r.level)))
-    .filter((x): x is "紧急" | "高" | "中" | "低" => x != null);
-  const perspectives = ratings
-    .map((r) => perspectiveBucket(r.perspective ?? ""))
-    .filter((x): x is "红方看蓝方" | "蓝方看红方" => x != null);
 
-  const levelProfile = countByKey(["紧急", "高", "中", "低"], levels);
   const mapEncoding = [
     { name: "高亮", value: (map.highlight_names ?? []).length },
     { name: "轴线", value: axes.length },
@@ -122,16 +196,15 @@ export function buildTaskCompareCharts(
       id: "cmp-threat-levels",
       type: "bar",
       title: "威胁等级分布",
-      series: levelProfile,
+      series: threatLevelDistributionSeries(ratings),
     },
     {
       id: "cmp-threat-perspectives",
       type: "grouped_bar",
-      title: "视角目标数",
-      series: countByKey(
-        ["红看蓝", "蓝看红"],
-        perspectives.map((p) => (p === "红方看蓝方" ? "红看蓝" : "蓝看红")),
-      ),
+      title: "双视角威胁条目",
+      description:
+        "红看蓝＝美方列出的日方目标数；蓝看红＝日方列出的美方目标数（只计条数，不是威胁高低）",
+      series: threatPerspectiveSeries(ratings),
     },
     {
       id: "cmp-threat-map-encoding",

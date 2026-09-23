@@ -185,13 +185,13 @@ export function SituationMap({
             pathOptions={{
               color:
                 z.level === "紧急"
-                  ? "#b45309"
+                  ? "#9f1239"
                   : z.side === "IJN"
                     ? "#3b82a8"
                     : "#c45c4a",
               fillColor:
                 z.level === "紧急"
-                  ? "#f59e0b"
+                  ? "#e11d48"
                   : z.side === "IJN"
                     ? "#3b82a8"
                     : "#c45c4a",

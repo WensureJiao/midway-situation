@@ -32,10 +32,10 @@ const IJN = "#3b82a8";
 
 /** 威胁等级分 → 色（与威胁排序面板一致） */
 const LEVEL_SCORE_COLORS: Record<number, string> = {
-  4: "#b45309", // 紧急
-  3: "#c45c4a", // 高
-  2: "#d4a017", // 中
-  1: "#5b8c5a", // 低
+  4: "#9f1239", // 紧急 · 深红，与「高」拉开
+  3: "#e07a3a", // 高 · 橙红
+  2: "#d4a017", // 中 · 金
+  1: "#5b8c5a", // 低 · 绿
 };
 
 const LEVEL_SCORE_LEGEND = [
@@ -130,6 +130,18 @@ function seriesColor(
   return TYPE_PALETTE[index % TYPE_PALETTE.length];
 }
 
+const PHASE_CODE_LABEL: Record<number, string> = {
+  1: "集结",
+  2: "搜索",
+  3: "接触",
+};
+
+function isPhaseCodeChart(chart: ChartSpec): boolean {
+  return (
+    chart.id === "grammar-area" || /意图阶段/.test(chart.title ?? "")
+  );
+}
+
 /** 折线/面积纵轴：数值几乎不变时收紧范围，避免贴顶看不出起伏 */
 function lineYDomain(values: number[]): [number, number] {
   const nums = values.filter((v) => Number.isFinite(v));
@@ -152,10 +164,14 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
     fill: seriesColor(chart, s.name, s.side, i, s.value),
   }));
   const showLevelLegend = isThreatLevelScoreChart(chart);
-  const showEvidenceTip =
+  const isPhaseChart = isPhaseCodeChart(chart);
+  const showDetailTip =
     chart.id === "cmp-intent-evidence" ||
     chart.id === "grammar-evidence-pie" ||
-    chart.title.includes("证据");
+    chart.id === "cmp-threat-levels" ||
+    chart.id === "grammar-bar" ||
+    chart.title.includes("证据") ||
+    series.some((s) => Boolean(s.detail));
   const type = chart.type;
   const isHBar = type === "hbar";
   const isPie = type === "pie";
@@ -166,8 +182,8 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
   const multiLineKeys = Array.from(
     new Set(
       data
-        .map((s) => s.side)
-        .filter((s): s is "USN" | "IJN" | "both" => Boolean(s)),
+        .map((s) => s.group ?? s.side)
+        .filter((s): s is string => Boolean(s)),
     ),
   );
   const multiLineData =
@@ -178,7 +194,9 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
             const row: Record<string, string | number> = { name };
             for (const k of multiLineKeys) {
               row[k] =
-                data.find((s) => s.name === name && s.side === k)?.value ?? 0;
+                data.find(
+                  (s) => s.name === name && (s.group ?? s.side) === k,
+                )?.value ?? 0;
             }
             return row;
           });
@@ -191,15 +209,22 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
           multiLineKeys.map((k) => Number(row[k]) || 0),
         )
       : data.map((s) => s.value);
-  const yDomain = lineYDomain(lineValues);
+  const yDomain = isPhaseChart ? ([1, 3] as [number, number]) : lineYDomain(lineValues);
 
   return (
     <div className="flex h-full flex-col rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)]">
-      <div className="mb-2 flex h-5 items-center justify-between gap-2">
-        <h3 className="min-w-0 truncate text-sm font-semibold text-[var(--ink)]">
-          {chart.title}
-        </h3>
-        <span className="shrink-0 text-[10px] text-[var(--muted)]">
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-semibold text-[var(--ink)]">
+            {chart.title}
+          </h3>
+          {chart.description ? (
+            <p className="mt-0.5 text-[10px] leading-snug text-[var(--muted)]">
+              {chart.description}
+            </p>
+          ) : null}
+        </div>
+        <span className="shrink-0 pt-0.5 text-[10px] text-[var(--muted)]">
           {chartTypeLabel(type)}
         </span>
       </div>
@@ -214,6 +239,12 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
               {L.label}
             </span>
           ))}
+        </div>
+      ) : isPhaseChart ? (
+        <div className="mb-2 flex h-4 flex-wrap gap-3 text-[10px] text-[var(--muted)]">
+          <span>1 = 集结</span>
+          <span>2 = 搜索</span>
+          <span>3 = 接触</span>
         </div>
       ) : null}
       <div className="min-h-0 overflow-hidden" style={{ height: chartHeight }}>
@@ -243,7 +274,7 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
                     detail?: string;
                   };
                   const title = `${row.name ?? ""}：${row.value ?? 0}`;
-                  if (!showEvidenceTip || !row.detail) {
+                  if (!showDetailTip || !row.detail) {
                     return (
                       <div className="rounded-md bg-[var(--panel)] px-2 py-1.5 text-xs shadow ring-1 ring-[var(--line)]">
                         {title}
@@ -280,11 +311,25 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
                 />
                 <YAxis
                   domain={yDomain}
+                  ticks={isPhaseChart ? [1, 2, 3] : undefined}
+                  tickFormatter={
+                    isPhaseChart
+                      ? (v) => PHASE_CODE_LABEL[Number(v)] ?? String(v)
+                      : undefined
+                  }
                   allowDecimals={false}
                   tick={{ fontSize: 10, fill: "#5c584f" }}
-                  width={32}
+                  width={isPhaseChart ? 40 : 32}
                 />
-                <Tooltip />
+                <Tooltip
+                  formatter={(value) => {
+                    const n = Number(value);
+                    if (isPhaseChart && PHASE_CODE_LABEL[n]) {
+                      return [`${n}（${PHASE_CODE_LABEL[n]}）`, "阶段"];
+                    }
+                    return [String(value), "值"];
+                  }}
+                />
                 <Area
                   type="monotone"
                   dataKey="value"
@@ -317,7 +362,19 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
                     key={k}
                     type="monotone"
                     dataKey={k}
-                    stroke={k === "IJN" ? IJN : USN}
+                    stroke={
+                      k === "紧急"
+                        ? levelScoreColor(4)
+                        : k === "高"
+                          ? levelScoreColor(3)
+                          : k === "中"
+                            ? levelScoreColor(2)
+                            : k === "低"
+                              ? levelScoreColor(1)
+                              : k === "蓝看红" || k === "IJN"
+                                ? IJN
+                                : USN
+                    }
                     strokeWidth={2}
                     dot={{ r: 3 }}
                   />
@@ -392,7 +449,34 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
                   />
                 </>
               )}
-              <Tooltip />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const row = payload[0]?.payload as {
+                    name?: string;
+                    value?: number;
+                    detail?: string;
+                  };
+                  const title = `${row.name ?? ""}：${row.value ?? 0}`;
+                  if (!showDetailTip || !row.detail) {
+                    return (
+                      <div className="rounded-md bg-[var(--panel)] px-2 py-1.5 text-xs shadow ring-1 ring-[var(--line)]">
+                        {title}
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="max-w-sm rounded-md bg-[var(--panel)] px-2.5 py-2 text-xs shadow-md ring-1 ring-[var(--line)]">
+                      <div className="mb-1 font-semibold text-[var(--ink)]">
+                        {title}
+                      </div>
+                      <div className="max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed text-[var(--muted)]">
+                        {row.detail}
+                      </div>
+                    </div>
+                  );
+                }}
+              />
               <Bar
                 dataKey="value"
                 radius={isHBar ? [0, 3, 3, 0] : [3, 3, 0, 0]}
@@ -432,9 +516,9 @@ function isHiddenChart(chart: ChartSpec, hideFixed: boolean): boolean {
 }
 
 const THREAT_COLORS: Record<string, string> = {
-  紧急: "#b45309",
-  高: "#c45c4a",
-  "高（发现链）": "#e07a6a",
+  紧急: "#9f1239",
+  高: "#e07a3a",
+  "高（发现链）": "#f0a060",
   中: "#d4a017",
   低: "#5b8c5a",
   "无/不适用": "#9ca3af",
