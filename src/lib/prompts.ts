@@ -144,8 +144,8 @@ export function buildSituationUserPrompt(
   const lockCharts = options?.lock_charts !== false;
   const chartOutHint = lockCharts
     ? `kpis 与 charts 可按示例填写（服务端会覆盖为固定四项 KPI 与四张兵力统计图）。`
-    : `对比页 charts 由服务端按任务从 threat_ratings 与 map（高亮/轴/圈）生成固定图槽，请输出 "charts": []。
-把可对比差异写在 threat_ratings 与 map.highlight_names / axes / threat_zones 上，不要自行设计统计图。`;
+    : `对比页 charts 由服务端按任务从 threat_ratings / map 生成认知图槽（柱/分组柱/饼等，属启用中的统计图语法子集），请输出 "charts": []。
+把可对比差异写在 threat_ratings 与 map.highlight_names / axes / threat_zones 与 phase 相关叙述上，不要自行设计统计图。`;
 
   return `## 场景
 战役: ${pack.scenario}

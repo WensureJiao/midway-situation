@@ -97,7 +97,7 @@ function VisPanel({
       ) : null}
 
       <div className="map-shell h-[min(46vh,460px)] overflow-hidden">
-        <SituationMap pack={pack} spec={spec} instanceKey={mapKey} />
+        <SituationMap key={mapKey} pack={pack} spec={spec} />
       </div>
 
       {(spec.map.axes?.length ?? 0) > 0 ||
@@ -130,6 +130,7 @@ function VisPanel({
           spec={spec}
           packPhase={pack.phase_label}
           showFixedCharts={false}
+          grammarHint
         />
       </div>
     </section>
@@ -486,6 +487,12 @@ export function VmmpCompareWorkbench() {
               )}
               {blind ? "揭晓" : "盲评"}
             </Button>
+            <Link
+              href="/charts"
+              className="rounded-md px-2.5 py-1.5 text-xs ring-1 ring-[var(--line)] hover:bg-[var(--panel-2)]"
+            >
+              图种库
+            </Link>
             <Link
               href="/"
               className="rounded-md px-2.5 py-1.5 text-xs ring-1 ring-[var(--line)] hover:bg-[var(--panel-2)]"

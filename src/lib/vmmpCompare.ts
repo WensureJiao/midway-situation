@@ -190,10 +190,13 @@ export function intentEvidenceItems(spec: SituationViewSpec) {
   for (const z of (spec.map.threat_zones ?? []).slice(0, 2)) {
     items.push({ kind: "活动区", text: `${z.label}（${z.level}）` });
   }
-  if (spec.narrative) {
-    items.push({ kind: "叙述依据", text: spec.narrative });
+  // 叙述另作阅读材料挂在末尾，不计入「证据构成」图的种类占比
+  // （几乎每侧都有 narrative，计入后恒为 1，对 A/B 无区分度）
+  const mapItems = items.slice(0, 7);
+  if (spec.narrative?.trim()) {
+    mapItems.push({ kind: "叙述", text: spec.narrative.trim() });
   }
-  return items.slice(0, 8);
+  return mapItems;
 }
 
 export function meanScores(scores: Record<string, number>): number | null {

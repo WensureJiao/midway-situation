@@ -38,13 +38,32 @@ function carriers(units: CompactUnit[]): CompactUnit[] {
   );
 }
 
+/** 去掉 ready_min 后缀后同机型合并计数 */
+function aggregateEmbarkedByClass(
+  rows: { key: string; count: number }[],
+  side: "USN" | "IJN",
+): { name: string; value: number; side: "USN" | "IJN" }[] {
+  const map = new Map<string, number>();
+  for (const row of rows) {
+    const name = row.key.replace(/\|ready_min=\d+/g, "");
+    map.set(name, (map.get(name) ?? 0) + row.count);
+  }
+  return [...map.entries()].map(([name, value]) => ({ name, value, side }));
+}
+
 /** 固定四张统计图（本地 / LLM 一致）。 */
 export function buildFixedCharts(pack: SlicePack): ChartSpec[] {
   const us = pack.sides.USN.summary;
   const ij = pack.sides.IJN.summary;
 
-  const usReadyClass = us.embarked_by_class_and_ready ?? [];
-  const ijReadyClass = ij.embarked_by_class_and_ready ?? [];
+  const usReadyClass = aggregateEmbarkedByClass(
+    us.embarked_by_class_and_ready ?? [],
+    "USN",
+  );
+  const ijReadyClass = aggregateEmbarkedByClass(
+    ij.embarked_by_class_and_ready ?? [],
+    "IJN",
+  );
 
   return [
     {
@@ -71,11 +90,7 @@ export function buildFixedCharts(pack: SlicePack): ChartSpec[] {
       type: "pie",
       title: "红方舰载机机型构成（就绪）",
       series: usReadyClass.length
-        ? usReadyClass.map((row) => ({
-            name: row.key.replace(/\|ready_min=\d+/, ""),
-            value: row.count,
-            side: "USN" as const,
-          }))
+        ? usReadyClass
         : [{ name: "暂无就绪机型", value: 0, side: "USN" }],
     },
     {
@@ -83,11 +98,7 @@ export function buildFixedCharts(pack: SlicePack): ChartSpec[] {
       type: "pie",
       title: "蓝方舰载机机型构成（就绪）",
       series: ijReadyClass.length
-        ? ijReadyClass.map((row) => ({
-            name: row.key.replace(/\|ready_min=\d+/, ""),
-            value: row.count,
-            side: "IJN" as const,
-          }))
+        ? ijReadyClass
         : [{ name: "暂无就绪机型", value: 0, side: "IJN" }],
     },
   ];

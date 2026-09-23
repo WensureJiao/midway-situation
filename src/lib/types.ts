@@ -91,12 +91,28 @@ export interface SliceIndexItem {
   path: string;
 }
 
+export type ChartType =
+  | "bar"
+  | "grouped_bar"
+  | "hbar"
+  | "line"
+  | "multi_line"
+  | "area"
+  | "pie";
+
 export interface ChartSpec {
   id: string;
-  type: "bar" | "pie" | "stacked_bar";
+  /** 统计图类型，见 chartTypes.CHART_TYPE_CATALOG */
+  type: ChartType;
   title: string;
   description?: string;
-  series: { name: string; value: number; side?: SideId | "both" }[];
+  series: {
+    name: string;
+    value: number;
+    side?: SideId | "both";
+    /** 悬停提示用，如证据条目明细 */
+    detail?: string;
+  }[];
 }
 
 export interface MapAxis {

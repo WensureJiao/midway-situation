@@ -1,9 +1,9 @@
 {
   "generated_by": "llm",
   "time_slice": "T21",
-  "title": "广域搜索接触：美机压近南云，日侦抵近中途岛",
+  "title": "广域搜索：侦察接触临界点",
   "phase_label": "广域搜索",
-  "narrative": "美方三支航母特混舰队（TF16/17及中途岛）正以约29.5°N、177.5–177.9°W为基线展开扇形前出；日方南云机动部队（赤城、加贺、苍龙、飞龙）位于28.9°N、179.1°W附近，舰载机已大规模升空并逼近美舰队经度带；双方侦察机在178.5°W–179.3°W区间形成对峙前沿，不确定性正快速收窄。",
+  "narrative": "美日双方侦察机扇区已大幅重叠，PBY与零式水侦在179°W附近形成对峙前沿；约克城前出的无畏式与野猫正逼近南云机动部队西侧边缘，而赤城、加贺、苍龙、飞龙（舰体未导出/未知）仍保持10节航速向东偏南航行；中途岛机场持续起飞B-17与PBY，TF16与TF17呈双轴向西北方向压进。",
   "map": {
     "center": [
       29.2,
@@ -11,13 +11,12 @@
     ],
     "zoom": 6,
     "highlight_names": [
-      "CVA-5 Yorktown",
-      "CVA-6 Enterprise",
-      "CVA-7 Hornet",
       "IJN Akagi",
       "IJN Kaga",
       "IJN Soryu",
-      "IJN Hiryu",
+      "CVA-5 Yorktown",
+      "CVA-6 Enterprise",
+      "CVA-7 Hornet",
       "Midway Installation"
     ],
     "axes": [
@@ -31,7 +30,7 @@
           28.92,
           -179.12
         ],
-        "label": "美打击轴",
+        "label": "美打击轴（TF16/17→南云）",
         "side": "USN"
       },
       {
@@ -44,7 +43,7 @@
           28.21,
           -177.38
         ],
-        "label": "日攻击轴",
+        "label": "日打击轴（南云→中途岛）",
         "side": "IJN"
       }
     ],
@@ -63,12 +62,12 @@
       {
         "id": "z2",
         "center": [
-          29.55,
-          -177.55
+          29.5,
+          -177.6
         ],
         "radius_nm": 35,
         "level": "高",
-        "label": "TF16/17联合打击前沿",
+        "label": "TF16/17联合打击前出区",
         "side": "USN"
       }
     ]
@@ -101,61 +100,68 @@
   ],
   "charts": [
     {
-      "id": "ships",
+      "id": "cmp-intent-axes",
       "type": "bar",
-      "title": "水面舰艇数量",
-      "description": "不含岸基设施",
+      "title": "作战指向（按方）",
+      "description": "由 map.axes 统计",
       "series": [
         {
           "name": "USN",
-          "value": 28,
+          "value": 1,
           "side": "USN"
         },
         {
           "name": "IJN",
-          "value": 20,
+          "value": 1,
           "side": "IJN"
         }
       ]
     },
     {
-      "id": "airborne",
+      "id": "cmp-intent-zones",
       "type": "bar",
-      "title": "在空飞机数量",
+      "title": "关注区等级",
+      "description": "由 map.threat_zones 统计",
       "series": [
         {
-          "name": "USN",
-          "value": 140,
-          "side": "USN"
+          "name": "紧急",
+          "value": 0
         },
         {
-          "name": "IJN",
-          "value": 36,
-          "side": "IJN"
+          "name": "高",
+          "value": 2
+        },
+        {
+          "name": "中",
+          "value": 0
+        },
+        {
+          "name": "低",
+          "value": 0
         }
       ]
     },
     {
-      "id": "usn-embarked-class",
+      "id": "cmp-intent-evidence",
       "type": "pie",
-      "title": "红方舰载机机型构成（就绪）",
+      "title": "证据片段构成",
+      "description": "由轴线/高亮/圈/叙述抽取",
       "series": [
         {
-          "name": "暂无就绪机型",
-          "value": 0,
-          "side": "USN"
-        }
-      ]
-    },
-    {
-      "id": "ijn-embarked-class",
-      "type": "pie",
-      "title": "蓝方舰载机机型构成（就绪）",
-      "series": [
+          "name": "方向",
+          "value": 2
+        },
         {
-          "name": "暂无就绪机型",
-          "value": 0,
-          "side": "IJN"
+          "name": "关键实体",
+          "value": 4
+        },
+        {
+          "name": "活动区",
+          "value": 2
+        },
+        {
+          "name": "叙述依据",
+          "value": 0
         }
       ]
     }
@@ -166,51 +172,33 @@
   "threat_ratings": [
     {
       "perspective": "红方看蓝方",
-      "target": "已压至约 179°W 附近的无畏式及伴随野猫",
+      "target": "赤城/加贺/苍龙",
+      "level": "高",
+      "evidence": "三艘航母位置明确（28.89°–28.97°N, 179.08°–179.28°W），已进入美舰载机作战半径，且正被Yorktown前出机群接近。"
+    },
+    {
+      "perspective": "红方看蓝方",
+      "target": "利根/筑摩水侦",
       "level": "紧急",
-      "evidence": "与南云舰位同经度带，且原数据中该空域出现对空弹幕，说明正在交火。"
+      "evidence": "Tone与Chikuma水侦已前出至29.0°N, 179.3°W附近，高度超11km，直接威胁TF16/17隐蔽性；该坐标与美方多架野猫、无畏式交汇，表明已被发现。"
     },
     {
-      "perspective": "红方看蓝方",
-      "target": "企业号/大黄蜂号/约克城号",
+      "perspective": "蓝方看红方",
+      "target": "中途岛机场",
       "level": "高",
-      "evidence": "航母本身未与南云进入舰炮射程，但已放出打击与护航兵力，是后续波次源。"
+      "evidence": "固定设施持续释放PBY与B-17，其活动扇区覆盖南云舰队北侧与西侧，构成稳定侦察链与潜在轰炸源。"
     },
     {
-      "perspective": "红方看蓝方",
-      "target": "PBY 草莓号",
+      "perspective": "蓝方看红方",
+      "target": "TF16（企业号/大黄蜂号）",
       "level": "高",
-      "evidence": "低空前出到南云经度附近，发现即等于引导。"
-    },
-    {
-      "perspective": "红方看蓝方",
-      "target": "中途岛机场与 B-17",
-      "level": "中",
-      "evidence": "对岛作战相关，但 B-17 仍在岛附近，尚未形成对机动部队的稳定轰炸航线。"
+      "evidence": "双航母同位（29.55°N, 177.50°W）且放出大量在空飞机，航向248.8°指向南云，是当前最集中的打击力量生成节点。"
     },
     {
       "perspective": "蓝方看红方",
-      "target": "赤城/加贺/苍龙/飞龙",
+      "target": "TF17（约克城号）",
       "level": "高",
-      "evidence": "位置已大致可被前出飞机接触，是必须摧毁的重心；本时刻未必每艘都在被瞄准，但暴露度高。"
-    },
-    {
-      "perspective": "蓝方看红方",
-      "target": "杰克式水侦",
-      "level": "紧急",
-      "evidence": "11 km 高空、扇区已伸到中途岛经度以北，直接威胁 TF16/17 的隐蔽。"
-    },
-    {
-      "perspective": "蓝方看红方",
-      "target": "贴着本队的九七式/九九式",
-      "level": "中",
-      "evidence": "具备对舰/对岛载荷潜力，但航向未收敛，立即突击概率低于已接触的美机对日舰。"
-    },
-    {
-      "perspective": "蓝方看红方",
-      "target": "雾岛/榛名及驱逐舰屏",
-      "level": "中至低",
-      "evidence": "防空与护航，不改变航母存亡这一主威胁。"
+      "evidence": "单航母独立部署于29.52°N, 177.84°W，航向257.1°，其前出机群（如Leslie Dauntless #9、Massey Devastators #12）已抵达178.5°–179.0°W，距南云仅约120nm，构成即时突击威胁。"
     }
   ]
 }

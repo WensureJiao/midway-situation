@@ -1,6 +1,5 @@
 {
-  "saved_at": "2026-09-19T08:54:52.555Z",
+  "saved_at": "2026-09-22T02:13:39.865Z",
   "time_slice": "T1",
-  "task_focus": "intent",
-  "model": "qwen-plus"
+  "task_focus": "intent"
 }

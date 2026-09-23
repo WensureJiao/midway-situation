@@ -34,10 +34,18 @@ export function normalizeSituationSpec(
       threat_zones: map.threat_zones ?? [],
     },
     kpis: raw.kpis ?? [],
-    charts: (raw.charts ?? []).map((c) => ({
-      ...c,
-      series: c.series ?? [],
-    })),
+    charts: (raw.charts ?? [])
+      .map((c) => {
+        const rawType = c.type as string;
+        if (rawType === "scatter" || rawType === "stacked_bar") return null;
+        const type = rawType === "donut" ? ("pie" as const) : c.type;
+        return {
+          ...c,
+          type,
+          series: c.series ?? [],
+        };
+      })
+      .filter((c): c is NonNullable<typeof c> => c != null),
     intent_findings: raw.intent_findings ?? [],
     threat_findings: raw.threat_findings ?? [],
     priorities: raw.priorities ?? [],

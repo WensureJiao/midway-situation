@@ -143,6 +143,12 @@ export function SituationWorkbench() {
 
           <div className="ml-auto flex items-center gap-2">
             <Link
+              href="/charts"
+              className="rounded-md bg-[var(--panel-2)] px-2.5 py-1.5 text-xs ring-1 ring-[var(--line)] hover:bg-[var(--panel-3)]"
+            >
+              图种库
+            </Link>
+            <Link
               href="/compare"
               className="inline-flex items-center gap-1 rounded-md bg-[var(--panel-2)] px-2.5 py-1.5 text-xs ring-1 ring-[var(--line)] hover:bg-[var(--panel-3)]"
             >

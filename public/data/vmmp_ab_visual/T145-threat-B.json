@@ -3,7 +3,7 @@
   "time_slice": "T145",
   "title": "残局猎杀：损管航母定位与零式残余威胁",
   "phase_label": "残局猎杀",
-  "narrative": "美军TF16（企业号、大黄蜂号）正向西缓慢逼近赤城、加贺、苍龙三艘停航损管航母；约克城号停航于TF16东侧，提供有限支援。日方四艘伤损航母呈集群漂泊（29.10°–29.17°N, 177.58°–177.78°W），零式战机分散于西侧空域（28.5°–29.0°N, 178.6°–179.7°W），构成拦截屏障但缺乏母舰协同。飞龙舰体未导出，构成关键不确定性威胁。",
+  "narrative": "美军TF16（企业号、大黄蜂号）正向西缓慢逼近赤城、加贺、苍龙三艘停航损管航母；约克城号停航于TF16东侧，提供有限航空支援。日方四航母中赤城、加贺、苍龙已确认漂泊受损，飞龙舰体未导出，构成最大不确定性威胁。在空零式分散于28.5°–29.0°N带，呈广域游猎态势，对美攻击编队构成中度拦截风险。",
   "map": {
     "center": [
       29.3,
@@ -15,8 +15,7 @@
       "IJN Kaga",
       "IJN Soryu",
       "Soryu Suganami Zero #5",
-      "Akagi Itaya Zero  #9",
-      "Yorktown Thatch Wildcats #11"
+      "Akagi Itaya Zero  #9"
     ],
     "axes": [
       {
@@ -35,14 +34,27 @@
       {
         "id": "a2",
         "from": [
-          29.68,
-          -179.26
+          29.61,
+          -178.87
         ],
         "to": [
           29.1,
           -177.78
         ],
-        "label": "约克城补刀轴",
+        "label": "TF16猎杀轴",
+        "side": "USN"
+      },
+      {
+        "id": "a3",
+        "from": [
+          29.61,
+          -178.87
+        ],
+        "to": [
+          29.17,
+          -177.58
+        ],
+        "label": "TF16猎杀轴",
         "side": "USN"
       }
     ],
@@ -50,45 +62,34 @@
       {
         "id": "z1",
         "center": [
-          29.13,
-          -177.61
+          28.75,
+          -178.9
         ],
-        "radius_nm": 25,
-        "level": "紧急",
-        "label": "赤城/加贺/苍龙损管集群",
+        "radius_nm": 60,
+        "level": "中",
+        "label": "零式游猎区",
         "side": "USN"
       },
       {
         "id": "z2",
         "center": [
-          28.74,
-          -179.45
+          29.14,
+          -177.65
         ],
-        "radius_nm": 35,
-        "level": "中",
-        "label": "西侧零式拦截扇区",
+        "radius_nm": 25,
+        "level": "紧急",
+        "label": "损管航母集群",
         "side": "USN"
       },
       {
         "id": "z3",
         "center": [
-          29.68,
-          -179.26
-        ],
-        "radius_nm": 15,
-        "level": "中",
-        "label": "约克城号生存区（含波特兰/阿斯托里亚）",
-        "side": "IJN"
-      },
-      {
-        "id": "z4",
-        "center": [
           28.21,
           -177.38
         ],
-        "radius_nm": 10,
+        "radius_nm": 15,
         "level": "高",
-        "label": "中途岛机场作战半径",
+        "label": "中途岛防空覆盖圈",
         "side": "IJN"
       }
     ]
@@ -132,11 +133,11 @@
         },
         {
           "name": "高",
-          "value": 3
+          "value": 2
         },
         {
           "name": "中",
-          "value": 2
+          "value": 3
         },
         {
           "name": "低",
@@ -168,15 +169,15 @@
       "series": [
         {
           "name": "高亮",
-          "value": 6
+          "value": 5
         },
         {
           "name": "轴线",
-          "value": 2
+          "value": 3
         },
         {
           "name": "圈",
-          "value": 4
+          "value": 3
         }
       ]
     }
@@ -189,43 +190,43 @@
       "perspective": "红方看蓝方",
       "target": "赤城/加贺/苍龙损管实体",
       "level": "紧急（猎杀价值）/ 低（对美即时打击）",
-      "evidence": "speed=0 且 damaged；攻击机不在空；三舰同处25nm圈内，具备集中补刀条件。"
+      "evidence": "speed=0 且 damaged；攻击机不在空。双重评级：不打掉会留后患，但它们现在打不了美舰。"
     },
     {
       "perspective": "红方看蓝方",
       "target": "飞龙（未知）",
       "level": "高",
-      "evidence": "无舰体数据，不能当已消灭；是残局反击的合理最大风险；其可能位置未被观测覆盖。"
+      "evidence": "无舰体数据，不能当已消灭；是残局反击的合理最大风险。"
     },
     {
       "perspective": "红方看蓝方",
       "target": "西侧零式",
       "level": "中",
-      "evidence": "在空7架，分布于28.5°–29.0°N空域，航向多指向TF16方向，可实施拦截但缺乏持续作战能力。"
+      "evidence": "在空但偏离母舰，可拦截猎杀机，难以突防到 TF16。"
     },
     {
       "perspective": "蓝方看红方",
       "target": "抵近无畏式",
       "level": "紧急",
-      "evidence": "Hornet Rodee Dauntless #1位于29.57°N, 177.89°W，距Kaga仅约12nm，处于俯冲投弹有效距离。"
+      "evidence": "与伤舰同经度带，且同位置有航弹。"
     },
     {
       "perspective": "蓝方看红方",
       "target": "企业号/大黄蜂号",
       "level": "高",
-      "evidence": "两舰均保持水面航行（2kn以下），舰载机就绪率高（Enterprise ready0=16, Hornet ready0=6），仍具完整航空突击能力。"
+      "evidence": "仍能放飞；航速低但不等于失去航空能力。"
     },
     {
       "perspective": "蓝方看红方",
       "target": "约克城号",
       "level": "中",
-      "evidence": "停航但舰载5架，ready0=4；周边有Portland/Astoria等重巡护航，生存力未崩溃。"
+      "evidence": "停航，本时刻不是猎杀主动力。"
     },
     {
       "perspective": "蓝方看红方",
-      "target": "中途岛机场",
-      "level": "高",
-      "evidence": "固定设施，B-17/B-26/PBY持续起降，构成远程监视与补刀力量；坐标明确（28.21°N, 177.38°W）。"
+      "target": "岸基轰炸机",
+      "level": "中",
+      "evidence": "在岛北活动，辅助补刀。"
     }
   ]
 }

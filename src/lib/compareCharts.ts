@@ -1,6 +1,8 @@
 import type { ChartSpec, SituationViewSpec, TaskFocus } from "./types";
 import { intentEvidenceItems } from "./vmmpCompare";
 
+export { CHART_TYPE_CATALOG, chartTypeLabel } from "./chartTypes";
+
 function normalizeCompareLevel(
   level: string,
 ): "紧急" | "高" | "中" | "低" | null {
@@ -32,9 +34,30 @@ function countByKey(keys: string[], values: string[]): ChartSpec["series"] {
   return keys.map((name) => ({ name, value: counts[name] ?? 0 }));
 }
 
+/** 证据构成：计数 + 悬停明细 */
+function evidenceCompositionSeries(
+  spec: SituationViewSpec,
+): ChartSpec["series"] {
+  const items = intentEvidenceItems(spec).filter(
+    (i) => i.kind !== "叙述" && i.kind !== "叙述依据",
+  );
+  const keys = ["方向", "关键实体", "活动区"] as const;
+  return keys.map((name) => {
+    const texts = items.filter((i) => i.kind === name).map((i) => i.text);
+    return {
+      name,
+      value: texts.length,
+      detail: texts.length
+        ? texts.map((t, i) => `${i + 1}. ${t}`).join("\n")
+        : "暂无此类证据",
+    };
+  });
+}
+
 /**
- * 对比页任务固定图槽：结构固定，数值来自该侧 spec 的 ratings / map，
- * 便于 A/B 左右同构对比。
+ * 对比页认知图槽：左右同构。
+ * 威胁：等级柱、视角分组柱、地图编码饼图
+ * 意图：指向分组柱、证据饼图（阶段用分段条）
  */
 export function buildTaskCompareCharts(
   spec: SituationViewSpec,
@@ -45,25 +68,18 @@ export function buildTaskCompareCharts(
     axes: [],
     threat_zones: [],
   };
-  const highlights = map.highlight_names ?? [];
   const axes = map.axes ?? [];
-  const zones = map.threat_zones ?? [];
 
   if (taskFocus === "intent") {
     const axisSides = axes.map((a) =>
       a.side === "IJN" ? "IJN" : a.side === "USN" ? "USN" : "其他",
     );
-    const zoneLevels = zones
-      .map((z) => normalizeCompareLevel(String(z.level)))
-      .filter((x): x is "紧急" | "高" | "中" | "低" => x != null);
-    const evidenceKinds = intentEvidenceItems(spec).map((i) => i.kind);
 
     return [
       {
         id: "cmp-intent-axes",
-        type: "bar",
-        title: "作战指向（按方）",
-        description: "由 map.axes 统计",
+        type: "grouped_bar",
+        title: "作战指向",
         series: [
           {
             name: "USN",
@@ -78,21 +94,10 @@ export function buildTaskCompareCharts(
         ],
       },
       {
-        id: "cmp-intent-zones",
-        type: "bar",
-        title: "关注区等级",
-        description: "由 map.threat_zones 统计",
-        series: countByKey(["紧急", "高", "中", "低"], zoneLevels),
-      },
-      {
         id: "cmp-intent-evidence",
         type: "pie",
-        title: "证据片段构成",
-        description: "由轴线/高亮/圈/叙述抽取",
-        series: countByKey(
-          ["方向", "关键实体", "活动区", "叙述依据"],
-          evidenceKinds,
-        ),
+        title: "证据构成",
+        series: evidenceCompositionSeries(spec),
       },
     ];
   }
@@ -105,31 +110,34 @@ export function buildTaskCompareCharts(
     .map((r) => perspectiveBucket(r.perspective ?? ""))
     .filter((x): x is "红方看蓝方" | "蓝方看红方" => x != null);
 
+  const levelProfile = countByKey(["紧急", "高", "中", "低"], levels);
+  const mapEncoding = [
+    { name: "高亮", value: (map.highlight_names ?? []).length },
+    { name: "轴线", value: axes.length },
+    { name: "关注圈", value: (map.threat_zones ?? []).length },
+  ];
+
   return [
     {
       id: "cmp-threat-levels",
       type: "bar",
       title: "威胁等级分布",
-      description: "由 threat_ratings 统计",
-      series: countByKey(["紧急", "高", "中", "低"], levels),
+      series: levelProfile,
     },
     {
       id: "cmp-threat-perspectives",
-      type: "bar",
-      title: "视角下目标数",
-      description: "各视角列出的目标条数",
-      series: countByKey(["红方看蓝方", "蓝方看红方"], perspectives),
+      type: "grouped_bar",
+      title: "视角目标数",
+      series: countByKey(
+        ["红看蓝", "蓝看红"],
+        perspectives.map((p) => (p === "红方看蓝方" ? "红看蓝" : "蓝看红")),
+      ),
     },
     {
-      id: "cmp-map-encoding",
-      type: "bar",
-      title: "地图编码量",
-      description: "高亮 / 轴线 / 圈",
-      series: [
-        { name: "高亮", value: highlights.length },
-        { name: "轴线", value: axes.length },
-        { name: "圈", value: zones.length },
-      ],
+      id: "cmp-threat-map-encoding",
+      type: "pie",
+      title: "地图编码",
+      series: mapEncoding,
     },
   ];
 }

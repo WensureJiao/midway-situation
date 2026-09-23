@@ -7,11 +7,15 @@ import {
 } from "@/lib/vmmpCompare";
 import { useMemo, useState } from "react";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
   Legend,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -19,11 +23,45 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { chartTypeLabel } from "@/lib/chartTypes";
 
 const INTENT_PHASES = ["集结", "搜索", "接触"] as const;
 
 const USN = "#c45c4a";
 const IJN = "#3b82a8";
+
+/** 威胁等级分 → 色（与威胁排序面板一致） */
+const LEVEL_SCORE_COLORS: Record<number, string> = {
+  4: "#b45309", // 紧急
+  3: "#c45c4a", // 高
+  2: "#d4a017", // 中
+  1: "#5b8c5a", // 低
+};
+
+const LEVEL_SCORE_LEGEND = [
+  { score: 4, label: "紧急" },
+  { score: 3, label: "高" },
+  { score: 2, label: "中" },
+  { score: 1, label: "低" },
+] as const;
+
+function levelScoreColor(score: number): string {
+  return LEVEL_SCORE_COLORS[score] ?? "#9ca3af";
+}
+
+/** 条长/点位用等级分时，用颜色区分档位 */
+function isThreatLevelScoreChart(chart: ChartSpec): boolean {
+  if (
+    chart.id === "grammar-hbar" ||
+    chart.id === "grammar-hbar-red" ||
+    chart.id === "grammar-hbar-blue"
+  ) {
+    return true;
+  }
+  return /威胁排序|等级分/.test(
+    `${chart.title ?? ""} ${chart.description ?? ""}`,
+  );
+}
 
 const TYPE_PALETTE = [
   "#c45c4a",
@@ -45,7 +83,7 @@ const TYPE_PALETTE = [
 
 function isCompositionChart(chart: ChartSpec): boolean {
   if (chart.type === "pie") return true;
-  return /机型|构成|就绪构成|舰载机/.test(chart.title);
+  return /机型|构成|就绪构成|舰载机|证据/.test(chart.title);
 }
 
 function isSideAggregateName(name: string): boolean {
@@ -59,7 +97,20 @@ function seriesColor(
   name: string,
   side: string | undefined,
   index: number,
+  value?: number,
 ): string {
+  if (
+    isThreatLevelScoreChart(chart) &&
+    typeof value === "number" &&
+    value >= 1 &&
+    value <= 4
+  ) {
+    return levelScoreColor(Math.round(value));
+  }
+  if (name === "紧急") return levelScoreColor(4);
+  if (name === "高" || name === "高（发现链）") return levelScoreColor(3);
+  if (name === "中" || name === "中至低") return levelScoreColor(2);
+  if (name === "低") return levelScoreColor(1);
   if (isCompositionChart(chart) && !isSideAggregateName(name)) {
     return TYPE_PALETTE[index % TYPE_PALETTE.length];
   }
@@ -72,76 +123,284 @@ function seriesColor(
     return "#2a9d8f";
   }
   if (name.includes("未就绪")) return "#9ca3af";
-  if (side === "USN" || name === "USN" || /^美/.test(name)) return USN;
-  if (side === "IJN" || name === "IJN" || /^日/.test(name)) return IJN;
+  if (side === "USN" || name === "USN" || /^美/.test(name) || /红方|红看/.test(name))
+    return USN;
+  if (side === "IJN" || name === "IJN" || /^日/.test(name) || /蓝方|蓝看/.test(name))
+    return IJN;
   return TYPE_PALETTE[index % TYPE_PALETTE.length];
 }
 
+/** 折线/面积纵轴：数值几乎不变时收紧范围，避免贴顶看不出起伏 */
+function lineYDomain(values: number[]): [number, number] {
+  const nums = values.filter((v) => Number.isFinite(v));
+  if (!nums.length) return [0, 1];
+  const min = Math.min(...nums);
+  const max = Math.max(...nums);
+  const span = max - min;
+  const relative = span / Math.max(Math.abs(max), 1);
+  if (span === 0 || relative < 0.25) {
+    const pad = Math.max(2, Math.ceil(span * 0.8) || 2);
+    return [Math.max(0, Math.floor(min - pad)), Math.ceil(max + pad)];
+  }
+  return [0, Math.max(1, Math.ceil(max * 1.08))];
+}
+
 function ChartCard({ chart }: { chart: ChartSpec }) {
-  const data = (chart.series ?? []).map((s, i) => ({
+  const series = chart.series ?? [];
+  const data = series.map((s, i) => ({
     ...s,
-    fill: seriesColor(chart, s.name, s.side, i),
+    fill: seriesColor(chart, s.name, s.side, i, s.value),
   }));
-  const pieLabels = chart.type === "pie" && isCompositionChart(chart);
-  const barLabels = chart.type !== "pie";
+  const showLevelLegend = isThreatLevelScoreChart(chart);
+  const showEvidenceTip =
+    chart.id === "cmp-intent-evidence" ||
+    chart.id === "grammar-evidence-pie" ||
+    chart.title.includes("证据");
+  const type = chart.type;
+  const isHBar = type === "hbar";
+  const isPie = type === "pie";
+  const isLineLike = type === "line" || type === "multi_line" || type === "area";
+  const chartHeight = isHBar ? Math.max(220, 36 + data.length * 28) : 200;
+  const stroke = "#5b8c5a";
+
+  const multiLineKeys = Array.from(
+    new Set(
+      data
+        .map((s) => s.side)
+        .filter((s): s is "USN" | "IJN" | "both" => Boolean(s)),
+    ),
+  );
+  const multiLineData =
+    type === "multi_line" && multiLineKeys.length >= 2
+      ? (() => {
+          const names = Array.from(new Set(data.map((s) => s.name)));
+          return names.map((name) => {
+            const row: Record<string, string | number> = { name };
+            for (const k of multiLineKeys) {
+              row[k] =
+                data.find((s) => s.name === name && s.side === k)?.value ?? 0;
+            }
+            return row;
+          });
+        })()
+      : null;
+
+  const lineValues =
+    multiLineData != null
+      ? multiLineData.flatMap((row) =>
+          multiLineKeys.map((k) => Number(row[k]) || 0),
+        )
+      : data.map((s) => s.value);
+  const yDomain = lineYDomain(lineValues);
 
   return (
-    <div className="rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)]">
-      <div className="mb-2">
-        <h3 className="text-sm font-semibold text-[var(--ink)]">{chart.title}</h3>
-        {chart.description && (
-          <p className="text-xs text-[var(--muted)]">{chart.description}</p>
-        )}
+    <div className="flex h-full flex-col rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)]">
+      <div className="mb-2 flex h-5 items-center justify-between gap-2">
+        <h3 className="min-w-0 truncate text-sm font-semibold text-[var(--ink)]">
+          {chart.title}
+        </h3>
+        <span className="shrink-0 text-[10px] text-[var(--muted)]">
+          {chartTypeLabel(type)}
+        </span>
       </div>
-      <div className={pieLabels || barLabels ? "h-56" : "h-52"}>
-        {chart.type === "pie" ? (
+      {showLevelLegend ? (
+        <div className="mb-2 flex h-4 flex-wrap gap-2 text-[10px] text-[var(--muted)]">
+          {LEVEL_SCORE_LEGEND.map((L) => (
+            <span key={L.score} className="inline-flex items-center gap-1">
+              <span
+                className="inline-block h-2 w-2.5 rounded-sm"
+                style={{ background: levelScoreColor(L.score) }}
+              />
+              {L.label}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <div className="min-h-0 overflow-hidden" style={{ height: chartHeight }}>
+        {isPie ? (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
               <Pie
                 data={data}
                 dataKey="value"
                 nameKey="name"
-                innerRadius={32}
+                innerRadius={0}
                 outerRadius={58}
                 paddingAngle={2}
-                label={pieLabels ? ({ value }) => `${value}` : false}
-                labelLine={pieLabels ? { strokeWidth: 1 } : false}
+                label={({ value }) => `${value}`}
+                labelLine={{ strokeWidth: 1 }}
               >
                 {data.map((s, i) => (
                   <Cell key={`${s.name}-${i}`} fill={s.fill} />
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value, name) => [`${value} 架`, String(name)]}
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const row = payload[0]?.payload as {
+                    name?: string;
+                    value?: number;
+                    detail?: string;
+                  };
+                  const title = `${row.name ?? ""}：${row.value ?? 0}`;
+                  if (!showEvidenceTip || !row.detail) {
+                    return (
+                      <div className="rounded-md bg-[var(--panel)] px-2 py-1.5 text-xs shadow ring-1 ring-[var(--line)]">
+                        {title}
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="max-w-xs rounded-md bg-[var(--panel)] px-2.5 py-2 text-xs shadow-md ring-1 ring-[var(--line)]">
+                      <div className="mb-1 font-semibold text-[var(--ink)]">
+                        {title}
+                      </div>
+                      <div className="whitespace-pre-wrap leading-relaxed text-[var(--muted)]">
+                        {row.detail}
+                      </div>
+                    </div>
+                  );
+                }}
               />
               <Legend wrapperStyle={{ fontSize: 11 }} />
             </PieChart>
+          </ResponsiveContainer>
+        ) : isLineLike ? (
+          <ResponsiveContainer width="100%" height="100%">
+            {type === "area" ? (
+              <AreaChart
+                data={data}
+                margin={{ top: 16, right: 12, left: 0, bottom: 8 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#d6d3ce" />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 10, fill: "#5c584f" }}
+                  interval={0}
+                />
+                <YAxis
+                  domain={yDomain}
+                  allowDecimals={false}
+                  tick={{ fontSize: 10, fill: "#5c584f" }}
+                  width={32}
+                />
+                <Tooltip />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke={stroke}
+                  fill={`${stroke}33`}
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            ) : multiLineData ? (
+              <LineChart
+                data={multiLineData}
+                margin={{ top: 16, right: 12, left: 0, bottom: 8 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#d6d3ce" />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 10, fill: "#5c584f" }}
+                  interval={0}
+                />
+                <YAxis
+                  domain={yDomain}
+                  allowDecimals={false}
+                  tick={{ fontSize: 10, fill: "#5c584f" }}
+                  width={32}
+                />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                {multiLineKeys.map((k) => (
+                  <Line
+                    key={k}
+                    type="monotone"
+                    dataKey={k}
+                    stroke={k === "IJN" ? IJN : USN}
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+                ))}
+              </LineChart>
+            ) : (
+              <LineChart
+                data={data}
+                margin={{ top: 16, right: 12, left: 0, bottom: 8 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#d6d3ce" />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 10, fill: "#5c584f" }}
+                  interval={0}
+                />
+                <YAxis
+                  domain={yDomain}
+                  allowDecimals={false}
+                  tick={{ fontSize: 10, fill: "#5c584f" }}
+                  width={32}
+                />
+                <Tooltip />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke={stroke}
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: stroke }}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
+            )}
           </ResponsiveContainer>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
-              margin={{ top: 20, right: 8, left: 0, bottom: 0 }}
+              layout={isHBar ? "vertical" : "horizontal"}
+              margin={
+                isHBar
+                  ? { top: 8, right: 24, left: 8, bottom: 8 }
+                  : { top: 16, right: 8, left: 0, bottom: 28 }
+              }
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#d6d3ce" />
-              <XAxis
-                dataKey="name"
-                tick={{ fontSize: 10, fill: "#5c584f" }}
-                interval={0}
-                angle={-20}
-                textAnchor="end"
-                height={52}
-              />
-              <YAxis tick={{ fontSize: 10, fill: "#5c584f" }} width={28} />
+              {isHBar ? (
+                <>
+                  <XAxis
+                    type="number"
+                    allowDecimals={false}
+                    tick={{ fontSize: 10, fill: "#5c584f" }}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={88}
+                    tick={{ fontSize: 10, fill: "#5c584f" }}
+                  />
+                </>
+              ) : (
+                <>
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 10, fill: "#5c584f" }}
+                    interval={0}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{ fontSize: 10, fill: "#5c584f" }}
+                    width={28}
+                  />
+                </>
+              )}
               <Tooltip />
               <Bar
                 dataKey="value"
-                radius={[3, 3, 0, 0]}
-                label={
-                  barLabels
-                    ? { position: "top", fontSize: 11, fill: "#3d3a34" }
-                    : false
-                }
+                radius={isHBar ? [0, 3, 3, 0] : [3, 3, 0, 0]}
+                label={{
+                  position: isHBar ? "right" : "top",
+                  fontSize: 11,
+                  fill: "#3d3a34",
+                }}
               >
                 {data.map((s, i) => (
                   <Cell key={`${s.name}-${i}`} fill={s.fill} />
@@ -423,7 +682,7 @@ function IntentFocusPanel({
           战役阶段
         </div>
         <div className="flex overflow-hidden rounded-md text-xs ring-1 ring-[var(--line)]">
-          {INTENT_PHASES.map((p, i) => {
+          {INTENT_PHASES.map((p) => {
             const active = p === phase;
             return (
               <div
@@ -440,9 +699,11 @@ function IntentFocusPanel({
             );
           })}
         </div>
-        <p className="mt-1 text-[11px] text-[var(--muted)]">
-          依据：{spec.phase_label || packPhase || "未标注"}
-        </p>
+        {(spec.phase_label || packPhase) && (
+          <p className="mt-1 text-[11px] text-[var(--muted)]">
+            {spec.phase_label || packPhase}
+          </p>
+        )}
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">
@@ -510,6 +771,8 @@ export function SituationCharts({
   spec,
   packPhase,
   showFixedCharts = true,
+  showFocusPanels = true,
+  grammarHint = false,
 }: {
   charts?: ChartSpec[];
   threatRatings?: SituationViewSpec["threat_ratings"];
@@ -520,11 +783,16 @@ export function SituationCharts({
   packPhase?: string;
   /** 主生成台展示四张兵力统计图；对比页关闭 */
   showFixedCharts?: boolean;
+  /** 是否展示威胁排序 / 意图焦点面板 */
+  showFocusPanels?: boolean;
+  /** 对比页脚注：指向图种库 */
+  grammarHint?: boolean;
 }) {
   const list = (charts ?? []).filter((c) => !isHiddenChart(c, !showFixedCharts));
 
-  const showThreat = taskFocus !== "intent";
-  const showIntent = taskFocus === "intent" && Boolean(spec);
+  const showThreat = showFocusPanels && taskFocus !== "intent";
+  const showIntent =
+    showFocusPanels && taskFocus === "intent" && Boolean(spec);
   const hasFocusPanel =
     (showThreat && (threatRatings?.length ?? 0) > 0) || showIntent;
 
@@ -537,12 +805,27 @@ export function SituationCharts({
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       {list.map((chart) => (
-        <ChartCard key={chart.id || chart.title} chart={chart} />
+        <div
+          key={chart.id || chart.title}
+          className={
+            chart.type === "hbar" ? "sm:col-span-2" : "h-full min-h-0"
+          }
+        >
+          <ChartCard chart={chart} />
+        </div>
       ))}
       {showThreat ? (
         <ThreatLevelChart ratings={threatRatings ?? []} />
       ) : showIntent && spec ? (
         <IntentFocusPanel spec={spec} packPhase={packPhase} />
+      ) : null}
+      {grammarHint ? (
+        <p className="sm:col-span-2 text-[10px] text-[var(--muted)]">
+          图种说明见{" "}
+          <a href="/charts" className="underline hover:text-[var(--ink)]">
+            图种库
+          </a>
+        </p>
       ) : null}
     </div>
   );

@@ -1,9 +1,9 @@
 {
   "generated_by": "llm",
   "time_slice": "T193",
-  "title": "中途岛终局：残存威胁评估",
+  "title": "终局态势：残存力量监控与意图收敛",
   "phase_label": "终局终结",
-  "narrative": "美方三航母（Enterprise、Hornet、Yorktown）仍具航行与起降能力，主力舰群呈西北—东南向缓速收拢；日方三伤航母（Akagi、Kaga、Soryu）全部停航漂泊于29.1°N附近，无机动能力。8架零式在空，含1架低空贴舰飞行（Akagi Itaya Zero #7），构成中度突发威胁；飞龙未见任何几何数据，属高不确定性目标。美方27架在空野猫正执行CAP，覆盖伤舰与中途岛空域。",
+  "narrative": "战役进入终局阶段，日方三艘伤损航母（赤城、苍龙、加贺）均停航漂泊于29.1°N附近，无机动能力；美方TF16双航母持续航行，约克城号停航但保有舰载机运作能力。8架零式仍在空域活动，其中1架贴舰低空飞行，显示残存抵抗意志而非有效突击意图。所有作战轴线已收束为单向——日方撤退方向（西北→东南）与美方CAP覆盖轴线（环绕中途岛及伤舰群）形成空间对置，证实战役主意图已从‘夺取’转为‘确认战果、防意外突袭’。",
   "map": {
     "center": [
       29.4,
@@ -11,40 +11,40 @@
     ],
     "zoom": 6,
     "highlight_names": [
-      "CVA-5 Yorktown",
+      "IJN Akagi",
+      "IJN Soryu",
+      "IJN Kaga",
       "CVA-6 Enterprise",
       "CVA-7 Hornet",
-      "IJN Akagi",
-      "IJN Kaga",
-      "IJN Soryu",
+      "CVA-5 Yorktown",
       "Soryu Suganami Zero #7",
-      "Akagi Itaya Zero #7"
+      "Akagi Itaya Zero  #7"
     ],
     "axes": [
       {
         "id": "a1",
         "from": [
-          29.62,
-          -179.18
-        ],
-        "to": [
           29.13,
           -177.61
         ],
-        "label": "日方撤退轴",
+        "to": [
+          28.21,
+          -177.38
+        ],
+        "label": "撤退轴（IJN→中途岛）",
         "side": "IJN"
       },
       {
         "id": "a2",
         "from": [
-          28.21,
-          -177.38
-        ],
-        "to": [
           29.62,
           -179.18
         ],
-        "label": "美舰支援轴",
+        "to": [
+          28.21,
+          -177.38
+        ],
+        "label": "CAP覆盖轴（USN→中途岛）",
         "side": "USN"
       }
     ],
@@ -57,19 +57,19 @@
         ],
         "radius_nm": 25,
         "level": "中",
-        "label": "三伤航母集群（无航速，但存弹药/燃油风险）",
+        "label": "伤损航母集群（含未观测飞龙）",
         "side": "IJN"
       },
       {
         "id": "z2",
         "center": [
-          28.85,
-          -178.85
+          29.62,
+          -177.85
         ],
         "radius_nm": 30,
         "level": "中",
-        "label": "残存零式活动区（含低空突防路径）",
-        "side": "IJN"
+        "label": "野猫CAP高频巡弋区（低空零式活动带）",
+        "side": "USN"
       }
     ]
   },
@@ -101,146 +101,68 @@
   ],
   "charts": [
     {
-      "id": "ships",
+      "id": "cmp-intent-axes",
       "type": "bar",
-      "title": "水面舰艇数量",
-      "description": "不含岸基设施",
+      "title": "作战指向（按方）",
+      "description": "由 map.axes 统计",
       "series": [
         {
           "name": "USN",
-          "value": 28,
+          "value": 1,
           "side": "USN"
         },
         {
           "name": "IJN",
-          "value": 20,
+          "value": 1,
           "side": "IJN"
         }
       ]
     },
     {
-      "id": "airborne",
+      "id": "cmp-intent-zones",
       "type": "bar",
-      "title": "在空飞机数量",
+      "title": "关注区等级",
+      "description": "由 map.threat_zones 统计",
       "series": [
         {
-          "name": "USN",
-          "value": 27,
-          "side": "USN"
+          "name": "紧急",
+          "value": 0
         },
         {
-          "name": "IJN",
-          "value": 8,
-          "side": "IJN"
+          "name": "高",
+          "value": 0
+        },
+        {
+          "name": "中",
+          "value": 2
+        },
+        {
+          "name": "低",
+          "value": 0
         }
       ]
     },
     {
-      "id": "usn-embarked-class",
+      "id": "cmp-intent-evidence",
       "type": "pie",
-      "title": "红方舰载机机型构成（就绪）",
+      "title": "证据片段构成",
+      "description": "由轴线/高亮/圈/叙述抽取",
       "series": [
         {
-          "name": "俯冲轰炸机-无畏",
-          "value": 11,
-          "side": "USN"
+          "name": "方向",
+          "value": 2
         },
         {
-          "name": "鱼雷机-毁灭者",
-          "value": 5,
-          "side": "USN"
+          "name": "关键实体",
+          "value": 4
         },
         {
-          "name": "战斗机-野猫",
-          "value": 10,
-          "side": "USN"
+          "name": "活动区",
+          "value": 2
         },
         {
-          "name": "战斗机-野猫",
-          "value": 1,
-          "side": "USN"
-        },
-        {
-          "name": "战斗机-野猫",
-          "value": 1,
-          "side": "USN"
-        },
-        {
-          "name": "战斗机-野猫",
-          "value": 1,
-          "side": "USN"
-        },
-        {
-          "name": "战斗机-野猫",
-          "value": 1,
-          "side": "USN"
-        },
-        {
-          "name": "战斗机-野猫",
-          "value": 1,
-          "side": "USN"
-        },
-        {
-          "name": "战斗机-野猫",
-          "value": 1,
-          "side": "USN"
-        },
-        {
-          "name": "战斗机-野猫",
-          "value": 1,
-          "side": "USN"
-        },
-        {
-          "name": "战斗机-野猫",
-          "value": 1,
-          "side": "USN"
-        },
-        {
-          "name": "战斗机-野猫",
-          "value": 1,
-          "side": "USN"
-        }
-      ]
-    },
-    {
-      "id": "ijn-embarked-class",
-      "type": "pie",
-      "title": "蓝方舰载机机型构成（就绪）",
-      "series": [
-        {
-          "name": "俯冲轰炸机-九九式/彗星",
-          "value": 27,
-          "side": "IJN"
-        },
-        {
-          "name": "舰载侦察机-水上飞机",
-          "value": 9,
-          "side": "IJN"
-        },
-        {
-          "name": "鱼雷机-九七式",
-          "value": 27,
-          "side": "IJN"
-        },
-        {
-          "name": "战斗机-零式",
-          "value": 2,
-          "side": "IJN"
-        },
-        {
-          "name": "战斗机-零式",
-          "value": 1,
-          "side": "IJN"
-        },
-        {
-          "name": "战斗机-零式",
-          "value": 1,
-          "side": "IJN"
-        },
-        {
-          "name": "战斗机-零式",
-          "value": 1,
-          "side": "IJN"
+          "name": "叙述依据",
+          "value": 0
         }
       ]
     }
@@ -248,42 +170,5 @@
   "intent_findings": [],
   "threat_findings": [],
   "priorities": [],
-  "threat_ratings": [
-    {
-      "perspective": "美方看日方",
-      "target": "残存零式（8架在空）",
-      "level": "中",
-      "evidence": "含1架207 m低空贴舰飞行（Akagi Itaya Zero #7），具备突防潜力；其余多在10 km以上高度，易被CAP拦截。"
-    },
-    {
-      "perspective": "美方看日方",
-      "target": "飞龙号航母",
-      "level": "高（不确定性）",
-      "evidence": "清洗数据中无任何几何、状态或搭载信息；既未确认沉没，亦无目击/雷达记录，属关键情报缺口。"
-    },
-    {
-      "perspective": "美方看日方",
-      "target": "三伤航母残骸（Akagi/Kaga/Soryu）",
-      "level": "中（跟踪）/低（打击）",
-      "evidence": "全部0 kn，无航向变化，无起飞能力；但存有未爆弹药与燃油，存在火灾/殉爆次生风险。"
-    },
-    {
-      "perspective": "日方看美方",
-      "target": "野猫CAP编队（27架）",
-      "level": "高",
-      "evidence": "集中覆盖28.5°–29.8°N、177.5°–179.4°W空域，对残存零式形成压制性优势。"
-    },
-    {
-      "perspective": "日方看美方",
-      "target": "企业号与大黄蜂号",
-      "level": "高（能力）但不可兑现",
-      "evidence": "双舰均以1.8–2.0 kn航速向西北缓行，舰载机就绪率高；但日方已无可用放飞平台，无法构成实际反制。"
-    },
-    {
-      "perspective": "任一方",
-      "target": "USS Benham / USS Ellet / USS New Orleans 损伤",
-      "level": "低",
-      "evidence": "三舰均保持伴随航行或受控停航，未脱离编队，不影响TF16/TF17整体作战完整性。"
-    }
-  ]
+  "threat_ratings": []
 }

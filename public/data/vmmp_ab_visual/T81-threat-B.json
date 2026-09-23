@@ -1,0 +1,215 @@
+{
+  "generated_by": "llm",
+  "time_slice": "T81",
+  "title": "机库危机：换弹窗口中的航母脆弱性",
+  "phase_label": "机库危机",
+  "narrative": "T81时刻，日军南云机动部队（赤城、加贺、苍龙）正密集进行鱼雷换炸弹作业，甲板堆满未放飞攻击机且大量ready=0，舰体暴露于高空投弹路径下；美方在空兵力虽仅30架（含20架野猫CAP与少量轰炸机），但已有多架俯冲轰炸机进入投弹航路，几何上正对日航母集群；美三航母航速极低（0–2 kn），处于回收或整备状态，暂无新一波打击能力，但其存在本身构成对日方换弹作业的即时压制威胁。",
+  "map": {
+    "center": [
+      29.1,
+      -178
+    ],
+    "zoom": 6,
+    "highlight_names": [
+      "IJN Akagi",
+      "IJN Kaga",
+      "IJN Soryu",
+      "CVA-5 Yorktown",
+      "CVA-6 Enterprise",
+      "CVA-7 Hornet"
+    ],
+    "axes": [
+      {
+        "id": "a1",
+        "from": [
+          29.69,
+          -179.26
+        ],
+        "to": [
+          29.09,
+          -177.86
+        ],
+        "label": "美舰→日舰投弹轴",
+        "side": "USN"
+      },
+      {
+        "id": "a2",
+        "from": [
+          29.09,
+          -177.86
+        ],
+        "to": [
+          29.69,
+          -179.26
+        ],
+        "label": "日舰→美舰发现轴（残存）",
+        "side": "IJN"
+      }
+    ],
+    "threat_zones": [
+      {
+        "id": "z1",
+        "center": [
+          29.11,
+          -177.9
+        ],
+        "radius_nm": 35,
+        "level": "高",
+        "label": "南云航母换弹核心区",
+        "side": "IJN"
+      },
+      {
+        "id": "z2",
+        "center": [
+          29.6,
+          -178.8
+        ],
+        "radius_nm": 45,
+        "level": "中",
+        "label": "美航母低速整备区",
+        "side": "USN"
+      }
+    ]
+  },
+  "kpis": [
+    {
+      "id": "us-cv",
+      "label": "美航母",
+      "value": 3,
+      "tone": "usn"
+    },
+    {
+      "id": "ijn-cv",
+      "label": "日航母舰体",
+      "value": 3,
+      "tone": "ijn"
+    },
+    {
+      "id": "air",
+      "label": "在空飞机",
+      "value": 36,
+      "tone": "warn"
+    },
+    {
+      "id": "dmg",
+      "label": "损伤舰艇",
+      "value": 0,
+      "tone": "neutral"
+    }
+  ],
+  "charts": [
+    {
+      "id": "cmp-threat-levels",
+      "type": "bar",
+      "title": "威胁等级分布",
+      "description": "由 threat_ratings 统计",
+      "series": [
+        {
+          "name": "紧急",
+          "value": 2
+        },
+        {
+          "name": "高",
+          "value": 1
+        },
+        {
+          "name": "中",
+          "value": 5
+        },
+        {
+          "name": "低",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "cmp-threat-perspectives",
+      "type": "bar",
+      "title": "视角下目标数",
+      "description": "各视角列出的目标条数",
+      "series": [
+        {
+          "name": "红方看蓝方",
+          "value": 3
+        },
+        {
+          "name": "蓝方看红方",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "cmp-map-encoding",
+      "type": "bar",
+      "title": "地图编码量",
+      "description": "高亮 / 轴线 / 圈",
+      "series": [
+        {
+          "name": "高亮",
+          "value": 6
+        },
+        {
+          "name": "轴线",
+          "value": 2
+        },
+        {
+          "name": "圈",
+          "value": 2
+        }
+      ]
+    }
+  ],
+  "intent_findings": [],
+  "threat_findings": [],
+  "priorities": [],
+  "threat_ratings": [
+    {
+      "perspective": "红方看蓝方",
+      "target": "赤城/加贺/苍龙（换弹窗口）",
+      "level": "紧急",
+      "evidence": "攻击机高度为 0 且大量 ready=0，弹药在舰；编队上空已有弹幕/航弹，命中即高后果。"
+    },
+    {
+      "perspective": "红方看蓝方",
+      "target": "6 架高空零式",
+      "level": "中",
+      "evidence": "能拦截，但数量少、位置偏西，不是对美舰的打击力量。"
+    },
+    {
+      "perspective": "红方看蓝方",
+      "target": "舰载九七式/九九式（未放飞）",
+      "level": "中",
+      "evidence": "潜在突击能力高，但本时刻无空中几何，立即致伤美舰的概率低于己方打日舰。"
+    },
+    {
+      "perspective": "蓝方看红方",
+      "target": "南云上空残存攻击与航弹",
+      "level": "紧急",
+      "evidence": "与己方航母同区，且正值甲板无法灵活起降。"
+    },
+    {
+      "perspective": "蓝方看红方",
+      "target": "在空辩护者/B-17",
+      "level": "高",
+      "evidence": "仍在空、可对舰；数量有限但窗口极度敏感。"
+    },
+    {
+      "perspective": "蓝方看红方",
+      "target": "企业号/大黄蜂号/约克城号",
+      "level": "中",
+      "evidence": "航速 0–2 kn 表明飞行作业/回收，短期再出击弱于 T21，仍是战役重心。"
+    },
+    {
+      "perspective": "蓝方看红方",
+      "target": "野猫式",
+      "level": "中",
+      "evidence": "主要威胁是护航与阻止己方放飞，不是对舰炸弹。"
+    },
+    {
+      "perspective": "蓝方看红方",
+      "target": "中途岛机场",
+      "level": "中",
+      "evidence": "对岛意图仍在航向上，但本时刻己方无法立刻投送航空兵力。"
+    }
+  ]
+}
