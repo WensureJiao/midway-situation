@@ -55,17 +55,66 @@ export function quizForFocus(focus: TaskFocus, sliceId: string): string {
   if (focus === "threat") {
     return `【小题·威胁】在 ${sliceId}，从红方（美）视角，当前最高优先级威胁目标前三是谁？先看图再作答（可写在纸上/笔记）。`;
   }
-  return `【小题·意图】在 ${sliceId}，南云主要作战指向哪里？当前更接近哪一阶段（集结/搜索/接触）？有无佯动分兵迹象？`;
+  return `【小题·意图】在 ${sliceId}，南云主要作战指向哪里？当前更接近哪一阶段（集结/搜索/危机/残局/终局）？有无佯动分兵迹象？`;
 }
 
-/** 粗略阶段：用于意图页阶段条高亮 */
+/**
+ * 五拍战役节拍：对齐 T1→T193 切片设计。
+ * inferCampaignPhase 保留为三档兼容别名（危机/残局/终局 → 接触）。
+ */
 export function inferCampaignPhase(
   packPhase: string,
   spec: SituationViewSpec,
 ): "集结" | "搜索" | "接触" {
-  const text = `${packPhase} ${spec.phase_label} ${spec.narrative}`;
-  if (/接触|交火|打击|猎杀|残局|终局|弹幕/.test(text)) return "接触";
-  if (/搜索|侦察|起飞|在空|水侦|PBY/.test(text)) return "搜索";
+  const beat = inferCampaignBeat(packPhase, spec);
+  if (beat === "集结") return "集结";
+  if (beat === "搜索") return "搜索";
+  return "接触";
+}
+
+/** 五拍战役节拍：对齐 T1→T193 切片设计，避免后半段全挤成「接触」 */
+export type CampaignBeat = "集结" | "搜索" | "危机" | "残局" | "终局";
+
+export const CAMPAIGN_BEAT_CODE: Record<CampaignBeat, number> = {
+  集结: 1,
+  搜索: 2,
+  危机: 3,
+  残局: 4,
+  终局: 5,
+};
+
+export const CAMPAIGN_BEAT_LABEL: Record<number, string> = {
+  1: "集结",
+  2: "搜索",
+  3: "危机",
+  4: "残局",
+  5: "终局",
+};
+
+/**
+ * 按切片 phase_label 推断节拍。
+ * 注意：当前 A/B 的 phase_label 文案基本同构，节拍图通常不随范式变化。
+ */
+export function inferCampaignBeat(
+  packPhase: string,
+  spec: SituationViewSpec,
+): CampaignBeat {
+  const label = `${packPhase} ${spec.phase_label ?? ""}`.trim();
+
+  if (/终局|终结|战果/.test(label)) return "终局";
+  if (/残局|猎杀/.test(label)) return "残局";
+  if (/机库危机|危机|交战|接触窗|突击/.test(label)) return "危机";
+  if (/搜索|侦察|广域/.test(label)) return "搜索";
+  if (/集结|初始|展开|机动部队/.test(label)) return "集结";
+
+  const narrative = String(spec.narrative ?? "")
+    .replace(/尚未接触|未接触|非接触|无直接交火|无交火/g, " ")
+    .replace(/打击重心|打击窗口|准备打击|有效打击/g, " ");
+  const text = `${label} ${narrative}`;
+  if (/终局|终结/.test(text)) return "终局";
+  if (/残局|猎杀/.test(text)) return "残局";
+  if (/交火|弹幕|机库/.test(text)) return "危机";
+  if (/搜索|侦察|水侦|PBY/.test(text)) return "搜索";
   return "集结";
 }
 
@@ -131,14 +180,14 @@ export function diffSpecs(
   }
 
   if (focus === "intent") {
-    const phaseA = inferCampaignPhase("", a);
-    const phaseB = inferCampaignPhase("", b);
-    if (phaseA !== phaseB || a.phase_label !== b.phase_label) {
+    const beatA = inferCampaignBeat("", a);
+    const beatB = inferCampaignBeat("", b);
+    if (beatA !== beatB || a.phase_label !== b.phase_label) {
       summaryLines.push(
-        `阶段：A「${phaseA}/${a.phase_label}」↔ B「${phaseB}/${b.phase_label}」`,
+        `阶段：A「${beatA}/${a.phase_label}」↔ B「${beatB}/${b.phase_label}」`,
       );
     } else {
-      summaryLines.push(`阶段判断：相同（${phaseA}）`);
+      summaryLines.push(`阶段判断：相同（${beatA}）`);
     }
     if (zonesA.join("|") !== zonesB.join("|")) {
       summaryLines.push(

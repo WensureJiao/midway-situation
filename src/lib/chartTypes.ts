@@ -36,7 +36,7 @@ export const CHART_TYPE_CATALOG: readonly CatalogEntry[] = [
   {
     type: "area",
     label: "面积图",
-    use: "跨切片意图阶段（1集结/2搜索/3接触）",
+    use: "跨切片意图阶段（集结/搜索/危机/残局/终局）",
   },
   {
     type: "pie",

@@ -185,12 +185,6 @@ export function buildTaskCompareCharts(
 
   const ratings = spec.threat_ratings ?? [];
 
-  const mapEncoding = [
-    { name: "高亮", value: (map.highlight_names ?? []).length },
-    { name: "轴线", value: axes.length },
-    { name: "关注圈", value: (map.threat_zones ?? []).length },
-  ];
-
   return [
     {
       id: "cmp-threat-levels",
@@ -210,7 +204,50 @@ export function buildTaskCompareCharts(
       id: "cmp-threat-map-encoding",
       type: "pie",
       title: "地图编码",
-      series: mapEncoding,
+      description: "高亮单位 / 轴线 / 关注圈数量；悬停可看明细",
+      series: mapEncodingSeries(map),
+    },
+  ];
+}
+
+/** 地图编码：高亮 / 轴线 / 关注圈 + 悬停明细 */
+export function mapEncodingSeries(
+  map: NonNullable<SituationViewSpec["map"]>,
+): ChartSpec["series"] {
+  const highlights = map.highlight_names ?? [];
+  const axes = map.axes ?? [];
+  const zones = map.threat_zones ?? [];
+  return [
+    {
+      name: "高亮",
+      value: highlights.length,
+      detail: highlights.length
+        ? highlights.map((n, i) => `${i + 1}. ${n}`).join("\n")
+        : "暂无高亮单位",
+    },
+    {
+      name: "轴线",
+      value: axes.length,
+      detail: axes.length
+        ? axes
+            .map(
+              (a, i) =>
+                `${i + 1}. ${a.label || a.id || "未命名"}（${a.side === "USN" ? "美" : a.side === "IJN" ? "日" : a.side ?? "?"}）`,
+            )
+            .join("\n")
+        : "暂无轴线",
+    },
+    {
+      name: "关注圈",
+      value: zones.length,
+      detail: zones.length
+        ? zones
+            .map(
+              (z, i) =>
+                `${i + 1}. [${z.level}] ${z.label}${z.radius_nm != null ? ` · ${z.radius_nm}nm` : ""}`,
+            )
+            .join("\n")
+        : "暂无关注圈",
     },
   ];
 }

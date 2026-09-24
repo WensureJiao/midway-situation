@@ -1,14 +1,6 @@
 import type { ChartSpec, SituationViewSpec, SlicePack } from "./types";
-import { buildTaskCompareCharts } from "./compareCharts";
-import { inferCampaignPhase } from "./vmmpCompare";
-
-function levelScore(level: string): number {
-  if (/紧急/.test(level)) return 4;
-  if (/高/.test(level)) return 3;
-  if (/中/.test(level)) return 2;
-  if (/低/.test(level)) return 1;
-  return 0;
-}
+import { buildTaskCompareCharts, mapEncodingSeries } from "./compareCharts";
+import { inferCampaignBeat, CAMPAIGN_BEAT_CODE } from "./vmmpCompare";
 
 const THREAT_LEVEL_KEYS = ["紧急", "高", "中", "低"] as const;
 type ThreatLevelKey = (typeof THREAT_LEVEL_KEYS)[number];
@@ -108,9 +100,15 @@ export function buildSliceGrammarCharts(
   const perspectiveBar = threatSlots.find(
     (c) => c.id === "cmp-threat-perspectives",
   );
+  const axesBar = intentSlots.find((c) => c.id === "cmp-intent-axes");
   const evidencePie = intentSlots.find(
     (c) => c.id === "cmp-intent-evidence",
   );
+  const intentMap = intentSpec.map ?? {
+    highlight_names: [],
+    axes: [],
+    threat_zones: [],
+  };
 
   const usReady = us.embarked_by_class_and_ready ?? [];
   const ijReady = ij.embarked_by_class_and_ready ?? [];
@@ -120,26 +118,6 @@ export function buildSliceGrammarCharts(
   const ijReadySeries = ijReady.length
     ? aggregateReadyByClass(ijReady, "IJN")
     : [{ name: "暂无就绪机型", value: 0, side: "IJN" as const }];
-
-  const redView = (threatSpec.threat_ratings ?? [])
-    .filter((r) => isRedPerspective(r.perspective ?? ""))
-    .map((r) => ({
-      name: r.target,
-      value: levelScore(String(r.level)),
-      side: "IJN" as const,
-    }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 8);
-
-  const blueView = (threatSpec.threat_ratings ?? [])
-    .filter((r) => isBluePerspective(r.perspective ?? ""))
-    .map((r) => ({
-      name: r.target,
-      value: levelScore(String(r.level)),
-      side: "USN" as const,
-    }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 8);
 
   return [
     {
@@ -158,20 +136,20 @@ export function buildSliceGrammarCharts(
       series: perspectiveBar?.series ?? [],
     },
     {
-      id: "grammar-hbar-red",
-      type: "hbar",
-      title: "红看蓝 · 威胁排序",
-      series: redView.length
-        ? redView
-        : [{ name: "暂无红看蓝条目", value: 0 }],
+      id: "grammar-axes",
+      type: "grouped_bar",
+      title: "作战指向",
+      description:
+        axesBar?.description ??
+        "各方地图轴线条数；悬停可看轴线名称与起终点",
+      series: axesBar?.series ?? [],
     },
     {
-      id: "grammar-hbar-blue",
-      type: "hbar",
-      title: "蓝看红 · 威胁排序",
-      series: blueView.length
-        ? blueView
-        : [{ name: "暂无蓝看红条目", value: 0 }],
+      id: "grammar-map-encoding",
+      type: "pie",
+      title: "地图编码",
+      description: "意图图：高亮单位 / 轴线 / 关注圈；悬停可看明细",
+      series: mapEncodingSeries(intentMap),
     },
     {
       id: "grammar-pie-usn",
@@ -203,10 +181,11 @@ export function buildTimelineGrammarCharts(
 
   const phaseArea = ordered.map((s) => {
     const { intentSpec: is } = pickSpecs(s, side);
-    const phase = inferCampaignPhase(is.phase_label ?? s.pack.phase_label, is);
+    const beat = inferCampaignBeat(is.phase_label ?? s.pack.phase_label, is);
     return {
       name: s.id,
-      value: phase === "接触" ? 3 : phase === "搜索" ? 2 : 1,
+      value: CAMPAIGN_BEAT_CODE[beat],
+      detail: `${beat} · ${is.phase_label || s.pack.phase_label || "未标注"}`,
     };
   });
 
@@ -293,7 +272,8 @@ export function buildTimelineGrammarCharts(
       id: "grammar-area",
       type: "area",
       title: "意图阶段",
-      description: "纵轴：1=集结 · 2=搜索 · 3=接触",
+      description:
+        "纵轴：1=集结 · 2=搜索 · 3=危机 · 4=残局 · 5=终局（按切片标签；A/B 文案通常同构）",
       series: phaseArea,
     },
   ];

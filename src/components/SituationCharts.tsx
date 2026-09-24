@@ -2,8 +2,9 @@
 
 import type { ChartSpec, SituationViewSpec, TaskFocus } from "@/lib/types";
 import {
-  inferCampaignPhase,
+  inferCampaignBeat,
   intentEvidenceItems,
+  type CampaignBeat,
 } from "@/lib/vmmpCompare";
 import { useMemo, useState } from "react";
 import {
@@ -25,7 +26,13 @@ import {
 } from "recharts";
 import { chartTypeLabel } from "@/lib/chartTypes";
 
-const INTENT_PHASES = ["集结", "搜索", "接触"] as const;
+const INTENT_BEATS: CampaignBeat[] = [
+  "集结",
+  "搜索",
+  "危机",
+  "残局",
+  "终局",
+];
 
 const USN = "#c45c4a";
 const IJN = "#3b82a8";
@@ -49,7 +56,7 @@ function levelScoreColor(score: number): string {
   return LEVEL_SCORE_COLORS[score] ?? "#9ca3af";
 }
 
-/** 条长/点位用等级分时，用颜色区分档位 */
+/** 条长表示等级分（1–4）的图，如威胁排序横条 */
 function isThreatLevelScoreChart(chart: ChartSpec): boolean {
   if (
     chart.id === "grammar-hbar" ||
@@ -61,6 +68,23 @@ function isThreatLevelScoreChart(chart: ChartSpec): boolean {
   return /威胁排序|等级分/.test(
     `${chart.title ?? ""} ${chart.description ?? ""}`,
   );
+}
+
+/** 横轴为紧急/高/中/低类目、纵轴为条数的分布柱 */
+function isThreatLevelDistributionChart(chart: ChartSpec): boolean {
+  return (
+    chart.id === "cmp-threat-levels" ||
+    chart.id === "grammar-bar" ||
+    /威胁等级分布/.test(chart.title ?? "")
+  );
+}
+
+function threatLevelNameColor(name: string): string | null {
+  if (name === "紧急") return levelScoreColor(4);
+  if (name === "高" || name === "高（发现链）") return levelScoreColor(3);
+  if (name === "中" || name === "中至低") return levelScoreColor(2);
+  if (name === "低") return levelScoreColor(1);
+  return null;
 }
 
 const TYPE_PALETTE = [
@@ -99,6 +123,10 @@ function seriesColor(
   index: number,
   value?: number,
 ): string {
+  // 类目名优先：分布柱的 value 是计数，不能当等级分
+  const byName = threatLevelNameColor(name);
+  if (byName) return byName;
+
   if (
     isThreatLevelScoreChart(chart) &&
     typeof value === "number" &&
@@ -107,10 +135,6 @@ function seriesColor(
   ) {
     return levelScoreColor(Math.round(value));
   }
-  if (name === "紧急") return levelScoreColor(4);
-  if (name === "高" || name === "高（发现链）") return levelScoreColor(3);
-  if (name === "中" || name === "中至低") return levelScoreColor(2);
-  if (name === "低") return levelScoreColor(1);
   if (isCompositionChart(chart) && !isSideAggregateName(name)) {
     return TYPE_PALETTE[index % TYPE_PALETTE.length];
   }
@@ -133,7 +157,9 @@ function seriesColor(
 const PHASE_CODE_LABEL: Record<number, string> = {
   1: "集结",
   2: "搜索",
-  3: "接触",
+  3: "危机",
+  4: "残局",
+  5: "终局",
 };
 
 function isPhaseCodeChart(chart: ChartSpec): boolean {
@@ -163,13 +189,18 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
     ...s,
     fill: seriesColor(chart, s.name, s.side, i, s.value),
   }));
-  const showLevelLegend = isThreatLevelScoreChart(chart);
+  const showLevelLegend =
+    isThreatLevelScoreChart(chart) || isThreatLevelDistributionChart(chart);
   const isPhaseChart = isPhaseCodeChart(chart);
   const showDetailTip =
     chart.id === "cmp-intent-evidence" ||
     chart.id === "grammar-evidence-pie" ||
     chart.id === "cmp-threat-levels" ||
     chart.id === "grammar-bar" ||
+    chart.id === "cmp-threat-map-encoding" ||
+    chart.id === "grammar-map-encoding" ||
+    chart.id === "cmp-intent-axes" ||
+    chart.id === "grammar-axes" ||
     chart.title.includes("证据") ||
     series.some((s) => Boolean(s.detail));
   const type = chart.type;
@@ -209,7 +240,9 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
           multiLineKeys.map((k) => Number(row[k]) || 0),
         )
       : data.map((s) => s.value);
-  const yDomain = isPhaseChart ? ([1, 3] as [number, number]) : lineYDomain(lineValues);
+  const yDomain = isPhaseChart
+    ? ([1, 5] as [number, number])
+    : lineYDomain(lineValues);
 
   return (
     <div className="flex h-full flex-col rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)]">
@@ -242,9 +275,11 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
         </div>
       ) : isPhaseChart ? (
         <div className="mb-2 flex h-4 flex-wrap gap-3 text-[10px] text-[var(--muted)]">
-          <span>1 = 集结</span>
-          <span>2 = 搜索</span>
-          <span>3 = 接触</span>
+          <span>1 集结</span>
+          <span>2 搜索</span>
+          <span>3 危机</span>
+          <span>4 残局</span>
+          <span>5 终局</span>
         </div>
       ) : null}
       <div className="min-h-0 overflow-hidden" style={{ height: chartHeight }}>
@@ -311,7 +346,7 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
                 />
                 <YAxis
                   domain={yDomain}
-                  ticks={isPhaseChart ? [1, 2, 3] : undefined}
+                  ticks={isPhaseChart ? [1, 2, 3, 4, 5] : undefined}
                   tickFormatter={
                     isPhaseChart
                       ? (v) => PHASE_CODE_LABEL[Number(v)] ?? String(v)
@@ -322,12 +357,29 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
                   width={isPhaseChart ? 40 : 32}
                 />
                 <Tooltip
-                  formatter={(value) => {
-                    const n = Number(value);
-                    if (isPhaseChart && PHASE_CODE_LABEL[n]) {
-                      return [`${n}（${PHASE_CODE_LABEL[n]}）`, "阶段"];
-                    }
-                    return [String(value), "值"];
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const row = payload[0]?.payload as {
+                      name?: string;
+                      value?: number;
+                      detail?: string;
+                    };
+                    const n = Number(row.value);
+                    const title = isPhaseChart
+                      ? `${row.name ?? ""}：${n}（${PHASE_CODE_LABEL[n] ?? n}）`
+                      : `${row.name ?? ""}：${row.value ?? ""}`;
+                    return (
+                      <div className="max-w-xs rounded-md bg-[var(--panel)] px-2.5 py-2 text-xs shadow-md ring-1 ring-[var(--line)]">
+                        <div className="font-semibold text-[var(--ink)]">
+                          {title}
+                        </div>
+                        {row.detail ? (
+                          <div className="mt-1 whitespace-pre-wrap text-[var(--muted)]">
+                            {row.detail}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
                   }}
                 />
                 <Area
@@ -749,7 +801,7 @@ function IntentFocusPanel({
   spec: SituationViewSpec;
   packPhase?: string;
 }) {
-  const phase = inferCampaignPhase(packPhase ?? "", spec);
+  const beat = inferCampaignBeat(packPhase ?? "", spec);
   const axes = spec.map.axes ?? [];
   const evidence = intentEvidenceItems(spec);
 
@@ -766,12 +818,12 @@ function IntentFocusPanel({
           战役阶段
         </div>
         <div className="flex overflow-hidden rounded-md text-xs ring-1 ring-[var(--line)]">
-          {INTENT_PHASES.map((p) => {
-            const active = p === phase;
+          {INTENT_BEATS.map((p) => {
+            const active = p === beat;
             return (
               <div
                 key={p}
-                className={`flex-1 px-2 py-2 text-center ${
+                className={`flex-1 px-1.5 py-2 text-center sm:px-2 ${
                   active
                     ? "bg-[var(--panel-3)] font-semibold text-[var(--ink)]"
                     : "bg-[var(--panel-2)] text-[var(--muted)]"
@@ -785,7 +837,7 @@ function IntentFocusPanel({
         </div>
         {(spec.phase_label || packPhase) && (
           <p className="mt-1 text-[11px] text-[var(--muted)]">
-            {spec.phase_label || packPhase}
+            本片：{spec.phase_label || packPhase}
           </p>
         )}
       </div>
