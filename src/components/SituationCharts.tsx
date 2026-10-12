@@ -249,23 +249,20 @@ export function ChartCard({
   const isLineLike = type === "line" || type === "multi_line" || type === "area";
   const chartHeight = isHBar
     ? Math.max(compact ? 140 : 220, 28 + data.length * (compact ? 22 : 28))
-    : isPie
-      ? compact
-        ? 200
-        : 240
+    : isPie || isRadar || chart.id === "cmp-force-bearing"
+      ? // 扩展行饼图/雷达统一高度，避免一行里外框高低不一
+        compact
+          ? 240
+          : 300
       : isHeat
         ? Math.max(compact ? 120 : 160, 28 + new Set(data.map((d) => d.group)).size * 22)
         : isSankey
           ? compact
             ? 160
             : 200
-          : isRadar || chart.id === "cmp-force-bearing"
-            ? compact
-              ? 240
-              : 300
-            : compact
-              ? 132
-              : 200;
+          : compact
+            ? 132
+            : 200;
   const stroke = "#5b8c5a";
   const scatterData = data.map((s, i) => ({
     ...s,
@@ -440,20 +437,27 @@ export function ChartCard({
       >
         {isPie ? (
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 4, right: 12, bottom: 36, left: 12 }}>
+            <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
               <Pie
-                data={data}
+                data={
+                  data.some((d) => Number(d.value) > 0)
+                    ? data.filter((d) => Number(d.value) > 0)
+                    : data
+                }
                 dataKey="value"
                 nameKey="name"
-                innerRadius={0}
-                outerRadius="58%"
-                paddingAngle={2}
+                innerRadius={compact ? "32%" : "36%"}
+                outerRadius={compact ? "62%" : "68%"}
+                paddingAngle={3}
                 cx="50%"
-                cy="42%"
-                label={({ name, value }) => `${name} ${value}`}
-                labelLine={{ strokeWidth: 1 }}
+                cy="46%"
+                label={({ value }) => (Number(value) > 0 ? String(value) : "")}
+                labelLine={false}
               >
-                {data.map((s, i) => (
+                {(data.some((d) => Number(d.value) > 0)
+                  ? data.filter((d) => Number(d.value) > 0)
+                  : data
+                ).map((s, i) => (
                   <Cell key={`${s.name}-${i}`} fill={s.fill} />
                 ))}
               </Pie>
@@ -465,7 +469,7 @@ export function ChartCard({
                     value?: number;
                     detail?: string;
                   };
-                  const title = `${row.name ?? ""}：${row.value ?? 0}`;
+                  const title = `${row.name ?? ""}: ${row.value ?? 0}`;
                   if (!showDetailTip || !row.detail) {
                     return (
                       <div className="rounded-md bg-[var(--panel)] px-2 py-1.5 text-xs shadow ring-1 ring-[var(--line)]">
@@ -487,8 +491,14 @@ export function ChartCard({
               />
               <Legend
                 verticalAlign="bottom"
-                height={32}
-                wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
+                align="center"
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{
+                  fontSize: 11,
+                  lineHeight: "16px",
+                  paddingTop: 2,
+                }}
               />
             </PieChart>
           </ResponsiveContainer>

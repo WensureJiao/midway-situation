@@ -347,60 +347,32 @@ export function VmmpCompareWorkbench() {
 
             {bearingRadar || evidencePie || evidenceRadar ? (
               <section className="rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)]">
-                <div className="mb-3 px-1">
+                <div className="mb-2 px-1">
                   <h3 className="text-sm font-semibold text-[var(--ink)]">
                     范式扩展图
                   </h3>
                   <p className="mt-0.5 text-[10px] text-[var(--muted)]">
-                    仅有 VMMP 时出现；对照上方结论阅读
+                    仅有 VMMP 时出现；对照上方结论阅读 · 方位雷达 / 证据构成 /
+                    证据轮廓
                   </p>
                 </div>
-
-                {bearingRadar ? (
-                  <div className="mb-4">
-                    <div className="mb-1.5 px-1 text-[11px] font-semibold text-[var(--ink)]">
-                      空间类
-                      <span className="ml-1.5 font-normal text-[var(--muted)]">
-                        Position / Alignment → 方位雷达
-                      </span>
-                    </div>
-                    <div className="mx-auto min-w-0 max-w-md">
-                      <div className="mb-1 px-1 text-[10px] font-medium text-[var(--muted)]">
-                        方位分布 · 相对中途岛八方位
-                      </div>
+                <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-3">
+                  {bearingRadar ? (
+                    <div className="flex min-w-0 max-w-full flex-col">
                       <ChartCard chart={bearingRadar} compact showWhyType />
                     </div>
-                  </div>
-                ) : null}
-
-                {evidencePie || evidenceRadar ? (
-                  <div>
-                    <div className="mb-1.5 px-1 text-[11px] font-semibold text-[var(--ink)]">
-                      证据类
-                      <span className="ml-1.5 font-normal text-[var(--muted)]">
-                        Connection→饼 · Alignment→轮廓雷达
-                      </span>
+                  ) : null}
+                  {evidencePie ? (
+                    <div className="flex min-w-0 max-w-full flex-col">
+                      <ChartCard chart={evidencePie} compact showWhyType />
                     </div>
-                    <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-                      {evidencePie ? (
-                        <div className="min-w-0 max-w-full">
-                          <div className="mb-1 px-1 text-[10px] font-medium text-[var(--muted)]">
-                            证据构成 · 饼图
-                          </div>
-                          <ChartCard chart={evidencePie} compact showWhyType />
-                        </div>
-                      ) : null}
-                      {evidenceRadar ? (
-                        <div className="min-w-0 max-w-full">
-                          <div className="mb-1 px-1 text-[10px] font-medium text-[var(--muted)]">
-                            证据维度轮廓 · 雷达图
-                          </div>
-                          <ChartCard chart={evidenceRadar} compact showWhyType />
-                        </div>
-                      ) : null}
+                  ) : null}
+                  {evidenceRadar ? (
+                    <div className="flex min-w-0 max-w-full flex-col">
+                      <ChartCard chart={evidenceRadar} compact showWhyType />
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
+                </div>
               </section>
             ) : null}
           </>

@@ -99,20 +99,39 @@ export function VmmpReasoningTrace({
           <p className="mt-1 text-[10px] leading-snug text-[var(--muted)]">
             自由叙述（无固定 C/R/O/M/E）；主语仍是{observerLabel}观察者。
           </p>
-          {parsed.freeform?.trim() ||
-          (!parsed.conclusion && reasoning?.trim()) ? (
-            <div className="mt-1.5 max-h-28 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-relaxed text-[var(--ink)]">
-              {(parsed.freeform || reasoning || "").trim()}
-            </div>
-          ) : parsed.conclusion ? (
-            <p className="mt-1.5 text-[10px] text-[var(--muted)]">
-              过程细节较少；结论已置于上方。
-            </p>
-          ) : (
-            <p className="mt-1.5 text-[10px] text-[var(--muted)]">
-              暂无{focusTitle}推理；点「生成 A/B」可写出
-            </p>
-          )}
+          {(() => {
+            const processText =
+              parsed.freeform?.trim() ||
+              (reasoning?.trim() && parsed.conclusion
+                ? reasoning
+                    .trim()
+                    .split(/\r?\n/)
+                    .map((l) => l.trim())
+                    .filter(
+                      (l) =>
+                        l &&
+                        !/^(?:结论|CONCLUSION)[:：]/i.test(l) &&
+                        l !== parsed.conclusion,
+                    )
+                    .join("\n")
+                    .trim()
+                : "") ||
+              (parsed.conclusion
+                ? `依据简述：${parsed.conclusion}`
+                : "");
+            if (processText) {
+              return (
+                <div className="mt-1.5 max-h-36 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-relaxed text-[var(--ink)]">
+                  {processText}
+                </div>
+              );
+            }
+            return (
+              <p className="mt-1.5 text-[10px] text-[var(--muted)]">
+                暂无{focusTitle}推理；点「生成 A/B」可写出
+              </p>
+            );
+          })()}
         </>
       ) : (
         <>

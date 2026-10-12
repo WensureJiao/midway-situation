@@ -73,22 +73,26 @@ function perspectiveBucket(
   return null;
 }
 
-/** 证据构成：计数 + 悬停明细 */
+/** 证据构成：英文类目 + 计数 + 悬停明细（中文原文在 detail） */
 function evidenceCompositionSeries(
   spec: SituationViewSpec,
 ): ChartSpec["series"] {
   const items = intentEvidenceItems(spec).filter(
     (i) => i.kind !== "叙述" && i.kind !== "叙述依据",
   );
-  const keys = ["方向", "关键实体", "活动区"] as const;
-  return keys.map((name) => {
-    const texts = items.filter((i) => i.kind === name).map((i) => i.text);
+  const keys = [
+    { kind: "方向", name: "Direction" },
+    { kind: "关键实体", name: "Entity" },
+    { kind: "活动区", name: "Zone" },
+  ] as const;
+  return keys.map(({ kind, name }) => {
+    const texts = items.filter((i) => i.kind === kind).map((i) => i.text);
     return {
       name,
       value: texts.length,
       detail: texts.length
         ? texts.map((t, i) => `${i + 1}. ${t}`).join("\n")
-        : "暂无此类证据",
+        : `No ${name.toLowerCase()} evidence`,
     };
   });
 }
@@ -561,7 +565,7 @@ export function buildTaskCompareCharts(
         id: "cmp-intent-evidence",
         type: "pie",
         title: "证据构成",
-        description: "方向 / 关键实体 / 活动区占比（对照意图结论）",
+        description: "Direction / Entity / Zone 占比",
         why_type: "M：Associative+Relate → Connection ⇒ pie",
         series: evidence,
       },
@@ -569,7 +573,7 @@ export function buildTaskCompareCharts(
         id: "cmp-intent-evidence-radar",
         type: "radar",
         title: "证据维度轮廓",
-        description: "三维度相对强弱（对照意图结论）",
+        description: "Direction · Entity · Zone 相对强弱",
         why_type: "M：Comparative+Compare → Alignment ⇒ radar",
         series: evidence,
       },

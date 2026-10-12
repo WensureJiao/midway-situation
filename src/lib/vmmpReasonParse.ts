@@ -89,7 +89,10 @@ export function parseCrotmeReasoning(raw: string | undefined | null): CrotmeBloc
     if (/^O[:：]/i.test(line) && !STEP_RE.test(line.replace(/^O[:：]\s*/i, ""))) {
       continue;
     }
-    const stepLine = line.replace(/^O[:：]\s*/i, "");
+    // 兼容「O：Identify：…」「步骤名：Identify：…」「Identify：…」
+    const stepLine = line
+      .replace(/^O[:：]\s*/i, "")
+      .replace(/^(?:步骤名|步骤|Step)[:：]\s*/i, "");
     const mS = stepLine.match(STEP_RE);
     if (mS) {
       O.push({ step: mS[1], text: mS[2].trim() });
@@ -98,7 +101,8 @@ export function parseCrotmeReasoning(raw: string | undefined | null): CrotmeBloc
     other.push(line);
   }
 
-  const structured = Boolean(conclusion || C || R || M || E || O.length);
+  // 「有结论」不等于 CROTME；structured 只表示走过 C/R/O/M/E
+  const structured = Boolean(C || R || M || E || O.length);
 
   // 无显式结论时：优先 Infer/Rank/Assess，否则用 C
   if (!conclusion) {
@@ -109,13 +113,30 @@ export function parseCrotmeReasoning(raw: string | undefined | null): CrotmeBloc
     conclusion = infer?.text || C || undefined;
   }
 
-  // A 侧自由文：首行作结论，其余作过程
-  let freeform = structured ? undefined : text;
-  if (!structured && !conclusion && other.length) {
-    conclusion = other[0];
-    freeform = other.slice(1).join("\n") || text;
-  } else if (!structured && conclusion && other.length) {
-    freeform = other.join("\n");
+  const stripProcessLabel = (s: string) =>
+    s.replace(/^(?:过程|PROCESS)[:：]\s*/i, "").trim();
+
+  // 过程文：优先 other；无范式且只有整段正文时再拆首行
+  let freeform: string | undefined;
+  if (other.length) {
+    freeform = other.map(stripProcessLabel).filter(Boolean).join("\n");
+  } else if (!structured) {
+    if (!conclusion) {
+      // 无「结论：」行：首行当结论，其余当过程；仅一行则结论=过程同句简写
+      if (lines.length >= 2) {
+        conclusion = lines[0];
+        freeform = lines.slice(1).join("\n");
+      } else {
+        conclusion = lines[0];
+        freeform = lines[0];
+      }
+    } else {
+      // 有结论行但没有其它行：过程用结论的简写，避免空白
+      freeform = `依据简述：${conclusion}`;
+    }
+  } else if (conclusion && !other.length) {
+    // 有范式但 O/C 已展示过程；若完全没有其它散文，给一句对照
+    freeform = undefined;
   }
 
   return {
