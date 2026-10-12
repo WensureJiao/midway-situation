@@ -1,12 +1,12 @@
 C：红方正通过Yorktown、Enterprise、Hornet三航母舰载机群（含140架在空）与中途岛陆基航空兵协同，压缩蓝方南云机动部队（Akagi/Soryu/Kaga）的侦察-打击窗口。  
-R：空间邻近性（如Yorktown Thatch Wildcats #11距Akagi仅约120km）与能力不对称性（美俯冲轰炸机52架 vs 日九九式13架）构成“能发现谁”与“能打掉谁”的双重压制关系。  
-步骤名：Identify：从蓝方IJN摘要中识别出南云机动部队核心为Akagi、Soryu、Kaga三艘航母，其舰载机ready0合计66架且多处于起飞/返航态。  
-步骤名：Locate：Akagi（28.92°N, 179.12°W）与Yorktown Thatch Wildcats #11（29.77°N, 177.60°W）直线距离约122km，处于无畏式俯冲轰炸机作战半径内。  
-步骤名：Filter：剔除蓝方无航空战力单位（如Nagara、Kirishima），聚焦三航母及Tone/Chikuma两侦察巡洋舰——后者搭载水上飞机正执行广域搜索但已暴露位置。  
-步骤名：Compare：美在空战斗机40架（野猫）对日零式仅2架，且美俯冲轰炸机52架远超日九九式/彗星13架，形成单向杀伤链优势。  
-步骤名：Aggregate：将Akagi/Soryu/Kaga按“高价值移动平台+低防空冗余+密集编队”归为同一威胁簇，Tone与Chikuma作为其侦察延伸节点同步绑定。  
-步骤名：Assess：Akagi被标定为最高威胁等级（T3），因其舰载35架含26架ready0，且位于编队中心；Soryu次之（T2），Kaga因ready0仅11架降为T2边缘。  
-步骤名：Rank：优先级排序为Akagi＞Soryu＞Tone＞Chikuma＞Kaga，依据是位置暴露度（Tone已发回侦察报告）、打击窗口（Akagi正组织第二波攻击）、毁伤回报比（击沉Akagi可瘫痪整个机动部队）。  
-步骤名：Verify：Yorktown Leslie Dauntless #9（29.61°N, 177.99°W）航向97.8°直指Akagi方位角，与Enterprise/Hornet同向航迹（248.8°）构成夹角包络，证实打击轴线已锁定。  
-M：高亮聚焦Akagi——因其在空间Position上居编队中心、在Salience上舰载机数与ready0双峰值；威胁圈以Akagi为圆心、150km为半径覆盖Soryu/Tone/Chikuma，体现Grouping与Spatial关联；排序Ordering严格按“平台存活率×打击时效×体系权重”加权生成。  
-E：所有判断均锚定原始经纬度、机型数量、ready0状态及航向数据，未引入外部假设。
+R：美舰载机已局部压至南云舰队附近（如Yorktown Leslie Dauntless #9在29.61°N, 177.99°W距Akagi仅约120km），形成“能发现即能打”的空间-时间耦合威胁链。  
+步骤名：Identify：从蓝方IJN摘要中锁定南云机动部队全部3艘主力航母（Akagi/Soryu/Kaga）及其当前航速10 kn/航向112.8°的统一运动状态。  
+步骤名：Locate：比对坐标，Akagi（28.92°N, 179.12°W）距Yorktown（29.55°N, 177.50°W）直线距离约165km，处于Dauntless俯冲轰炸机作战半径内。  
+步骤名：Filter：剔除蓝方无航空战力单位（如Nagara、Kirishima舰载仅2架），聚焦Akagi（ready0=26）、Soryu（ready0=29）、Kaga（ready0=11）三航母——其合计66架待发战机构成唯一可反击力量。  
+步骤名：Compare：美方在空140架中含52架Dauntless俯冲轰炸机与6架Devastator鱼雷机，对日方16架九七式+13架九九式形成数量与高度优势（Dauntless平均7621m vs Val 4572m）。  
+步骤名：Aggregate：将Akagi/Soryu/Kaga按“同编队、同航向、同暴露度”归为单一高危目标簇，其位置被Yorktown Thatch Wildcats #14（29.58°N, 177.61°W）等多批次战机持续覆盖。  
+步骤名：Assess：三航母中Soryu ready0=29最高、Akagi舰载35最多，但Kaga舰载仅12且ready0=11最低，综合判为“高价值-中脆弱”等级；Soryu为“高价值-高脆弱”最高等级。  
+步骤名：Rank：Soryu＞Akagi＞Kaga，依据是Soryu在空战机最多（29架ready）、位置居编队前导（28.89°N, 179.28°W最西）、且正被Yorktown Massey Devastators #12（29.41°N, 178.59°W）航迹指向。  
+步骤名：Verify：Soryu坐标（28.89°N, 179.28°W）与Yorktown Massey Devastators #12航向79.7°夹角＜15°，证实其正被定向突袭，威胁链闭环。  
+M：高亮Soryu因Comparative关系触发Filter操作下的Salience拓扑；轴线沿28.9°N纬度带对齐Akagi-Soryu-Kaga三舰，强化Grouping；威胁圈以Soryu为中心半径80km，覆盖其周边所有在空零式（如Hiryu Mori Zero #15）与美机交汇区。  
+E：所有排序依据均来自数据中具体坐标、航向、ready0数值及机型部署事实，未引入外部假设。

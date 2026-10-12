@@ -15,7 +15,8 @@ import type {
   SituationViewSpec,
   SlicePack,
 } from "@/lib/types";
-import { normalizeSituationSpec } from "@/lib/utils";
+import { filterUsnObserverRatings, normalizeSituationSpec } from "@/lib/utils";
+import { mergeLlmThreatZones } from "@/lib/threatZones";
 
 async function loadPack(timeSlice: string): Promise<SlicePack> {
   const file = path.join(
@@ -112,26 +113,58 @@ export async function POST(req: Request) {
     }
 
     // 主生成台锁定四张兵力统计图；对比页按任务从 ratings/map 生成固定图槽
-    const ratings =
+    // 威胁任务只保留美方观察视角，丢掉日方视角结论
+    const rawRatings =
       taskFocus === "intent"
-        ? (spec.threat_ratings ?? [])
+        ? []
         : spec.threat_ratings?.length
           ? spec.threat_ratings
           : buildThreatRatingsFromPack(pack);
+    const ratings = filterUsnObserverRatings(rawRatings);
+
+    // LLM：本地骨架定几何 + zone_overrides 升降级；本地/回退已是骨架
+    const threatZones =
+      body.mode === "llm" && !used_fallback
+        ? mergeLlmThreatZones(pack, spec, ratings)
+        : (spec.map?.threat_zones ?? []);
+
     const charts = lockCharts
       ? buildFixedCharts(pack)
       : buildTaskCompareCharts(
-          { ...spec, threat_ratings: ratings },
+          {
+            ...spec,
+            threat_ratings: ratings,
+            map: { ...spec.map, threat_zones: threatZones },
+          },
           taskFocus,
+          pack.phase_label,
+          { rich: body.vmmp_mode === "on", pack },
         );
+
+    const {
+      zone_overrides: _zoneOverrides,
+      ...specWithoutOverrides
+    } = spec;
+    void _zoneOverrides;
+
     spec = {
-      ...spec,
+      ...specWithoutOverrides,
       kpis: buildFixedKpis(pack),
       charts,
       intent_findings: [],
       threat_findings: [],
       priorities: [],
       threat_ratings: ratings,
+      map: {
+        ...(spec.map ?? {
+          center: [28.21, -177.38] as [number, number],
+          zoom: 6,
+          highlight_names: [],
+          axes: [],
+          threat_zones: [],
+        }),
+        threat_zones: threatZones,
+      },
     };
 
     const payload: GenerateResponse = {

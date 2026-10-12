@@ -1,4 +1,5 @@
 import type { SituationViewSpec } from "@/lib/types";
+import { inferCampaignBeat } from "@/lib/vmmpCompare";
 
 function sideName(side?: string) {
   if (side === "IJN") return "蓝方（日）";
@@ -6,22 +7,85 @@ function sideName(side?: string) {
   return "";
 }
 
-function zoneColor(level: string, side?: string) {
+function zoneColor(level: string, _side?: string) {
   if (level === "紧急") return "#9f1239";
-  if (side === "IJN") return "#3b82a8";
-  return "#c45c4a";
+  return "#d97706";
 }
 
 export function MapAnnotationLegend({ spec }: { spec: SituationViewSpec }) {
   const axes = spec.map?.axes ?? [];
   const zones = spec.map?.threat_zones ?? [];
-  if (!axes.length && !zones.length) return null;
+  const highlights = spec.map?.highlight_names ?? [];
+  const beat = inferCampaignBeat("", spec);
+  const phaseText = spec.phase_label?.trim() || "";
+  if (!axes.length && !zones.length && !highlights.length && !phaseText) {
+    return null;
+  }
 
   return (
     <div className="grid gap-3 text-xs">
       <div>
         <div className="mb-1 text-[11px] font-medium text-[var(--muted)]">
-          轴线
+          符号
+        </div>
+        <div className="flex flex-wrap gap-3 text-[10px] text-[var(--muted)]">
+          <span className="inline-flex items-center gap-1">
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-[var(--usn)] ring-1 ring-white" />
+            美方
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-[var(--ijn)] ring-1 ring-white" />
+            日方
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full bg-[#e07a6a] ring-1 ring-white" />
+            在空（美）
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full bg-[#6eb0d0] ring-1 ring-white" />
+            在空（日）
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#c4a35a] ring-1 ring-white" />
+            岸基
+          </span>
+        </div>
+      </div>
+      <div>
+        <div className="mb-1 text-[11px] font-medium text-[var(--muted)]">
+          阶段
+        </div>
+        <p className="text-[var(--ink)]">
+          <span className="font-semibold">{beat}</span>
+          {phaseText ? (
+            <span className="ml-1.5 text-[10px] text-[var(--muted)]">
+              {phaseText}
+            </span>
+          ) : null}
+        </p>
+      </div>
+
+      <div>
+        <div className="mb-1 text-[11px] font-medium text-[var(--muted)]">
+          高亮单位
+        </div>
+        {highlights.length ? (
+          <ul className="space-y-1">
+            {highlights.map((name) => (
+              <li key={name} className="flex items-start gap-2">
+                <span className="mt-0.5 h-3 w-3 shrink-0 rotate-45 rounded-[2px] bg-[var(--usn)] ring-2 ring-[#d4af37]/70" />
+                <span className="min-w-0 text-[var(--ink)]">{name}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-[var(--muted)]">无</p>
+        )}
+      </div>
+
+      <div>
+        <div className="mb-1 text-[11px] font-medium text-[var(--muted)]">
+          作战指向
         </div>
         {axes.length ? (
           <ul className="space-y-1">
@@ -30,7 +94,7 @@ export function MapAnnotationLegend({ spec }: { spec: SituationViewSpec }) {
                 <span
                   className="mt-1.5 h-0 w-5 shrink-0 border-t-2 border-dashed"
                   style={{
-                    borderColor: a.side === "IJN" ? "#3b82a8" : "#c45c4a",
+                    borderColor: a.side === "IJN" ? "#2563eb" : "#dc2626",
                   }}
                 />
                 <span className="min-w-0">
@@ -48,9 +112,10 @@ export function MapAnnotationLegend({ spec }: { spec: SituationViewSpec }) {
           <p className="text-[var(--muted)]">无</p>
         )}
       </div>
+
       <div>
         <div className="mb-1 text-[11px] font-medium text-[var(--muted)]">
-          圈
+          关注区
         </div>
         {zones.length ? (
           <ul className="space-y-1">

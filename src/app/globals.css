@@ -71,6 +71,12 @@ body {
   color: #355048;
 }
 
+/* 作战指向箭头：去掉 Leaflet divIcon 默认白底边框 */
+.axis-arrow-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
 .legend-usn,
 .legend-ijn,
 .legend-dmg {
@@ -109,5 +115,69 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Leaflet divIcon：去掉默认白底边框 */
+.leaflet-div-icon.axis-arrow-icon,
+.leaflet-div-icon.unit-icon,
+.leaflet-div-icon.focus-pin-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.focus-pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+.focus-pin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--focus-c, #dc2626);
+  border: 2px solid #fff;
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--focus-c, #dc2626) 40%, transparent),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+  animation: focus-pulse 0.85s ease-out infinite;
+}
+.focus-pin-label {
+  max-width: 160px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #1c2430;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-left: 3px solid var(--focus-c, #dc2626);
+}
+
+@keyframes focus-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--focus-c, #dc2626) 60%, transparent),
+      0 2px 6px rgba(0, 0, 0, 0.35);
+  }
+  70% {
+    transform: scale(1.15);
+    box-shadow:
+      0 0 0 14px color-mix(in srgb, var(--focus-c, #dc2626) 0%, transparent),
+      0 2px 6px rgba(0, 0, 0, 0.35);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--focus-c, #dc2626) 0%, transparent),
+      0 2px 6px rgba(0, 0, 0, 0.35);
   }
 }

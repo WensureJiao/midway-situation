@@ -19,11 +19,21 @@ import {
   LineChart,
   Pie,
   PieChart,
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
+  Radar,
+  RadarChart,
   ResponsiveContainer,
+  ReferenceLine,
+  Scatter,
+  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
+  ZAxis,
 } from "recharts";
+import { SankeyFlow } from "@/components/SankeyFlow";
 import { chartTypeLabel } from "@/lib/chartTypes";
 
 const INTENT_BEATS: CampaignBeat[] = [
@@ -61,7 +71,8 @@ function isThreatLevelScoreChart(chart: ChartSpec): boolean {
   if (
     chart.id === "grammar-hbar" ||
     chart.id === "grammar-hbar-red" ||
-    chart.id === "grammar-hbar-blue"
+    chart.id === "grammar-hbar-blue" ||
+    chart.id === "cmp-threat-rank"
   ) {
     return true;
   }
@@ -147,6 +158,14 @@ function seriesColor(
     return "#2a9d8f";
   }
   if (name.includes("未就绪")) return "#9ca3af";
+  if (
+    side === "both" ||
+    name === "中途岛" ||
+    /登陆海域|Midway/i.test(name)
+  ) {
+    // 金黄，与美方红、日方蓝明显区分
+    return "#ca8a04";
+  }
   if (side === "USN" || name === "USN" || /^美/.test(name) || /红方|红看/.test(name))
     return USN;
   if (side === "IJN" || name === "IJN" || /^日/.test(name) || /蓝方|蓝看/.test(name))
@@ -164,7 +183,11 @@ const PHASE_CODE_LABEL: Record<number, string> = {
 
 function isPhaseCodeChart(chart: ChartSpec): boolean {
   return (
-    chart.id === "grammar-area" || /意图阶段/.test(chart.title ?? "")
+    chart.id === "grammar-area" ||
+    chart.id === "cmp-intent-phase" ||
+    chart.id === "cmp-intent-phase-line" ||
+    chart.id === "cmp-intent-phase-area" ||
+    /意图阶段|战役阶段|阶段编码|阶段过程/.test(chart.title ?? "")
   );
 }
 
@@ -183,7 +206,20 @@ function lineYDomain(values: number[]): [number, number] {
   return [0, Math.max(1, Math.ceil(max * 1.08))];
 }
 
-function ChartCard({ chart }: { chart: ChartSpec }) {
+export function ChartCard({
+  chart,
+  compact = false,
+  hideChromeTitle = false,
+  showWhyType = false,
+}: {
+  chart: ChartSpec;
+  /** 嵌入研判排版时用更矮的图 */
+  compact?: boolean;
+  /** 外层已有标题时隐藏卡片标题/选图说明，避免重复并减少溢出 */
+  hideChromeTitle?: boolean;
+  /** compact 时仍显示选图理由（范式选图对照） */
+  showWhyType?: boolean;
+}) {
   const series = chart.series ?? [];
   const data = series.map((s, i) => ({
     ...s,
@@ -206,9 +242,41 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
   const type = chart.type;
   const isHBar = type === "hbar";
   const isPie = type === "pie";
+  const isScatter = type === "scatter";
+  const isRadar = type === "radar";
+  const isHeat = type === "heatmap";
+  const isSankey = type === "sankey";
   const isLineLike = type === "line" || type === "multi_line" || type === "area";
-  const chartHeight = isHBar ? Math.max(220, 36 + data.length * 28) : 200;
+  const chartHeight = isHBar
+    ? Math.max(compact ? 140 : 220, 28 + data.length * (compact ? 22 : 28))
+    : isPie
+      ? compact
+        ? 200
+        : 240
+      : isHeat
+        ? Math.max(compact ? 120 : 160, 28 + new Set(data.map((d) => d.group)).size * 22)
+        : isSankey
+          ? compact
+            ? 160
+            : 200
+          : isRadar || chart.id === "cmp-force-bearing"
+            ? compact
+              ? 240
+              : 300
+            : compact
+              ? 132
+              : 200;
   const stroke = "#5b8c5a";
+  const scatterData = data.map((s, i) => ({
+    ...s,
+    x: typeof s.x === "number" ? s.x : i + 1,
+    y: typeof s.y === "number" ? s.y : s.value,
+  }));
+  const heatRows = Array.from(
+    new Set(data.map((d) => String(d.group ?? "行"))),
+  );
+  const heatCols = Array.from(new Set(data.map((d) => String(d.name))));
+  const heatMax = Math.max(1, ...data.map((d) => Number(d.value) || 0));
 
   const multiLineKeys = Array.from(
     new Set(
@@ -245,24 +313,84 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
     : lineYDomain(lineValues);
 
   return (
-    <div className="flex h-full flex-col rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)]">
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h3 className="truncate text-sm font-semibold text-[var(--ink)]">
-            {chart.title}
-          </h3>
-          {chart.description ? (
-            <p className="mt-0.5 text-[10px] leading-snug text-[var(--muted)]">
-              {chart.description}
-            </p>
-          ) : null}
+    <div className="flex h-full min-w-0 max-w-full flex-col">
+      {!hideChromeTitle ? (
+        <div
+          className={`flex min-w-0 items-start justify-between gap-2 ${compact ? "mb-1.5" : "mb-2"}`}
+        >
+          <div className="min-w-0">
+            <h3
+              className={`truncate font-semibold text-[var(--ink)] ${
+                compact ? "text-xs" : "text-sm"
+              }`}
+            >
+              {chart.title}
+            </h3>
+            {!compact && chart.description ? (
+              <p className="mt-0.5 text-[10px] leading-snug text-[var(--muted)]">
+                {chart.description}
+              </p>
+            ) : null}
+            {(!compact || showWhyType) && chart.why_type ? (
+              <p className="mt-0.5 text-[10px] leading-snug text-[var(--muted)]">
+                选图：{chart.why_type}
+              </p>
+            ) : null}
+          </div>
+          <span className="shrink-0 pt-0.5 text-[10px] text-[var(--muted)]">
+            {chartTypeLabel(type)}
+          </span>
         </div>
-        <span className="shrink-0 pt-0.5 text-[10px] text-[var(--muted)]">
-          {chartTypeLabel(type)}
-        </span>
-      </div>
-      {showLevelLegend ? (
-        <div className="mb-2 flex h-4 flex-wrap gap-2 text-[10px] text-[var(--muted)]">
+      ) : (
+        <div className="mb-1.5 flex min-w-0 items-center justify-between gap-2">
+          <div className="min-w-0">
+            {chart.id === "cmp-force-landing" ? (
+              <div className="flex h-4 flex-wrap gap-2.5 text-[10px] text-[var(--muted)]">
+                <span className="inline-flex items-center gap-1">
+                  <span
+                    className="inline-block h-2 w-2 rounded-full"
+                    style={{ background: USN }}
+                  />
+                  美方
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span
+                    className="inline-block h-2 w-2 rounded-full"
+                    style={{ background: IJN }}
+                  />
+                  日方
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="inline-block h-2 w-2 rounded-full bg-[#ca8a04]" />
+                  中途岛
+                </span>
+              </div>
+            ) : showLevelLegend ? (
+              <div className="flex h-4 flex-wrap gap-2 text-[10px] text-[var(--muted)]">
+                {LEVEL_SCORE_LEGEND.map((L) => (
+                  <span key={L.score} className="inline-flex items-center gap-1">
+                    <span
+                      className="inline-block h-2 w-2.5 rounded-sm"
+                      style={{ background: levelScoreColor(L.score) }}
+                    />
+                    {L.label}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            {showWhyType && chart.why_type ? (
+              <p className="mt-0.5 text-[10px] leading-snug text-[var(--muted)]">
+                选图：{chart.why_type}
+              </p>
+            ) : null}
+          </div>
+          <span className="shrink-0 text-[10px] text-[var(--muted)]">
+            {chartTypeLabel(type)}
+          </span>
+        </div>
+      )}
+      {showLevelLegend && !hideChromeTitle ? (
+        <div className="mb-1.5 flex h-4 flex-wrap gap-2 text-[10px] text-[var(--muted)]">
           {LEVEL_SCORE_LEGEND.map((L) => (
             <span key={L.score} className="inline-flex items-center gap-1">
               <span
@@ -274,26 +402,55 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
           ))}
         </div>
       ) : isPhaseChart ? (
-        <div className="mb-2 flex h-4 flex-wrap gap-3 text-[10px] text-[var(--muted)]">
+        <div className="mb-1.5 flex h-4 flex-wrap gap-3 text-[10px] text-[var(--muted)]">
           <span>1 集结</span>
           <span>2 搜索</span>
           <span>3 危机</span>
           <span>4 残局</span>
           <span>5 终局</span>
         </div>
+      ) : chart.id === "cmp-force-landing" && !hideChromeTitle ? (
+        <div className="mb-1.5 flex h-4 flex-wrap gap-2.5 text-[10px] text-[var(--muted)]">
+          <span className="inline-flex items-center gap-1">
+            <span
+              className="inline-block h-2 w-2 rounded-full"
+              style={{ background: USN }}
+            />
+            美方
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span
+              className="inline-block h-2 w-2 rounded-full"
+              style={{ background: IJN }}
+            />
+            日方
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full bg-[#ca8a04]" />
+            中途岛
+          </span>
+        </div>
       ) : null}
-      <div className="min-h-0 overflow-hidden" style={{ height: chartHeight }}>
+      {/* 棕色框只包住绘图区，标题文字在框外；饼图留出图例空间，避免裁切 */}
+      <div
+        className={`min-h-0 w-full min-w-0 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] ${
+          isPie ? "overflow-visible" : "overflow-hidden"
+        } ${compact ? "p-1.5" : "p-2"}`}
+        style={{ height: chartHeight }}
+      >
         {isPie ? (
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+            <PieChart margin={{ top: 4, right: 12, bottom: 36, left: 12 }}>
               <Pie
                 data={data}
                 dataKey="value"
                 nameKey="name"
                 innerRadius={0}
-                outerRadius={58}
+                outerRadius="58%"
                 paddingAngle={2}
-                label={({ value }) => `${value}`}
+                cx="50%"
+                cy="42%"
+                label={({ name, value }) => `${name} ${value}`}
                 labelLine={{ strokeWidth: 1 }}
               >
                 {data.map((s, i) => (
@@ -328,7 +485,11 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
                   );
                 }}
               />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Legend
+                verticalAlign="bottom"
+                height={32}
+                wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
+              />
             </PieChart>
           </ResponsiveContainer>
         ) : isLineLike ? (
@@ -461,6 +622,245 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
               </LineChart>
             )}
           </ResponsiveContainer>
+        ) : isScatter ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <ScatterChart
+              margin={{
+                top: 8,
+                right: compact ? 6 : 10,
+                bottom:
+                  chart.id === "cmp-force-landing" ? (compact ? 14 : 18) : 8,
+                left: compact ? 0 : 2,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#d6d3ce" />
+              <XAxis
+                type="number"
+                dataKey="x"
+                name={chart.id === "cmp-force-landing" ? "东向 nm" : "X"}
+                tick={{ fontSize: 9, fill: "#5c584f" }}
+                allowDecimals
+                label={
+                  chart.id === "cmp-force-landing"
+                    ? {
+                        value: "东 → (nm)",
+                        position: "insideBottom",
+                        offset: -4,
+                        style: { fontSize: 9, fill: "#5c584f" },
+                      }
+                    : undefined
+                }
+              />
+              <YAxis
+                type="number"
+                dataKey="y"
+                name={chart.id === "cmp-force-landing" ? "北向 nm" : "Y"}
+                tick={{ fontSize: 9, fill: "#5c584f" }}
+                width={chart.id === "cmp-force-landing" ? (compact ? 34 : 42) : 36}
+                allowDecimals
+                label={
+                  chart.id === "cmp-force-landing" && !compact
+                    ? {
+                        value: "北 →",
+                        angle: -90,
+                        position: "insideLeft",
+                        style: { fontSize: 9, fill: "#5c584f" },
+                      }
+                    : undefined
+                }
+              />
+              <ZAxis
+                type="number"
+                dataKey="z"
+                range={
+                  chart.id === "cmp-force-landing" ? [10, 22] : [40, 120]
+                }
+              />
+              {chart.id === "cmp-force-landing" ? (
+                <>
+                  <ReferenceLine x={0} stroke="#ca8a04" strokeDasharray="4 4" />
+                  <ReferenceLine y={0} stroke="#ca8a04" strokeDasharray="4 4" />
+                </>
+              ) : null}
+              <Tooltip
+                cursor={{ strokeDasharray: "3 3" }}
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const row = payload[0]?.payload as {
+                    name?: string;
+                    x?: number;
+                    y?: number;
+                    detail?: string;
+                  };
+                  return (
+                    <div className="max-w-xs rounded-md bg-[var(--panel)] px-2.5 py-2 text-xs shadow-md ring-1 ring-[var(--line)]">
+                      <div className="font-semibold text-[var(--ink)]">
+                        {row.name}
+                        {chart.id === "cmp-force-landing"
+                          ? ` · 东 ${row.x} / 北 ${row.y} nm`
+                          : `（${row.x}, ${row.y}）`}
+                      </div>
+                      {row.detail ? (
+                        <div className="mt-1 whitespace-pre-wrap text-[var(--muted)]">
+                          {row.detail}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                }}
+              />
+              <Scatter
+                data={scatterData.map((s) => ({
+                  ...s,
+                  z:
+                    chart.id === "cmp-force-landing"
+                      ? s.side === "both" || s.name === "中途岛"
+                        ? 2.2
+                        : 1
+                      : 3,
+                }))}
+                fill={USN}
+                shape="circle"
+              >
+                {scatterData.map((s, i) => (
+                  <Cell key={`${s.name}-${i}`} fill={s.fill} />
+                ))}
+              </Scatter>
+            </ScatterChart>
+          </ResponsiveContainer>
+        ) : isRadar ? (
+          <ResponsiveContainer width="100%" height="100%">
+            {chart.id === "cmp-force-bearing" ? (
+              <RadarChart
+                data={Array.from(new Set(data.map((d) => d.name))).map(
+                  (name) => {
+                    const us = data.find(
+                      (d) => d.name === name && d.side === "USN",
+                    );
+                    const ij = data.find(
+                      (d) => d.name === name && d.side === "IJN",
+                    );
+                    return {
+                      name,
+                      美方: Number(us?.value) || 0,
+                      日方: Number(ij?.value) || 0,
+                      detail: [us?.detail, ij?.detail]
+                        .filter(Boolean)
+                        .join("\n\n"),
+                    };
+                  },
+                )}
+                margin={{
+                  top: compact ? 8 : 12,
+                  right: compact ? 16 : 28,
+                  bottom: compact ? 16 : 20,
+                  left: compact ? 16 : 28,
+                }}
+                outerRadius={compact ? "72%" : "78%"}
+              >
+                <PolarGrid stroke="#d6d3ce" />
+                <PolarAngleAxis
+                  dataKey="name"
+                  tick={{ fontSize: 10, fill: "#5c584f" }}
+                />
+                <PolarRadiusAxis
+                  tick={{ fontSize: 9, fill: "#5c584f" }}
+                  allowDecimals={false}
+                />
+                <Radar
+                  name="美方"
+                  dataKey="美方"
+                  stroke={USN}
+                  fill={`${USN}44`}
+                  strokeWidth={1.5}
+                />
+                <Radar
+                  name="日方"
+                  dataKey="日方"
+                  stroke={IJN}
+                  fill={`${IJN}44`}
+                  strokeWidth={1.5}
+                />
+                <Legend
+                  wrapperStyle={{ fontSize: 10, color: "#5c584f" }}
+                />
+                <Tooltip />
+              </RadarChart>
+            ) : (
+              <RadarChart
+                data={data}
+                margin={{ top: 8, right: 16, bottom: 8, left: 16 }}
+              >
+                <PolarGrid stroke="#d6d3ce" />
+                <PolarAngleAxis
+                  dataKey="name"
+                  tick={{ fontSize: 10, fill: "#5c584f" }}
+                />
+                <PolarRadiusAxis
+                  tick={{ fontSize: 9, fill: "#5c584f" }}
+                  allowDecimals={false}
+                />
+                <Radar
+                  dataKey="value"
+                  stroke={USN}
+                  fill={`${USN}55`}
+                  strokeWidth={1.5}
+                />
+                <Tooltip />
+              </RadarChart>
+            )}
+          </ResponsiveContainer>
+        ) : isHeat ? (
+          <div className="flex h-full flex-col gap-1 overflow-auto px-0.5">
+            <div
+              className="grid gap-0.5"
+              style={{
+                gridTemplateColumns: `56px repeat(${Math.max(heatCols.length, 1)}, minmax(0,1fr))`,
+              }}
+            >
+              <div />
+              {heatCols.map((c) => (
+                <div
+                  key={c}
+                  className="truncate text-center text-[9px] text-[var(--muted)]"
+                >
+                  {c}
+                </div>
+              ))}
+              {heatRows.map((row) => (
+                <div key={row} className="contents">
+                  <div className="truncate pr-1 text-[9px] leading-5 text-[var(--muted)]">
+                    {row}
+                  </div>
+                  {heatCols.map((col) => {
+                    const cell = data.find(
+                      (d) =>
+                        String(d.group ?? "行") === row &&
+                        String(d.name) === col,
+                    );
+                    const v = Number(cell?.value) || 0;
+                    const alpha = v <= 0 ? 0.06 : 0.18 + (0.7 * v) / heatMax;
+                    return (
+                      <div
+                        key={`${row}-${col}`}
+                        title={
+                          cell?.detail
+                            ? `${row} · ${col}\n${cell.detail}`
+                            : `${row} · ${col}：${v}`
+                        }
+                        className="h-5 rounded-sm ring-1 ring-black/5"
+                        style={{
+                          background: `rgba(196,92,74,${alpha})`,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : isSankey ? (
+          <SankeyFlow links={data} compact={compact} />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
@@ -468,7 +868,12 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
               layout={isHBar ? "vertical" : "horizontal"}
               margin={
                 isHBar
-                  ? { top: 8, right: 24, left: 8, bottom: 8 }
+                  ? {
+                      top: 8,
+                      right: compact ? 28 : 24,
+                      left: 4,
+                      bottom: 8,
+                    }
                   : { top: 16, right: 8, left: 0, bottom: 28 }
               }
             >
@@ -483,8 +888,8 @@ function ChartCard({ chart }: { chart: ChartSpec }) {
                   <YAxis
                     type="category"
                     dataKey="name"
-                    width={88}
-                    tick={{ fontSize: 10, fill: "#5c584f" }}
+                    width={compact ? 72 : 88}
+                    tick={{ fontSize: compact ? 9 : 10, fill: "#5c584f" }}
                   />
                 </>
               ) : (
@@ -603,9 +1008,7 @@ function levelScore(level: string): number {
   return 1;
 }
 
-type PerspectiveKey = "红方" | "蓝方";
-
-/** 红方=美（USN），蓝方=日（IJN）。「红方看…」即美方视角。 */
+/** 红方=美（USN）。固定美方观察视角，避免早期切片并排日方视角造成“上帝视角”。 */
 function viewSideFromPerspective(p: string): "USN" | "IJN" | "其他" {
   if (/美方|USN/.test(p)) return "USN";
   if (/日方|IJN/.test(p)) return "IJN";
@@ -621,17 +1024,11 @@ function ThreatLevelChart({
 }: {
   ratings: SituationViewSpec["threat_ratings"];
 }) {
-  const [perspective, setPerspective] = useState<PerspectiveKey>("红方");
-
   const filtered = useMemo(() => {
-    return ratings.filter((r) => {
-      const side = viewSideFromPerspective(r.perspective);
-      // 界面：红方=美 USN，蓝方=日 IJN
-      if (perspective === "红方") return side === "USN";
-      if (perspective === "蓝方") return side === "IJN";
-      return false;
-    });
-  }, [ratings, perspective]);
+    return ratings.filter(
+      (r) => viewSideFromPerspective(r.perspective) === "USN",
+    );
+  }, [ratings]);
 
   const rows = useMemo(() => {
     return filtered
@@ -650,36 +1047,15 @@ function ThreatLevelChart({
       );
   }, [filtered]);
 
-  const label =
-    perspective === "红方"
-      ? "威胁目标排序（红方/美视角）"
-      : "威胁目标排序（蓝方/日视角）";
-
   return (
     <div className="rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)] sm:col-span-2">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h3 className="text-sm font-semibold text-[var(--ink)]">{label}</h3>
-          <p className="text-xs text-[var(--muted)]">
-            横轴为威胁强度（紧急&gt;高&gt;中&gt;低）；颜色表示等级
-          </p>
-        </div>
-        <div className="flex overflow-hidden rounded-md text-[11px] ring-1 ring-[var(--line)]">
-          {(["红方", "蓝方"] as PerspectiveKey[]).map((p) => (
-            <button
-              key={p}
-              type="button"
-              className={`px-2.5 py-1 ${
-                perspective === p
-                  ? "bg-[var(--panel-3)] font-semibold"
-                  : "bg-[var(--panel-2)]"
-              }`}
-              onClick={() => setPerspective(p)}
-            >
-              {p === "红方" ? "红方（美）" : "蓝方（日）"}
-            </button>
-          ))}
-        </div>
+      <div className="mb-2">
+        <h3 className="text-sm font-semibold text-[var(--ink)]">
+          威胁目标排序（美方视角）
+        </h3>
+        <p className="text-xs text-[var(--muted)]">
+          固定观察者为美方，只列日方目标；早期切片日方未必已发现美航母，故不并排日方视角。
+        </p>
       </div>
 
       <div className="mb-2 flex flex-wrap gap-3 text-[10px] text-[var(--muted)]">
@@ -794,21 +1170,32 @@ function ThreatLevelChart({
   );
 }
 
-function IntentFocusPanel({
+export function IntentFocusPanel({
   spec,
   packPhase,
+  compact = false,
 }: {
   spec: SituationViewSpec;
   packPhase?: string;
+  /** 嵌入对比页右栏时收紧边距 */
+  compact?: boolean;
 }) {
   const beat = inferCampaignBeat(packPhase ?? "", spec);
   const axes = spec.map.axes ?? [];
   const evidence = intentEvidenceItems(spec);
 
   return (
-    <div className="rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)] sm:col-span-2">
+    <div
+      className={`rounded-lg bg-[var(--panel)] ring-1 ring-[var(--line)] ${
+        compact ? "p-2" : "p-3 sm:col-span-2"
+      }`}
+    >
       <div className="mb-2">
-        <h3 className="text-sm font-semibold text-[var(--ink)]">
+        <h3
+          className={`font-semibold text-[var(--ink)] ${
+            compact ? "text-xs" : "text-sm"
+          }`}
+        >
           意图研判焦点
         </h3>
       </div>
@@ -842,57 +1229,67 @@ function IntentFocusPanel({
         )}
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <div>
           <div className="mb-1 text-[11px] font-medium text-[var(--muted)]">
-            作战指向 / 轴线
+            作战指向
           </div>
           {axes.length ? (
-            <ul className="space-y-1.5 text-xs">
-              {axes.map((ax) => (
-                <li
-                  key={ax.id || ax.label}
-                  className="rounded-md bg-[var(--panel-2)] px-2 py-1.5"
-                >
-                  <span className="font-medium text-[var(--ink)]">
-                    {ax.label}
-                  </span>
-                  {ax.side && (
-                    <span className="ml-2 text-[10px] text-[var(--muted)]">
-                      {ax.side}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="text-[10px] text-[var(--muted)]">
+                  <th className="pb-1 font-medium">标签</th>
+                  <th className="pb-1 font-medium">所属</th>
+                </tr>
+              </thead>
+              <tbody>
+                {axes.map((ax) => (
+                  <tr
+                    key={ax.id || ax.label}
+                    className="border-t border-[var(--line)]"
+                  >
+                    <td className="py-1.5 pr-2 text-[var(--ink)]">{ax.label}</td>
+                    <td className="py-1.5 text-[var(--muted)]">
+                      {ax.side ?? "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : (
-            <div className="rounded-md bg-[var(--panel-2)] px-2 py-3 text-xs text-[var(--muted)]">
-              暂无轴线；请结合地图高亮与叙述判断方向
-            </div>
+            <p className="text-xs text-[var(--muted)]">
+              暂无作战指向；请结合地图高亮与叙述判断方向
+            </p>
           )}
         </div>
         <div>
           <div className="mb-1 text-[11px] font-medium text-[var(--muted)]">
-            证据 → 假设
+            证据摘要
           </div>
           {evidence.length ? (
-            <ul className="max-h-[200px] space-y-1.5 overflow-auto text-xs">
-              {evidence.map((item, i) => (
-                <li
-                  key={`${item.kind}-${i}`}
-                  className="rounded-md bg-[var(--panel-2)] px-2 py-1.5"
-                >
-                  <span className="mr-1.5 text-[10px] font-semibold text-[var(--muted)]">
-                    {item.kind}
-                  </span>
-                  <span className="text-[var(--ink)]">{item.text}</span>
-                </li>
-              ))}
-            </ul>
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="text-[10px] text-[var(--muted)]">
+                  <th className="pb-1 font-medium">类型</th>
+                  <th className="pb-1 font-medium">内容</th>
+                </tr>
+              </thead>
+              <tbody>
+                {evidence.map((item, i) => (
+                  <tr
+                    key={`${item.kind}-${i}`}
+                    className="border-t border-[var(--line)]"
+                  >
+                    <td className="py-1.5 pr-2 align-top text-[var(--muted)]">
+                      {item.kind}
+                    </td>
+                    <td className="py-1.5 text-[var(--ink)]">{item.text}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : (
-            <div className="rounded-md bg-[var(--panel-2)] px-2 py-3 text-xs text-[var(--muted)]">
-              暂无结构化证据
-            </div>
+            <p className="text-xs text-[var(--muted)]">暂无结构化证据</p>
           )}
         </div>
       </div>
@@ -908,7 +1305,6 @@ export function SituationCharts({
   packPhase,
   showFixedCharts = true,
   showFocusPanels = true,
-  grammarHint = false,
 }: {
   charts?: ChartSpec[];
   threatRatings?: SituationViewSpec["threat_ratings"];
@@ -921,8 +1317,6 @@ export function SituationCharts({
   showFixedCharts?: boolean;
   /** 是否展示威胁排序 / 意图焦点面板 */
   showFocusPanels?: boolean;
-  /** 对比页脚注：指向图种库 */
-  grammarHint?: boolean;
 }) {
   const list = (charts ?? []).filter((c) => !isHiddenChart(c, !showFixedCharts));
 
@@ -954,14 +1348,6 @@ export function SituationCharts({
         <ThreatLevelChart ratings={threatRatings ?? []} />
       ) : showIntent && spec ? (
         <IntentFocusPanel spec={spec} packPhase={packPhase} />
-      ) : null}
-      {grammarHint ? (
-        <p className="sm:col-span-2 text-[10px] text-[var(--muted)]">
-          图种说明见{" "}
-          <a href="/charts" className="underline hover:text-[var(--ink)]">
-            图种库
-          </a>
-        </p>
       ) : null}
     </div>
   );

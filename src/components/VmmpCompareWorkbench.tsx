@@ -1,210 +1,42 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SituationCharts } from "@/components/SituationCharts";
-import { MapAnnotationLegend } from "@/components/MapAnnotationLegend";
+import { ChartCard } from "@/components/SituationCharts";
+import { SpatialStudyPanel } from "@/components/SpatialStudyPanel";
+import { buildTaskCompareCharts } from "@/lib/compareCharts";
 import type {
   GenerateResponse,
   SituationViewSpec,
   SliceIndexItem,
   SlicePack,
-  TaskFocus,
 } from "@/lib/types";
 import { normalizeSituationSpec } from "@/lib/utils";
-import { buildTaskCompareCharts } from "@/lib/compareCharts";
-import {
-  INTENT_E_CRITERIA,
-  THREAT_E_CRITERIA,
-  meanScores,
-} from "@/lib/vmmpCompare";
 import {
   AlertTriangle,
   ArrowLeftRight,
-  Download,
-  Eye,
-  EyeOff,
   Loader2,
   Sparkles,
 } from "lucide-react";
 
-const SituationMap = dynamic(
-  () => import("@/components/SituationMap").then((m) => m.SituationMap),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-full items-center justify-center text-sm text-[var(--muted)]">
-        地图加载中…
-      </div>
-    ),
-  },
-);
-
-type SideKey = "A" | "B";
-type ViewTab = "view" | "score";
-
-function VisPanel({
-  label,
-  badge,
-  pack,
-  spec,
-  mapKey,
-  blind,
-  taskFocus,
-  reasoning,
-}: {
-  label: string;
-  badge: string;
-  pack: SlicePack;
-  spec: SituationViewSpec;
-  mapKey: string;
-  blind: boolean;
-  taskFocus: TaskFocus;
-  reasoning: string;
-}) {
-  return (
-    <section className="flex min-w-0 flex-col overflow-hidden rounded-lg bg-[var(--panel)] ring-1 ring-[var(--line)]">
-      <div className="flex items-center justify-between gap-2 border-b border-[var(--line)] px-3 py-2">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h2 className="font-display text-lg tracking-wide">
-              {blind ? "方案" : label}
-            </h2>
-            <span className="rounded bg-[var(--panel-3)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--muted)]">
-              {blind ? "?" : badge}
-            </span>
-          </div>
-          <p className="truncate text-xs text-[var(--muted)]">
-            {spec.title}
-            <span className="mx-1">·</span>
-            {spec.phase_label}
-          </p>
-        </div>
-        <div className="shrink-0 text-right text-[10px] text-[var(--muted)]">
-          高亮 {spec.map.highlight_names?.length ?? 0}
-          <br />
-          轴 {spec.map.axes?.length ?? 0} · 圈{" "}
-          {spec.map.threat_zones?.length ?? 0}
-        </div>
-      </div>
-
-      {spec.narrative ? (
-        <p className="border-b border-[var(--line)] px-3 py-2 text-sm leading-relaxed text-[var(--ink)]/90">
-          {spec.narrative}
-        </p>
-      ) : null}
-
-      <div className="map-shell h-[min(46vh,460px)] overflow-hidden">
-        <SituationMap key={mapKey} pack={pack} spec={spec} />
-      </div>
-
-      {(spec.map.axes?.length ?? 0) > 0 ||
-      (spec.map.threat_zones?.length ?? 0) > 0 ? (
-        <div className="border-t border-[var(--line)] px-3 py-2">
-          <MapAnnotationLegend spec={spec} />
-        </div>
-      ) : null}
-
-      <div className="border-t border-[var(--line)] px-3 py-2">
-        <h3 className="mb-1 text-xs font-semibold text-[var(--ink)]">
-          推理过程
-        </h3>
-        {blind ? (
-          <p className="text-[11px] text-[var(--muted)]">
-            盲评中已隐藏，避免从步骤看出有无范式。
-          </p>
-        ) : (
-          <div className="max-h-52 overflow-auto whitespace-pre-wrap text-[12px] leading-relaxed text-[var(--ink)]">
-            {reasoning.trim() || "这一侧还没有推理记录。点「生成 A/B」会一起写出。"}
-          </div>
-        )}
-      </div>
-
-      <div className="border-t border-[var(--line)] p-2">
-        <SituationCharts
-          charts={buildTaskCompareCharts(spec, taskFocus)}
-          threatRatings={spec.threat_ratings}
-          taskFocus={taskFocus}
-          spec={spec}
-          packPhase={pack.phase_label}
-          showFixedCharts={false}
-          grammarHint
-        />
-      </div>
-    </section>
-  );
-}
-
-function ScoreColumn({
-  title,
-  criteria,
-  scores,
-  onChange,
-}: {
-  title: string;
-  criteria: readonly { id: string; label: string }[];
-  scores: Record<string, number>;
-  onChange: (id: string, v: number) => void;
-}) {
-  const mean = meanScores(scores);
-  return (
-    <div className="rounded-lg bg-[var(--panel-2)] p-2 ring-1 ring-[var(--line)]">
-      <div className="mb-2 flex items-center justify-between">
-        <h4 className="text-xs font-semibold">{title}</h4>
-        <span className="text-[11px] text-[var(--muted)]">
-          均分 {mean == null ? "—" : mean.toFixed(2)}
-        </span>
-      </div>
-      <div className="space-y-1.5">
-        {criteria.map((c) => (
-          <label
-            key={c.id}
-            className="flex items-center justify-between gap-2 text-[11px]"
-          >
-            <span className="min-w-0 flex-1 truncate" title={c.label}>
-              {c.label}
-            </span>
-            <select
-              className="rounded border border-[var(--line)] bg-[var(--panel)] px-1.5 py-0.5"
-              value={scores[c.id] ?? 0}
-              onChange={(e) => onChange(c.id, Number(e.target.value))}
-            >
-              <option value={0}>—</option>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </label>
-        ))}
-      </div>
-    </div>
-  );
-}
+/** 对比页固定以威胁分析为主界面；意图图种沉底展示 */
+const TASK_FOCUS = "threat" as const;
 
 export function VmmpCompareWorkbench() {
   const [index, setIndex] = useState<SliceIndexItem[]>([]);
   const [sliceId, setSliceId] = useState("T1");
-  const [taskFocus, setTaskFocus] = useState<TaskFocus>("threat");
   const [pack, setPack] = useState<SlicePack | null>(null);
   const [specA, setSpecA] = useState<SituationViewSpec | null>(null);
   const [specB, setSpecB] = useState<SituationViewSpec | null>(null);
-  const [reasonA, setReasonA] = useState("");
-  const [reasonB, setReasonB] = useState("");
+  const [reasonThreatA, setReasonThreatA] = useState("");
+  const [reasonThreatB, setReasonThreatB] = useState("");
+  const [reasonIntentA, setReasonIntentA] = useState("");
+  const [reasonIntentB, setReasonIntentB] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
-  const [blind, setBlind] = useState(false);
-  const [swapBlind, setSwapBlind] = useState(false);
-  const [viewTab, setViewTab] = useState<ViewTab>("view");
-  const [scoresA, setScoresA] = useState<Record<string, number>>({});
-  const [scoresB, setScoresB] = useState<Record<string, number>>({});
-
-  const criteria =
-    taskFocus === "threat" ? THREAT_E_CRITERIA : INTENT_E_CRITERIA;
+  const [abSide, setAbSide] = useState<"A" | "B">("A");
 
   useEffect(() => {
     fetch("/data/midway/index.json")
@@ -221,36 +53,41 @@ export function VmmpCompareWorkbench() {
     setPack(null);
     setSpecA(null);
     setSpecB(null);
-    setReasonA("");
-    setReasonB("");
-    setScoresA({});
-    setScoresB({});
+    setReasonThreatA("");
+    setReasonThreatB("");
+    setReasonIntentA("");
+    setReasonIntentB("");
     fetch(item.path)
       .then((r) => r.json())
       .then((data: SlicePack) => setPack(data))
       .catch((e) => setError(String(e)));
   }, [sliceId, index]);
 
-  useEffect(() => {
-    setScoresA({});
-    setScoresB({});
-  }, [taskFocus]);
-
   const loadReasoning = useCallback(async () => {
-    const pull = async (side: "A" | "B") => {
+    const pull = async (
+      focus: "threat" | "intent",
+      side: "A" | "B",
+    ) => {
       const res = await fetch(
-        `/api/vmmp-reasoning?slice=${sliceId}&focus=${taskFocus}&side=${side}`,
+        `/api/vmmp-reasoning?slice=${sliceId}&focus=${focus}&side=${side}`,
       );
       const data = (await res.json()) as { ok?: boolean; text?: string };
       return data.ok ? (data.text ?? "") : "";
     };
-    const [a, b] = await Promise.all([pull("A"), pull("B")]);
-    setReasonA(a);
-    setReasonB(b);
-  }, [sliceId, taskFocus]);
+    const [tA, tB, iA, iB] = await Promise.all([
+      pull("threat", "A"),
+      pull("threat", "B"),
+      pull("intent", "A"),
+      pull("intent", "B"),
+    ]);
+    setReasonThreatA(tA);
+    setReasonThreatB(tB);
+    setReasonIntentA(iA);
+    setReasonIntentB(iB);
+  }, [sliceId]);
 
   const tryLoadSaved = useCallback(async () => {
-    const base = `/data/vmmp_ab_visual/${sliceId}-${taskFocus}`;
+    const base = `/data/vmmp_ab_visual/${sliceId}-${TASK_FOCUS}`;
     try {
       const [ra, rb] = await Promise.all([
         fetch(`${base}-A.json`),
@@ -262,13 +99,12 @@ export function VmmpCompareWorkbench() {
       setSpecA(normalizeSituationSpec(a));
       setSpecB(normalizeSituationSpec(b));
       setNotes([]);
-      setSwapBlind(Math.random() < 0.5);
       void loadReasoning();
       return true;
     } catch {
       return false;
     }
-  }, [sliceId, taskFocus, loadReasoning]);
+  }, [sliceId, loadReasoning]);
 
   useEffect(() => {
     if (!pack) return;
@@ -280,9 +116,6 @@ export function VmmpCompareWorkbench() {
     setLoading(true);
     setError(null);
     setNotes([]);
-    setScoresA({});
-    setScoresB({});
-    setViewTab("view");
     const runNotes: string[] = [];
     try {
       const callOne = async (vmmp_mode: "off" | "on") => {
@@ -292,7 +125,7 @@ export function VmmpCompareWorkbench() {
           body: JSON.stringify({
             time_slice: sliceId,
             mode: "llm",
-            task_focus: taskFocus,
+            task_focus: TASK_FOCUS,
             vmmp_mode,
             lock_charts: false,
           }),
@@ -311,31 +144,47 @@ export function VmmpCompareWorkbench() {
         return normalizeSituationSpec(data.spec);
       };
 
-      const callReason = async (side: "A" | "B") => {
+      const callReason = async (
+        focus: "threat" | "intent",
+        side: "A" | "B",
+      ) => {
         const res = await fetch("/api/vmmp-reasoning", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             time_slice: sliceId,
-            task_focus: taskFocus,
+            task_focus: focus,
             side,
           }),
         });
-        const data = (await res.json()) as { ok?: boolean; text?: string; error?: string };
+        const data = (await res.json()) as {
+          ok?: boolean;
+          text?: string;
+          error?: string;
+        };
         if (!res.ok || !data.ok) {
-          runNotes.push(`${side} 推理未写出：${data.error || "失败"}`);
+          runNotes.push(
+            `${side}·${focus === "threat" ? "威胁" : "意图"}推理未写出：${data.error || "失败"}`,
+          );
           return "";
         }
         return data.text ?? "";
       };
 
-      const [a, textA] = await Promise.all([callOne("off"), callReason("A")]);
-      const [b, textB] = await Promise.all([callOne("on"), callReason("B")]);
+      const [a, b, tA, tB, iA, iB] = await Promise.all([
+        callOne("off"),
+        callOne("on"),
+        callReason("threat", "A"),
+        callReason("threat", "B"),
+        callReason("intent", "A"),
+        callReason("intent", "B"),
+      ]);
       setSpecA(a);
       setSpecB(b);
-      setReasonA(textA);
-      setReasonB(textB);
-      setSwapBlind(Math.random() < 0.5);
+      setReasonThreatA(tA);
+      setReasonThreatB(tB);
+      setReasonIntentA(iA);
+      setReasonIntentB(iB);
 
       try {
         const saveRes = await fetch("/api/vmmp-ab-save", {
@@ -343,7 +192,7 @@ export function VmmpCompareWorkbench() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             time_slice: sliceId,
-            task_focus: taskFocus,
+            task_focus: TASK_FOCUS,
             spec_a: a,
             spec_b: b,
           }),
@@ -361,62 +210,47 @@ export function VmmpCompareWorkbench() {
     } finally {
       setLoading(false);
     }
-  }, [pack, sliceId, taskFocus]);
+  }, [pack, sliceId]);
 
-  const leftRight = useMemo(() => {
-    if (!specA || !specB) return null;
-    if (blind && swapBlind) {
-      return {
-        left: { key: "B" as SideKey, spec: specB },
-        right: { key: "A" as SideKey, spec: specA },
-      };
-    }
-    return {
-      left: { key: "A" as SideKey, spec: specA },
-      right: { key: "B" as SideKey, spec: specB },
-    };
-  }, [specA, specB, blind, swapBlind]);
+  const activeSpec = abSide === "A" ? specA : specB;
+  const activeThreatReason = abSide === "A" ? reasonThreatA : reasonThreatB;
+  const activeIntentReason = abSide === "A" ? reasonIntentA : reasonIntentB;
+  const rich = abSide === "B";
 
-  const exportScores = () => {
-    const meanA = meanScores(scoresA);
-    const meanB = meanScores(scoresB);
-    const rows = ["slice,task_focus,side,criterion,score,mean"];
-    for (const side of ["A", "B"] as const) {
-      const scores = side === "A" ? scoresA : scoresB;
-      const mean = side === "A" ? meanA : meanB;
-      for (const c of criteria) {
-        rows.push(
-          [
-            sliceId,
-            taskFocus,
-            side,
-            c.id,
-            scores[c.id] ?? "",
-            mean?.toFixed(2) ?? "",
-          ].join(","),
-        );
-      }
-    }
-    const blob = new Blob(["\uFEFF" + rows.join("\n")], {
-      type: "text/csv;charset=utf-8",
+  /** B 扩展：空间方位雷达 + 证据构成饼 / 维度轮廓雷达 */
+  const intentCharts = useMemo(() => {
+    if (!pack || !activeSpec || !rich) return [];
+    return buildTaskCompareCharts(activeSpec, "intent", pack.phase_label, {
+      rich: true,
+      pack,
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `vmmp-score-${sliceId}-${taskFocus}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  }, [pack, activeSpec, rich]);
+
+  const bearingRadar = useMemo(() => {
+    if (!pack || !activeSpec || !rich) return undefined;
+    return buildTaskCompareCharts(activeSpec, "threat", pack.phase_label, {
+      rich: true,
+      pack,
+    }).find((c) => c.id === "cmp-force-bearing");
+  }, [pack, activeSpec, rich]);
+
+  const evidencePie = intentCharts.find((c) => c.id === "cmp-intent-evidence");
+  const evidenceRadar = intentCharts.find(
+    (c) => c.id === "cmp-intent-evidence-radar",
+  );
 
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--panel)]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-[1800px] flex-wrap items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-3">
           <div className="mr-2 flex items-center gap-2">
             <ArrowLeftRight className="h-5 w-5 text-[var(--accent)]" />
             <div className="font-display text-lg leading-none tracking-wide">
-              A/B 图像对比
+              VMMP 对比
             </div>
+            <span className="rounded bg-[var(--panel-2)] px-1.5 py-0.5 text-[10px] text-[var(--muted)] ring-1 ring-[var(--line)]">
+              对比界面
+            </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -439,65 +273,28 @@ export function VmmpCompareWorkbench() {
           <div className="flex overflow-hidden rounded-md text-xs ring-1 ring-[var(--line)]">
             <button
               type="button"
-              className={`px-2.5 py-1.5 ${taskFocus === "threat" ? "bg-[var(--panel-3)] font-semibold" : "bg-[var(--panel-2)]"}`}
-              onClick={() => setTaskFocus("threat")}
+              className={`px-2.5 py-1.5 ${abSide === "A" ? "bg-[var(--panel-3)] font-semibold" : "bg-[var(--panel-2)]"}`}
+              onClick={() => setAbSide("A")}
+              disabled={!specA}
             >
-              威胁
+              A · 无范式
             </button>
             <button
               type="button"
-              className={`px-2.5 py-1.5 ${taskFocus === "intent" ? "bg-[var(--panel-3)] font-semibold" : "bg-[var(--panel-2)]"}`}
-              onClick={() => setTaskFocus("intent")}
+              className={`px-2.5 py-1.5 ${abSide === "B" ? "bg-[var(--panel-3)] font-semibold" : "bg-[var(--panel-2)]"}`}
+              onClick={() => setAbSide("B")}
+              disabled={!specB}
             >
-              意图
+              B · 有 VMMP
             </button>
           </div>
 
-          <div className="flex overflow-hidden rounded-md text-xs ring-1 ring-[var(--line)]">
-            {(
-              [
-                ["view", "看图"],
-                ["score", "打分"],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                className={`px-2.5 py-1.5 ${viewTab === id ? "bg-[var(--panel-3)] font-semibold" : "bg-[var(--panel-2)]"}`}
-                onClick={() => setViewTab(id)}
-                disabled={!specA || !specB}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
           <div className="ml-auto flex items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              type="button"
-              onClick={() => setBlind((v) => !v)}
-              disabled={!specA || !specB}
-            >
-              {blind ? (
-                <Eye className="h-3.5 w-3.5" />
-              ) : (
-                <EyeOff className="h-3.5 w-3.5" />
-              )}
-              {blind ? "揭晓" : "盲评"}
-            </Button>
-            <Link
-              href="/charts"
-              className="rounded-md px-2.5 py-1.5 text-xs ring-1 ring-[var(--line)] hover:bg-[var(--panel-2)]"
-            >
-              图种库
-            </Link>
             <Link
               href="/"
               className="rounded-md px-2.5 py-1.5 text-xs ring-1 ring-[var(--line)] hover:bg-[var(--panel-2)]"
             >
-              返回
+              返回本地
             </Link>
             <Button
               size="sm"
@@ -515,7 +312,7 @@ export function VmmpCompareWorkbench() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1800px] space-y-3 px-4 py-4">
+      <main className="mx-auto max-w-[1600px] space-y-4 px-4 py-4">
         {(error || notes.length > 0) && (
           <section className="flex gap-2 rounded-lg bg-[#f8efe4] p-3 text-xs text-[#7a4b12] ring-1 ring-[#e0c4a0]">
             <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -528,110 +325,89 @@ export function VmmpCompareWorkbench() {
           </section>
         )}
 
-        {!pack || !specA || !specB || !leftRight ? (
+        {!pack || !specA || !specB || !activeSpec ? (
           <div className="flex h-[60vh] items-center justify-center rounded-lg bg-[var(--panel)] text-sm text-[var(--muted)] ring-1 ring-[var(--line)]">
             {loading
-              ? "正在生成左右地图、图表和推理（约 2 分钟）…"
-              : "点「生成 A/B」开始对比。左 A 无范式，右 B 有 VMMP。"}
+              ? "正在生成 A/B 态势与推理…"
+              : "点「生成 A/B」后，用顶部按钮切换无范式 / 有 VMMP。"}
           </div>
-        ) : viewTab === "view" ? (
-          <>
-            {blind && (
-              <p className="text-[11px] text-[var(--muted)]">
-                盲评中：左右标签已隐藏
-                {swapBlind ? "（顺序已打乱）" : ""}。
-              </p>
-            )}
-            <div className="grid gap-3 lg:grid-cols-2">
-              <VisPanel
-                label={
-                  leftRight.left.key === "A" ? "A · 无范式" : "B · 有 VMMP"
-                }
-                badge={leftRight.left.key === "A" ? "A" : "B"}
-                pack={pack}
-                spec={leftRight.left.spec}
-                mapKey={`left-${sliceId}-${taskFocus}-${leftRight.left.key}`}
-                blind={blind}
-                taskFocus={taskFocus}
-                reasoning={leftRight.left.key === "A" ? reasonA : reasonB}
-              />
-              <VisPanel
-                label={
-                  leftRight.right.key === "A" ? "A · 无范式" : "B · 有 VMMP"
-                }
-                badge={leftRight.right.key === "A" ? "A" : "B"}
-                pack={pack}
-                spec={leftRight.right.spec}
-                mapKey={`right-${sliceId}-${taskFocus}-${leftRight.right.key}`}
-                blind={blind}
-                taskFocus={taskFocus}
-                reasoning={leftRight.right.key === "A" ? reasonA : reasonB}
-              />
-            </div>
-          </>
         ) : (
-          <section className="rounded-lg bg-[var(--panel)] p-4 ring-1 ring-[var(--line)]">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold">E 指标打分</h3>
-              <Button
-                variant="secondary"
-                size="sm"
-                type="button"
-                onClick={exportScores}
-              >
-                <Download className="h-3.5 w-3.5" />
-                导出 CSV
-              </Button>
-            </div>
-            <p className="mb-3 text-[11px] text-[var(--muted)]">
-              按「是否更好支持当前任务」打 1–5，不要按好不好看。
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <ScoreColumn
-                title={blind ? "左侧方案" : "A · 无范式"}
-                criteria={criteria}
-                scores={leftRight.left.key === "A" ? scoresA : scoresB}
-                onChange={(id, v) => {
-                  if (leftRight.left.key === "A") {
-                    setScoresA((s) => ({ ...s, [id]: v }));
-                  } else {
-                    setScoresB((s) => ({ ...s, [id]: v }));
-                  }
-                }}
-              />
-              <ScoreColumn
-                title={blind ? "右侧方案" : "B · 有 VMMP"}
-                criteria={criteria}
-                scores={leftRight.right.key === "A" ? scoresA : scoresB}
-                onChange={(id, v) => {
-                  if (leftRight.right.key === "A") {
-                    setScoresA((s) => ({ ...s, [id]: v }));
-                  } else {
-                    setScoresB((s) => ({ ...s, [id]: v }));
-                  }
-                }}
-              />
-            </div>
-            {!blind && (
-              <div className="mt-3 text-[11px] text-[var(--muted)]">
-                A 均分 {meanScores(scoresA)?.toFixed(2) ?? "—"} · B 均分{" "}
-                {meanScores(scoresB)?.toFixed(2) ?? "—"}
-                {meanScores(scoresA) != null &&
-                  meanScores(scoresB) != null && (
-                    <>
-                      {" "}
-                      · 差值(B−A){" "}
-                      {(
-                        (meanScores(scoresB) as number) -
-                        (meanScores(scoresA) as number)
-                      ).toFixed(2)}
-                    </>
-                  )}
-              </div>
-            )}
-          </section>
+          <>
+            <SpatialStudyPanel
+              label={abSide === "A" ? "A · 无范式" : "B · 有 VMMP"}
+              badge={abSide}
+              pack={pack}
+              spec={activeSpec}
+              mapKey={`compare-${sliceId}-threat-${abSide}`}
+              taskFocus="threat"
+              reasoningThreat={activeThreatReason}
+              reasoningIntent={activeIntentReason}
+              richCharts={rich}
+            />
+
+            {bearingRadar || evidencePie || evidenceRadar ? (
+              <section className="rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)]">
+                <div className="mb-3 px-1">
+                  <h3 className="text-sm font-semibold text-[var(--ink)]">
+                    范式扩展图
+                  </h3>
+                  <p className="mt-0.5 text-[10px] text-[var(--muted)]">
+                    仅有 VMMP 时出现；对照上方结论阅读
+                  </p>
+                </div>
+
+                {bearingRadar ? (
+                  <div className="mb-4">
+                    <div className="mb-1.5 px-1 text-[11px] font-semibold text-[var(--ink)]">
+                      空间类
+                      <span className="ml-1.5 font-normal text-[var(--muted)]">
+                        Position / Alignment → 方位雷达
+                      </span>
+                    </div>
+                    <div className="mx-auto min-w-0 max-w-md">
+                      <div className="mb-1 px-1 text-[10px] font-medium text-[var(--muted)]">
+                        方位分布 · 相对中途岛八方位
+                      </div>
+                      <ChartCard chart={bearingRadar} compact showWhyType />
+                    </div>
+                  </div>
+                ) : null}
+
+                {evidencePie || evidenceRadar ? (
+                  <div>
+                    <div className="mb-1.5 px-1 text-[11px] font-semibold text-[var(--ink)]">
+                      证据类
+                      <span className="ml-1.5 font-normal text-[var(--muted)]">
+                        Connection→饼 · Alignment→轮廓雷达
+                      </span>
+                    </div>
+                    <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+                      {evidencePie ? (
+                        <div className="min-w-0 max-w-full">
+                          <div className="mb-1 px-1 text-[10px] font-medium text-[var(--muted)]">
+                            证据构成 · 饼图
+                          </div>
+                          <ChartCard chart={evidencePie} compact showWhyType />
+                        </div>
+                      ) : null}
+                      {evidenceRadar ? (
+                        <div className="min-w-0 max-w-full">
+                          <div className="mb-1 px-1 text-[10px] font-medium text-[var(--muted)]">
+                            证据维度轮廓 · 雷达图
+                          </div>
+                          <ChartCard chart={evidenceRadar} compact showWhyType />
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+          </>
         )}
       </main>
     </div>
   );
 }
+
+

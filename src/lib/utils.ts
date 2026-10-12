@@ -10,6 +10,22 @@ export function nmToMeters(nm: number): number {
   return nm * 1852;
 }
 
+/** 是否为美方（红方）观察视角条目 */
+export function isUsnObserverPerspective(perspective?: string): boolean {
+  const p = perspective ?? "";
+  if (/蓝方看|日方看/i.test(p)) return false;
+  return /红方看|美方看|USN/i.test(p);
+}
+
+/** 只保留美方观察下的威胁条目；丢掉日方视角结论 */
+export function filterUsnObserverRatings(
+  ratings: SituationViewSpec["threat_ratings"] | undefined,
+): SituationViewSpec["threat_ratings"] {
+  return (ratings ?? []).filter((r) =>
+    isUsnObserverPerspective(r.perspective),
+  );
+}
+
 /** LLM 常漏数组字段；渲染前补齐，避免 .map / .length 崩溃。 */
 export function normalizeSituationSpec(
   raw: SituationViewSpec,
@@ -21,8 +37,10 @@ export function normalizeSituationSpec(
     axes: [],
     threat_zones: [],
   };
+  const { zone_overrides: _ignored, ...rest } = raw;
+  void _ignored;
   return {
-    ...raw,
+    ...rest,
     title: raw.title ?? "",
     phase_label: raw.phase_label ?? "",
     narrative: raw.narrative ?? "",
@@ -37,7 +55,7 @@ export function normalizeSituationSpec(
     charts: (raw.charts ?? [])
       .map((c) => {
         const rawType = c.type as string;
-        if (rawType === "scatter" || rawType === "stacked_bar") return null;
+        if (rawType === "stacked_bar" || rawType === "sankey") return null;
         const type = rawType === "donut" ? ("pie" as const) : c.type;
         return {
           ...c,
@@ -49,6 +67,6 @@ export function normalizeSituationSpec(
     intent_findings: raw.intent_findings ?? [],
     threat_findings: raw.threat_findings ?? [],
     priorities: raw.priorities ?? [],
-    threat_ratings: raw.threat_ratings ?? [],
+    threat_ratings: filterUsnObserverRatings(raw.threat_ratings),
   };
 }

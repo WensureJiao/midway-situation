@@ -98,7 +98,12 @@ export type ChartType =
   | "line"
   | "multi_line"
   | "area"
-  | "pie";
+  | "pie"
+  | "scatter"
+  | "radar"
+  | "heatmap"
+  /** 流向：series.name→series.group，value=流量 */
+  | "sankey";
 
 export interface ChartSpec {
   id: string;
@@ -106,12 +111,18 @@ export interface ChartSpec {
   type: ChartType;
   title: string;
   description?: string;
+  /** 选用该图种的简要理由（范式选图时可填） */
+  why_type?: string;
   series: {
     name: string;
     value: number;
     side?: SideId | "both";
-    /** 多序列折线的序列名（如威胁等级）；缺省用 side */
+    /** 多序列折线 / 热力行名；缺省用 side */
     group?: string;
+    /** 散点横轴；缺省用序号 */
+    x?: number;
+    /** 散点纵轴；缺省用 value */
+    y?: number;
     /** 悬停提示用，如证据条目明细 */
     detail?: string;
   }[];
@@ -175,11 +186,21 @@ export interface SituationViewSpec {
     level: string;
     evidence: string;
   }[];
+  /**
+   * LLM 可选：对本地关注圈骨架的升降级（服务端 merge 后丢弃）。
+   * id 仅限 nagumo / midway / tf16 / tf17 / air-contact。
+   */
+  zone_overrides?: {
+    id: string;
+    level: string;
+    label?: string;
+    evidence?: string;
+  }[];
 }
 
 /** VMMP A/B：off=对照；on=附带对应任务范式 JSON */
 export type VmmpMode = "off" | "on";
-/** 视觉对比时的任务焦点，决定注入哪份 VMMP、偏重地图编码 */
+/** 视觉对比时的任务焦点，决定注入哪份 VMMP */
 export type TaskFocus = "threat" | "intent";
 
 export interface GenerateRequest {

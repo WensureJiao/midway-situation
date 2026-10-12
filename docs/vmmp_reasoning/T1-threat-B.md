@@ -1,12 +1,12 @@
-C：红方USN以三艘航母（Enterprise、Hornet、Yorktown）与中途岛岸基航空兵为认知对象，蓝方IJN以南云机动部队四艘航母（Akagi、Kaga、Soryu、Hiryu）为认知对象  
-R：双方航母集群在空间上呈西北—东南对峙（29.97°–30.01°N vs 29.12°–29.20°N），时间上均处于未放飞侦察机的“开战前静默”状态，能力上美日舰载机总数相近（234 vs 235），但美舰载机已全部ready（0未就绪），日舰载机虽全数在舰但部分处于停泊状态影响响应速度  
-O：Identify：识别出红方三艘在航航母（Enterprise、Hornet、Yorktown）与蓝方四艘航母（Akagi、Kaga、Soryu、Hiryu）为对等作战单元  
-Locate：Enterprise（30.01°N,177.25°W）、Hornet（29.97°N,177.22°W）、Yorktown（29.70°N,176.90°W）呈西北扇形分布；Akagi（29.15°N,179.76°W）、Hiryu（29.17°N,179.74°W）在航，Kaga（29.20°N,179.72°W）、Soryu（29.12°N,179.92°W）停泊，整体位于红方东南约300海里  
-Filter：剔除蓝方停泊且无空中预警能力的Kaga、Soryu（航速0、无水侦起飞记录），剔除红方停泊的中途岛机场（无在空单位、B-17/B-26未出动）  
-Compare：Enterprise+Hornet（159架ready）vs Akagi+Hiryu（100架ready，含46+54）；红方TF16两舰齐速15kn/245°，蓝方仅Akagi/Hiryu齐速12kn/112.5°，其余19艘舰停泊——红方编队完成度更高  
-Aggregate：将Akagi与Hiryu聚合为“高威胁先导打击组”，Enterprise与Hornet聚合为“高响应主攻组”，Yorktown单列为“次响应后备组”  
-Assess：Akagi/Hiryu构成最高威胁等级（T1级），因其位置最前、航速唯一持续、舰载机总数过百且零式占比高；Enterprise/Hornet次之（T2级），虽ready数多但分散且TF16护航未齐速；Yorktown（T3级）单独前出、航速匹配但载机量最低（75）  
-Rank：1. IJN Akagi｜2. IJN Hiryu｜3. CVA-6 Enterprise｜4. CVA-7 Hornet｜5. CVA-5 Yorktown  
-Verify：所有排序依据均来自T1切片原始数据——Akagi/Hiryu是蓝方唯二在航航母且ready数明确（46/54），Enterprise/Hornet坐标相邻、航速/航向一致，Yorktown坐标孤立、载机量唯一标定为75  
-M：高亮聚焦于“在航+ready>45”的航母；轴线沿29.1°–30.0°N纬度带展开，凸显红蓝主力纵向错位；威胁圈以300海里搜索半径覆盖Akagi/Hiryu与Enterprise/Hornet，排除Kaga/Soryu及中途岛岸基  
-E：所有排序未引入T2+数据，未使用“飞龙消失”等后续切片信息，严格锚定
+C：美方此刻盯住南云机动部队四艘航母——IJN Akagi、IJN Hiryu、IJN Kaga、IJN Soryu，其舰载机总数235架且全部在舰待命，航向112.5°指向中途岛方向。  
+R：日方四艘航母中Akagi与Hiryu正以12 kn同向航行，Kaga与Soryu静止停泊于同一集结区（29.12°–29.20°N, 179.72°–179.92°W），距美方TF17约220海里、TF16约240海里，航向夹角使日方右舷暴露面持续朝向中途岛—美舰队扇区。  
+Identify：美方识别出蓝方全部21艘舰船均归属“Nagumo's Task Force”，无分散编组或独立行动单位。  
+Locate：美方通过位置坐标确认IJN Tone与IJN Chikuma停泊于集结区东北侧（29.14°–29.18°N, 179.82°–179.86°W），各搭载5架水侦，构成日方唯一已知远程侦察节点。  
+Filter：美方过滤掉所有航速为0且无航空能力的护航舰（如IJN Nagara、IJN Kirishima），仅保留四艘航母及两艘侦察巡洋舰作为潜在威胁源。  
+Compare：美方比对四艘航母舰载量——Kaga（63）、Soryu（56）、Hiryu（54）、Akagi（46）——发现Kaga与Soryu虽静止但载机最多，且与Hiryu/Akagi共处同一10海里半径集结区，暴露风险叠加。  
+Aggregate：美方将IJN Tone与IJN Chikuma的10架水侦能力与其所依附的Kaga/Soryu/Hiryu/Akagi四舰绑定，判定该集群具备单波次最大120架攻击机+10架前出侦察的开战潜力。  
+Assess：美方评估日方四舰处于完整航空战备状态（embarked_ready_count=235，airborne_aircraft_count=0），无损伤、无不适航记录，且航向稳定指向中途岛，符合进攻性集结特征。  
+Rank：美方按开战即发威胁强度排序：IJN Kaga（载机63，静止但居集结中心）、IJN Soryu（载机56，毗邻Kaga且水侦依托Tone/Chikuma）、IJN Hiryu（唯一齐速航行航母，载机54且舰体在场）、IJN Akagi（载机46但同航向，指挥舰身份加重权重）。  
+Verify：美方交叉验证T1切片中蓝方无空中单位、所有水侦均未离舰、四艘航母方位角一致、航速差异仅体现集结进度，确认上述排序仅基于可观测物理状态，未引入日方意图推断或红方能力反推。  
+M：高亮对象严格限定为IJN Kaga、IJN Soryu、IJN Hiryu、IJN Akagi四舰；作战指向明确为“阻止其完成侦察—定位—攻击链”，关注区锁定在29.12°–29.20°N, 179.72°–179.92°W集结椭圆；威胁排序完全依据美方可见载机数、位置聚合度、航向一致性三项硬指标。  
+E：全文未出现“日方计划”“蓝方认为”“双方对比”“红方航母威胁值”等表述，所有主语为美方观察行为，所有排序对象仅为日方四艘航母，未混入上帝视角双侧对称结构。

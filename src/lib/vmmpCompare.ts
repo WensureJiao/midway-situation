@@ -173,11 +173,11 @@ export function diffSpecs(
   }
   if (axesA.join("|") !== axesB.join("|")) {
     summaryLines.push(
-      `轴线/指向：A「${axesA.join("；") || "无"}」↔ B「${axesB.join("；") || "无"}」`,
-    );
-  } else {
-    summaryLines.push(`轴线标签：相同（${axesA.join("；") || "无"}）`);
-  }
+      `作战指向：A「${axesA.join("；") || "无"}」↔ B「${axesB.join("；") || "无"}」`,
+      );
+    } else {
+      summaryLines.push(`作战指向：相同（${axesA.join("；") || "无"}）`);
+    }
 
   if (focus === "intent") {
     const beatA = inferCampaignBeat("", a);

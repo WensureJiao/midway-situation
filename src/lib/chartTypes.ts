@@ -6,42 +6,65 @@ type CatalogEntry = {
   use: string;
 };
 
-/** 统计图白名单（与主台 / 对比页 / 图种库实际出图一致） */
+/**
+ * 可渲染图种目录（实现层能力，非 VMMP JSON 原文）。
+ * 对比页实际选图由 vmmpChartSelect 按 M/T 拓扑筛选。
+ */
 export const CHART_TYPE_CATALOG: readonly CatalogEntry[] = [
   {
     type: "bar",
     label: "柱状图",
-    use: "威胁等级分布；水面舰/在空计数",
+    use: "威胁等级计数；对齐/分组对比",
   },
   {
     type: "grouped_bar",
     label: "分组柱状",
-    use: "双视角威胁条目数；美/日作战轴线数",
+    use: "多组并列计数",
   },
   {
     type: "hbar",
     label: "条形图",
-    use: "红看蓝 / 蓝看红威胁排序",
+    use: "排序 / 充分度 / 证据优先级（Ordering·Salience）",
   },
   {
     type: "line",
     label: "折线图",
-    use: "跨切片在空/舰数",
+    use: "连续过程 / 节拍编码（Continuity）",
   },
   {
     type: "multi_line",
     label: "多序列折线",
-    use: "跨切片美/日在空；红看蓝/蓝看红威胁走势",
+    use: "多序列走势对照",
   },
   {
     type: "area",
     label: "面积图",
-    use: "跨切片意图阶段（集结/搜索/危机/残局/终局）",
+    use: "过程量感（Continuity·Hierarchy）",
   },
   {
     type: "pie",
     label: "饼图",
-    use: "证据构成、地图编码；红/蓝机型构成",
+    use: "构成占比（Grouping·Connection）",
+  },
+  {
+    type: "scatter",
+    label: "散点图",
+    use: "空间位置或二维关系（Position·Uncertainty）",
+  },
+  {
+    type: "radar",
+    label: "雷达图",
+    use: "多维轮廓 / 方位（Consistency·Alignment）",
+  },
+  {
+    type: "heatmap",
+    label: "热力图",
+    use: "矩阵命中（Hierarchy）",
+  },
+  {
+    type: "sankey",
+    label: "桑基图",
+    use: "证据→等级等流向（Connection）",
   },
 ] as const;
 

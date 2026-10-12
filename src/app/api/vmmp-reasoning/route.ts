@@ -40,7 +40,8 @@ async function callReasoningLlm(user: string): Promise<string> {
       messages: [
         {
           role: "system",
-          content: "你是态势推理助手。按用户要求的行数简短作答，使用简体中文。",
+          content:
+            "你是美方（红方 USN）参谋侧的态势推理助手。只用「我方/美方」单一观察视角写敌情判断。禁止日方视角结论、禁止蓝方看红方、禁止上帝视角双侧对称排序或意图自述。使用简体中文，按用户要求的行数作答。",
         },
         { role: "user", content: user },
       ],

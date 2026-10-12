@@ -4,7 +4,6 @@ import {
   centroid,
   findByNameHint,
   findUnit,
-  isAirborne,
   selectTasks,
   summarizePackForPrompt,
 } from "./summarize";
@@ -13,6 +12,7 @@ import {
   buildSituationUserPrompt,
   type PromptVmmpOptions,
 } from "./prompts";
+import { buildThreatZoneSkeleton } from "./threatZones";
 import type {
   AnalysisTask,
   ChartSpec,
@@ -113,8 +113,6 @@ function buildMap(pack: SlicePack): SituationViewSpec["map"] {
   const midway =
     findByNameHint(pack, "中途岛主跑道") ||
     findUnit(pack, (u) => u.unit_type === "Facility");
-  const enterprise = findByNameHint(pack, "Enterprise");
-  const yorktown = findByNameHint(pack, "Yorktown");
   const ijnCarriers = carriers(pack.sides.IJN.units);
   const usCarriers = carriers(pack.sides.USN.units);
   const ijnCenter =
@@ -160,68 +158,12 @@ function buildMap(pack: SlicePack): SituationViewSpec["map"] {
     });
   }
 
-  const zones: SituationViewSpec["map"]["threat_zones"] = [];
-  if (ijnCenter) {
-    const damaged = ijnCarriers.some((u) => u.damaged);
-    zones.push({
-      id: "nagumo",
-      center: ijnCenter,
-      radius_nm: damaged ? 25 : 45,
-      level: damaged ? "紧急" : "高",
-      label: damaged ? "南云损管群" : "南云机动部队",
-      side: "IJN",
-    });
-  }
-  if (midway) {
-    zones.push({
-      id: "midway",
-      center: [midway.latitude, midway.longitude],
-      radius_nm: 30,
-      level: "高",
-      label: "中途岛岸基",
-      side: "USN",
-    });
-  }
-  if (enterprise) {
-    zones.push({
-      id: "tf16",
-      center: [enterprise.latitude, enterprise.longitude],
-      radius_nm: 35,
-      level: "高",
-      label: "TF16",
-      side: "USN",
-    });
-  } else if (yorktown) {
-    zones.push({
-      id: "tf17",
-      center: [yorktown.latitude, yorktown.longitude],
-      radius_nm: 30,
-      level: "高",
-      label: "TF17",
-      side: "USN",
-    });
-  }
-
-  const air = [...pack.sides.USN.units, ...pack.sides.IJN.units].filter(
-    isAirborne,
-  );
-  const airC = centroid(air);
-  if (airC && air.length >= 5) {
-    zones.push({
-      id: "air-contact",
-      center: airC,
-      radius_nm: 50,
-      level: "紧急",
-      label: `在空接触带（${air.length}）`,
-    });
-  }
-
   return {
     center: mapCenter,
     zoom: 6,
     highlight_names: highlight,
     axes,
-    threat_zones: zones,
+    threat_zones: buildThreatZoneSkeleton(pack),
   };
 }
 
@@ -265,13 +207,18 @@ export function buildFixedKpis(pack: SlicePack): SituationViewSpec["kpis"] {
   ];
 }
 
-/** 从 pack 威胁任务中提取威胁等级（供第 5 张图）。 */
+/** 从 pack 威胁任务中提取威胁等级（仅美方观察视角）。 */
 export function buildThreatRatingsFromPack(
   pack: SlicePack,
 ): SituationViewSpec["threat_ratings"] {
   const tasks = pack.threat?.tasks ?? [];
   const ratingTask = tasks.find((t) => t.reference_ratings?.length);
-  return ratingTask?.reference_ratings ?? [];
+  const rows = ratingTask?.reference_ratings ?? [];
+  return rows.filter((r) => {
+    const p = r.perspective ?? "";
+    if (/蓝方看|日方看/i.test(p)) return false;
+    return /红方看|美方看|USN/i.test(p);
+  });
 }
 
 /** Deterministic local generator — map + KPIs + threat ratings（不含四张兵力统计图）. */
@@ -325,6 +272,7 @@ export function buildPromptBundle(
     vmmp_mode,
     task_focus,
     lock_charts,
+    zone_skeleton: buildThreatZoneSkeleton(pack),
     vmmp_json:
       vmmp_mode === "on" ? loadVmmpJson(task_focus) : null,
   };
