@@ -1,12 +1,12 @@
 {
   "generated_by": "llm",
   "time_slice": "T1",
-  "title": "南云集结·美舰待机",
-  "phase_label": "初始态势：兵力展开与南云机动部队集结",
-  "narrative": "T1时刻，南云机动部队四艘航母（赤城、飞龙、苍龙、加贺）在西经179.75°附近集结，航向112.5°，整体指向中途岛；美TF16（企业号、大黄蜂号）与TF17（约克城号）分置中途岛西北至北侧海域，尚未放飞侦察机，战场处于静默对峙状态。双方均无在空飞机，航空力量全部处于甲板或岸基停放状态，战役主动权取决于首轮搜索发现效能。",
+  "title": "南云集结·发现权争夺前夜",
+  "phase_label": "初始态势：红蓝双方初始兵力配置，南云机动部队集结",
+  "narrative": "T1为战役静默期，双方均无在空单位，尚未进入侦察接触阶段。美方三航母（TF16双舰+TF17约克城）呈扇形布于中途岛北至西北海域，航向统一指向西南偏西，隐含向南云方向靠拢意图；日方四航母集群以Akagi/Hiryu为前导、Kaga/Soryu为后队，整体航向112.5°直指中途岛，构成完整航空打击基线。威胁核心不在即时杀伤，而在谁先完成目标定位——南云水侦搭载平台（利根/筑摩）虽未起飞，但已处于弹射就绪状态，构成潜在‘发现链’起点。",
   "map": {
     "center": [
-      29.2,
+      29.4,
       -178.5
     ],
     "zoom": 6,
@@ -15,9 +15,8 @@
       "IJN Hiryu",
       "IJN Kaga",
       "IJN Soryu",
-      "CVA-5 Yorktown",
-      "CVA-6 Enterprise",
-      "CVA-7 Hornet"
+      "IJN Tone",
+      "IJN Chikuma"
     ],
     "axes": [
       {
@@ -49,37 +48,26 @@
     ],
     "threat_zones": [
       {
-        "id": "nagumo",
+        "id": "ijn-cv-cluster",
         "center": [
-          29.16218725,
-          -179.78483775
+          29.16,
+          -179.75
         ],
-        "radius_nm": 45,
+        "radius_nm": 42,
         "level": "高",
-        "label": "南云机动部队",
+        "label": "南云航母集群",
         "side": "IJN"
       },
       {
-        "id": "midway",
+        "id": "recon-belt",
         "center": [
-          28.206959,
-          -177.382232
+          29.16,
+          -179.78
         ],
-        "radius_nm": 30,
-        "level": "高",
-        "label": "中途岛岸基",
-        "side": "USN"
-      },
-      {
-        "id": "tf16",
-        "center": [
-          30.012257,
-          -177.253156
-        ],
-        "radius_nm": 35,
-        "level": "高",
-        "label": "TF16",
-        "side": "USN"
+        "radius_nm": 25,
+        "level": "紧急",
+        "label": "水侦接触带（利根/筑摩）",
+        "side": "IJN"
       }
     ]
   },
@@ -115,7 +103,7 @@
       "type": "scatter",
       "title": "敌我位置与登陆海域关系",
       "description": "原点=中途岛；横轴东向海里，纵轴北向海里；红美蓝日",
-      "why_type": "空间散点直接对照敌我相对登陆海域的几何关系",
+      "why_type": "常驻图种（本地 / 无范式）",
       "series": [
         {
           "name": "中途岛",
@@ -309,230 +297,57 @@
       ]
     },
     {
-      "id": "cmp-force-range",
-      "type": "hbar",
-      "title": "距岛距离排序",
-      "description": "取样舰艇到中途岛的海里；近者更贴近登陆海域",
-      "why_type": "距离条形把「谁更靠近目标」排成可读序列",
-      "series": [
-        {
-          "name": "Portland",
-          "value": 91.5,
-          "side": "USN",
-          "detail": "美方 · USS Portland\n距中途岛约 91.5 nm · 方位 15°"
-        },
-        {
-          "name": "CVA-5 Yorkt…",
-          "value": 93,
-          "side": "USN",
-          "detail": "美方 · CVA-5 Yorktown\n距中途岛约 93 nm · 方位 16°"
-        },
-        {
-          "name": "Astoria",
-          "value": 95.2,
-          "side": "USN",
-          "detail": "美方 · USS Astoria\n距中途岛约 95.2 nm · 方位 16°"
-        },
-        {
-          "name": "Atlanta",
-          "value": 104.3,
-          "side": "USN",
-          "detail": "美方 · USS Atlanta\n距中途岛约 104.3 nm · 方位 4°"
-        },
-        {
-          "name": "New Orleans",
-          "value": 104.3,
-          "side": "USN",
-          "detail": "美方 · USS New Orleans\n距中途岛约 104.3 nm · 方位 5°"
-        },
-        {
-          "name": "CVA-7 Hornet",
-          "value": 105.9,
-          "side": "USN",
-          "detail": "美方 · CVA-7 Hornet\n距中途岛约 105.9 nm · 方位 5°"
-        },
-        {
-          "name": "Norrthampton",
-          "value": 107.3,
-          "side": "USN",
-          "detail": "美方 · USS Norrthampton\n距中途岛约 107.3 nm · 方位 3°"
-        },
-        {
-          "name": "Pensacola",
-          "value": 107.8,
-          "side": "USN",
-          "detail": "美方 · USS Pensacola\n距中途岛约 107.8 nm · 方位 6°"
-        },
-        {
-          "name": "CVA-6 Enter…",
-          "value": 108.5,
-          "side": "USN",
-          "detail": "美方 · CVA-6 Enterprise\n距中途岛约 108.5 nm · 方位 4°"
-        },
-        {
-          "name": "Minneapolis",
-          "value": 110.1,
-          "side": "USN",
-          "detail": "美方 · USS Minneapolis\n距中途岛约 110.1 nm · 方位 3°"
-        },
-        {
-          "name": "Kirishima",
-          "value": 135.9,
-          "side": "IJN",
-          "detail": "日方 · IJN Kirishima\n距中途岛约 135.9 nm · 方位 295°"
-        },
-        {
-          "name": "Hiryu",
-          "value": 137.3,
-          "side": "IJN",
-          "detail": "日方 · IJN Hiryu\n距中途岛约 137.3 nm · 方位 295°"
-        }
-      ]
-    },
-    {
-      "id": "cmp-force-bearing",
-      "type": "radar",
-      "title": "相对中途岛方位分布",
-      "description": "八方位兵力计数；美/日双轮廓对照集中方向",
-      "why_type": "方位玫瑰看敌我相对目标的方向集中度（意图指向）",
-      "series": [
-        {
-          "name": "N",
-          "value": 10,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · N\n1. 美·CVA-5 Yorktown\n2. 美·CVA-6 Enterprise\n3. 美·CVA-7 Hornet\n4. 美·Portland\n5. 美·Astoria\n6. 美·Atlanta\n7. 美·Norrthampton\n8. 美·New Orleans\n9. 美·Minneapolis\n10. 美·Pensacola"
-        },
-        {
-          "name": "N",
-          "value": 0,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · N\n1. 美·CVA-5 Yorktown\n2. 美·CVA-6 Enterprise\n3. 美·CVA-7 Hornet\n4. 美·Portland\n5. 美·Astoria\n6. 美·Atlanta\n7. 美·Norrthampton\n8. 美·New Orleans\n9. 美·Minneapolis\n10. 美·Pensacola"
-        },
-        {
-          "name": "NE",
-          "value": 0,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · NE\n该方位暂无取样舰艇"
-        },
-        {
-          "name": "NE",
-          "value": 0,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · NE\n该方位暂无取样舰艇"
-        },
-        {
-          "name": "E",
-          "value": 0,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · E\n该方位暂无取样舰艇"
-        },
-        {
-          "name": "E",
-          "value": 0,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · E\n该方位暂无取样舰艇"
-        },
-        {
-          "name": "SE",
-          "value": 0,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · SE\n该方位暂无取样舰艇"
-        },
-        {
-          "name": "SE",
-          "value": 0,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · SE\n该方位暂无取样舰艇"
-        },
-        {
-          "name": "S",
-          "value": 0,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · S\n该方位暂无取样舰艇"
-        },
-        {
-          "name": "S",
-          "value": 0,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · S\n该方位暂无取样舰艇"
-        },
-        {
-          "name": "SW",
-          "value": 0,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · SW\n该方位暂无取样舰艇"
-        },
-        {
-          "name": "SW",
-          "value": 0,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · SW\n该方位暂无取样舰艇"
-        },
-        {
-          "name": "W",
-          "value": 0,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · W\n1. 日·Soryu"
-        },
-        {
-          "name": "W",
-          "value": 1,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · W\n1. 日·Soryu"
-        },
-        {
-          "name": "NW",
-          "value": 0,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · NW\n1. 日·Akagi\n2. 日·Hiryu\n3. 日·Kaga\n4. 日·Kirishima\n5. 日·Haruna\n6. 日·Nagara\n7. 日·Tone\n8. 日·Chikuma\n9. 日·Kazagumo"
-        },
-        {
-          "name": "NW",
-          "value": 9,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · NW\n1. 日·Akagi\n2. 日·Hiryu\n3. 日·Kaga\n4. 日·Kirishima\n5. 日·Haruna\n6. 日·Nagara\n7. 日·Tone\n8. 日·Chikuma\n9. 日·Kazagumo"
-        }
-      ]
-    },
-    {
       "id": "cmp-threat-rank",
       "type": "hbar",
       "title": "威胁目标排序",
       "description": "条长=等级分（1–4）；悬停看证据",
-      "why_type": "排序任务用条形图对齐「谁更优先」",
       "series": [
+        {
+          "name": "水侦/发现链",
+          "value": 4,
+          "detail": "紧急 — 利根、筑摩两舰均搭载水上侦察机且处于待命状态，其最大搜索半径可覆盖TF16前沿位置；一旦起飞即可能触发首轮发现，决定后续搜索主动权归属。"
+        },
         {
           "name": "南云四航母",
           "value": 3,
-          "detail": "高 — 完整甲板、齐备舰载机、航向直指中途岛；尚未放飞，不具备即时打击能力，但构成战役核心威胁源。"
-        },
-        {
-          "name": "利根/筑摩水侦",
-          "value": 3,
-          "detail": "高 — 虽未升空，但作为日方唯一远程搜索手段，其弹射准备度决定首轮发现窗口；T1为开战前夜，发现链启动即转为紧急。"
+          "detail": "高 — 完整甲板、齐备舰载机、明确航向指向中途岛；尚未放飞故不构成即时接触，但为战役重心与最大打击潜力源。"
         },
         {
           "name": "护航驱逐舰",
           "value": 1,
-          "detail": "低 — 纯水面护航单位，无航空战力，不参与搜索或打击链，不影响航空战役结构。"
+          "detail": "低 — 数量众多但无航空能力，当前静止或低速伴随，不参与发现链构建，亦不改变航空战役结构。"
         }
-      ]
+      ],
+      "why_type": "常驻图种（本地 / 无范式）"
+    },
+    {
+      "id": "cmp-threat-level-bar",
+      "type": "bar",
+      "title": "威胁等级分布",
+      "description": "紧急/高/中/低条数",
+      "series": [
+        {
+          "name": "紧急",
+          "value": 1,
+          "detail": "紧急"
+        },
+        {
+          "name": "高",
+          "value": 1,
+          "detail": "高"
+        },
+        {
+          "name": "中",
+          "value": 0,
+          "detail": "中"
+        },
+        {
+          "name": "低",
+          "value": 1,
+          "detail": "低"
+        }
+      ],
+      "why_type": "常驻图种（本地 / 无范式）"
     }
   ],
   "intent_findings": [],
@@ -543,19 +358,19 @@
       "perspective": "红方看蓝方",
       "target": "南云四航母",
       "level": "高",
-      "evidence": "完整甲板、齐备舰载机、航向直指中途岛；尚未放飞，不具备即时打击能力，但构成战役核心威胁源。"
+      "evidence": "完整甲板、齐备舰载机、明确航向指向中途岛；尚未放飞故不构成即时接触，但为战役重心与最大打击潜力源。"
     },
     {
       "perspective": "红方看蓝方",
-      "target": "利根/筑摩水侦",
-      "level": "高",
-      "evidence": "虽未升空，但作为日方唯一远程搜索手段，其弹射准备度决定首轮发现窗口；T1为开战前夜，发现链启动即转为紧急。"
+      "target": "水侦/发现链",
+      "level": "紧急",
+      "evidence": "利根、筑摩两舰均搭载水上侦察机且处于待命状态，其最大搜索半径可覆盖TF16前沿位置；一旦起飞即可能触发首轮发现，决定后续搜索主动权归属。"
     },
     {
       "perspective": "红方看蓝方",
       "target": "护航驱逐舰",
       "level": "低",
-      "evidence": "纯水面护航单位，无航空战力，不参与搜索或打击链，不影响航空战役结构。"
+      "evidence": "数量众多但无航空能力，当前静止或低速伴随，不参与发现链构建，亦不改变航空战役结构。"
     }
   ]
 }

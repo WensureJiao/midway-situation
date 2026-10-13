@@ -12,6 +12,7 @@ import {
   buildSituationUserPrompt,
   type PromptVmmpOptions,
 } from "./prompts";
+import { buildDefaultMapAxes } from "./mapSkeletonDiff";
 import { buildThreatZoneSkeleton } from "./threatZones";
 import type {
   AnalysisTask,
@@ -115,12 +116,6 @@ function buildMap(pack: SlicePack): SituationViewSpec["map"] {
     findUnit(pack, (u) => u.unit_type === "Facility");
   const ijnCarriers = carriers(pack.sides.IJN.units);
   const usCarriers = carriers(pack.sides.USN.units);
-  const ijnCenter =
-    centroid(ijnCarriers) ||
-    centroid(pack.sides.IJN.units.filter((u) => u.unit_type === "Ship"));
-  const usCenter =
-    centroid(usCarriers) ||
-    centroid(pack.sides.USN.units.filter((u) => u.unit_type === "Ship"));
 
   const allShips = [
     ...pack.sides.USN.units.filter((u) => u.unit_type === "Ship"),
@@ -138,31 +133,11 @@ function buildMap(pack: SlicePack): SituationViewSpec["map"] {
     ...(midway ? [midway.name] : []),
   ];
 
-  const axes: SituationViewSpec["map"]["axes"] = [];
-  if (ijnCenter && midway) {
-    axes.push({
-      id: "ijn-to-midway",
-      from: ijnCenter,
-      to: [midway.latitude, midway.longitude],
-      label: "南云→中途岛",
-      side: "IJN",
-    });
-  }
-  if (usCenter && ijnCenter) {
-    axes.push({
-      id: "usn-to-ijn",
-      from: usCenter,
-      to: ijnCenter,
-      label: "美特混→南云",
-      side: "USN",
-    });
-  }
-
   return {
     center: mapCenter,
     zoom: 6,
     highlight_names: highlight,
-    axes,
+    axes: buildDefaultMapAxes(pack),
     threat_zones: buildThreatZoneSkeleton(pack),
   };
 }

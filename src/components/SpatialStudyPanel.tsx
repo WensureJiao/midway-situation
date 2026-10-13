@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { ChartCard } from "@/components/SituationCharts";
+import { SkeletonDiffBar } from "@/components/SkeletonDiffBar";
 import { VmmpReasoningTrace } from "@/components/VmmpReasoningTrace";
 import {
   buildTaskCompareCharts,
@@ -368,6 +369,7 @@ export function SpatialStudyPanel({
   reasoningIntent,
   richCharts = true,
   mapKey,
+  showSkeletonDiff = false,
 }: {
   pack: SlicePack;
   spec: SituationViewSpec;
@@ -380,6 +382,8 @@ export function SpatialStudyPanel({
   reasoningIntent?: string;
   richCharts?: boolean;
   mapKey?: string;
+  /** 对比页：展示相对本地骨架的圈/轴变更 */
+  showSkeletonDiff?: boolean;
 }) {
   const threatReason = reasoningThreat ?? reasoning;
   const intentReason = reasoningIntent;
@@ -498,6 +502,14 @@ export function SpatialStudyPanel({
           </div>
         </div>
       </div>
+
+      {showSkeletonDiff ? (
+        <SkeletonDiffBar
+          pack={pack}
+          spec={spec}
+          sideLabel={label || (badge ? `${badge}` : undefined)}
+        />
+      ) : null}
 
       {/* 上：地图 + 右侧 PRIORITY / CORE（与本地主界面同构） */}
       <div className="grid border-b border-[var(--line)] lg:grid-cols-[minmax(0,1fr)_minmax(300px,38%)]">

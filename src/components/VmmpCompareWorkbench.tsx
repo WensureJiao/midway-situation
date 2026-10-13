@@ -343,6 +343,7 @@ export function VmmpCompareWorkbench() {
               reasoningThreat={activeThreatReason}
               reasoningIntent={activeIntentReason}
               richCharts={rich}
+              showSkeletonDiff
             />
 
             {bearingRadar || evidencePie || evidenceRadar ? (

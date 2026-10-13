@@ -1,9 +1,9 @@
 {
   "generated_by": "llm",
   "time_slice": "T145",
-  "title": "残局猎杀：TF16/17围歼南云损管航母群",
+  "title": "残局猎杀：终结南云损管集群",
   "phase_label": "残局猎杀",
-  "narrative": "美海军TF16（企业号、大黄蜂号）与TF17（约克城号）正以低速向西压进，围拢赤城、加贺、苍龙三艘停航损管航母；日方零式战机分散滞空，但母舰已丧失起降能力；飞龙舰体未导出，构成残局最大不确定性；中途岛岸基力量持续支援补刀行动。",
+  "narrative": "美方两支航母特混舰队（TF16/TF17）正以低速向西南偏西方向抵近，聚焦猎杀已停航、受损且无航空反击能力的赤城、加贺、苍龙三艘日航母；飞龙舰体未导出，构成残局最大不确定性风险；西侧零式在空但分散且远离母舰，威胁等级中等；南云损管集群本身无机动能力，但其位置暴露即意味着必须被清除。",
   "map": {
     "center": [
       29.3,
@@ -11,16 +11,13 @@
     ],
     "zoom": 6,
     "highlight_names": [
-      "CVA-6 Enterprise",
-      "CVA-7 Hornet",
-      "CVA-5 Yorktown",
       "IJN Akagi",
       "IJN Kaga",
       "IJN Soryu"
     ],
     "axes": [
       {
-        "id": "a1",
+        "id": "usn-hunt-axis",
         "from": [
           29.61,
           -178.87
@@ -29,80 +26,56 @@
           29.13,
           -177.61
         ],
-        "label": "猎杀轴",
+        "label": "TF16→赤城",
         "side": "USN"
       },
       {
-        "id": "a2",
+        "id": "ijn-recon-axis",
         "from": [
-          29.61,
-          -178.87
-        ],
-        "to": [
           29.1,
           -177.78
         ],
-        "label": "猎杀轴",
-        "side": "USN"
-      },
-      {
-        "id": "a3",
-        "from": [
-          29.61,
-          -178.87
-        ],
         "to": [
-          29.17,
-          -177.58
+          28.7,
+          -179.14
         ],
-        "label": "猎杀轴",
-        "side": "USN"
+        "label": "苍龙→零式巡逻扇区",
+        "side": "IJN"
       }
     ],
     "threat_zones": [
       {
-        "id": "z1",
+        "id": "ijn-cv-cluster",
         "center": [
           29.13,
           -177.61
         ],
-        "radius_nm": 35,
+        "radius_nm": 22,
         "level": "紧急",
-        "label": "赤城损管区（高价值残骸）",
-        "side": "USN"
+        "label": "南云伤航母集群",
+        "side": "IJN"
       },
       {
-        "id": "z2",
+        "id": "recon-belt",
         "center": [
-          29.1,
-          -177.78
+          28.74,
+          -179.45
         ],
         "radius_nm": 35,
         "level": "紧急",
-        "label": "苍龙损管区（高价值残骸）",
-        "side": "USN"
+        "label": "零式高空侦察带",
+        "side": "IJN"
       },
       {
-        "id": "z3",
+        "id": "flyer-unknown",
         "center": [
-          29.17,
-          -177.58
+          29.2,
+          -177.8
         ],
-        "radius_nm": 35,
-        "level": "紧急",
-        "label": "加贺损管区（高价值残骸）",
-        "side": "USN"
-      },
-      {
-        "id": "z4",
-        "center": [
-          28.72,
-          -179
-        ],
-        "radius_nm": 60,
+        "radius_nm": 40,
         "level": "高",
-        "label": "西侧零式滞空区（拦截风险）",
-        "side": "USN"
+        "label": "飞龙潜在活动区",
+        "side": "IJN"
       }
     ]
   },
@@ -134,64 +107,260 @@
   ],
   "charts": [
     {
-      "id": "cmp-threat-levels",
+      "id": "cmp-force-landing",
+      "type": "scatter",
+      "title": "敌我位置与登陆海域关系",
+      "description": "原点=中途岛；横轴东向海里，纵轴北向海里；红美蓝日",
+      "why_type": "常驻图种（本地 / 无范式）",
+      "series": [
+        {
+          "name": "中途岛",
+          "value": 0,
+          "x": 0,
+          "y": 0,
+          "side": "both",
+          "group": "登陆海域",
+          "detail": "登陆/目标海域锚点 · 中途岛\n(28.21°N, 177.38°W)"
+        },
+        {
+          "name": "CVA-5 Yorktown",
+          "value": 133.3,
+          "x": -99.1,
+          "y": 89.2,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 航空母舰\n相对中途岛：东 -99.1 nm / 北 89.2 nm\n距离约 133.3 nm · 方位 312°"
+        },
+        {
+          "name": "CVA-6 Enterprise",
+          "value": 115.1,
+          "x": -78.7,
+          "y": 84,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 航空母舰\n相对中途岛：东 -78.7 nm / 北 84 nm\n距离约 115.1 nm · 方位 317°"
+        },
+        {
+          "name": "CVA-7 Hornet",
+          "value": 115.1,
+          "x": -78.7,
+          "y": 84,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 航空母舰\n相对中途岛：东 -78.7 nm / 北 84 nm\n距离约 115.1 nm · 方位 317°"
+        },
+        {
+          "name": "IJN Akagi",
+          "value": 56.5,
+          "x": -12.1,
+          "y": 55.2,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 航空母舰\n相对中途岛：东 -12.1 nm / 北 55.2 nm\n距离约 56.5 nm · 方位 348°"
+        },
+        {
+          "name": "IJN Soryu",
+          "value": 57.4,
+          "x": -21,
+          "y": 53.4,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 航空母舰\n相对中途岛：东 -21 nm / 北 53.4 nm\n距离约 57.4 nm · 方位 339°"
+        },
+        {
+          "name": "IJN Kaga",
+          "value": 58.8,
+          "x": -10.2,
+          "y": 57.9,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 航空母舰\n相对中途岛：东 -10.2 nm / 北 57.9 nm\n距离约 58.8 nm · 方位 350°"
+        },
+        {
+          "name": "IJN Kirishima",
+          "value": 56.7,
+          "x": -9.7,
+          "y": 55.9,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 战列舰\n相对中途岛：东 -9.7 nm / 北 55.9 nm\n距离约 56.7 nm · 方位 350°"
+        },
+        {
+          "name": "IJN Haruna",
+          "value": 61.7,
+          "x": -18.4,
+          "y": 58.9,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 战列舰\n相对中途岛：东 -18.4 nm / 北 58.9 nm\n距离约 61.7 nm · 方位 343°"
+        },
+        {
+          "name": "USS Portland",
+          "value": 133.9,
+          "x": -100.7,
+          "y": 88.2,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 重巡洋舰\n相对中途岛：东 -100.7 nm / 北 88.2 nm\n距离约 133.9 nm · 方位 311°"
+        },
+        {
+          "name": "USS Astoria",
+          "value": 133.6,
+          "x": -97.7,
+          "y": 91.1,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 重巡洋舰\n相对中途岛：东 -97.7 nm / 北 91.1 nm\n距离约 133.6 nm · 方位 313°"
+        },
+        {
+          "name": "USS Atlanta",
+          "value": 115.2,
+          "x": -80.4,
+          "y": 82.5,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 防空巡洋舰\n相对中途岛：东 -80.4 nm / 北 82.5 nm\n距离约 115.2 nm · 方位 316°"
+        },
+        {
+          "name": "USS Norrthampton",
+          "value": 118.9,
+          "x": -82.5,
+          "y": 85.6,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 重巡洋舰\n相对中途岛：东 -82.5 nm / 北 85.6 nm\n距离约 118.9 nm · 方位 316°"
+        },
+        {
+          "name": "USS New Orleans",
+          "value": 113.2,
+          "x": -77.8,
+          "y": 82.3,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 重巡洋舰\n相对中途岛：东 -77.8 nm / 北 82.3 nm\n距离约 113.2 nm · 方位 317°"
+        },
+        {
+          "name": "USS Minneapolis",
+          "value": 120.2,
+          "x": -81.5,
+          "y": 88.3,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 重巡洋舰\n相对中途岛：东 -81.5 nm / 北 88.3 nm\n距离约 120.2 nm · 方位 317°"
+        },
+        {
+          "name": "USS Pensacola",
+          "value": 114.9,
+          "x": -75.5,
+          "y": 86.6,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 重巡洋舰\n相对中途岛：东 -75.5 nm / 北 86.6 nm\n距离约 114.9 nm · 方位 319°"
+        },
+        {
+          "name": "IJN Nagara",
+          "value": 61.3,
+          "x": -11,
+          "y": 60.3,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 轻巡洋舰\n相对中途岛：东 -11 nm / 北 60.3 nm\n距离约 61.3 nm · 方位 350°"
+        },
+        {
+          "name": "IJN Tone",
+          "value": 59,
+          "x": -15.5,
+          "y": 56.9,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 重巡洋舰-侦察巡洋舰\n相对中途岛：东 -15.5 nm / 北 56.9 nm\n距离约 59 nm · 方位 345°"
+        },
+        {
+          "name": "IJN Chikuma",
+          "value": 57,
+          "x": -17.5,
+          "y": 54.3,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 重巡洋舰-侦察巡洋舰\n相对中途岛：东 -17.5 nm / 北 54.3 nm\n距离约 57 nm · 方位 342°"
+        },
+        {
+          "name": "IJN Kazagumo",
+          "value": 61,
+          "x": -20.1,
+          "y": 57.6,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 驱逐舰\n相对中途岛：东 -20.1 nm / 北 57.6 nm\n距离约 61 nm · 方位 341°"
+        },
+        {
+          "name": "IJN Hagikazi",
+          "value": 54.1,
+          "x": -11.5,
+          "y": 52.9,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 驱逐舰\n相对中途岛：东 -11.5 nm / 北 52.9 nm\n距离约 54.1 nm · 方位 348°"
+        }
+      ]
+    },
+    {
+      "id": "cmp-threat-rank",
+      "type": "hbar",
+      "title": "威胁目标排序",
+      "description": "条长=等级分（1–4）；悬停看证据",
+      "series": [
+        {
+          "name": "赤城/加贺/苍龙损管实体",
+          "value": 4,
+          "detail": "紧急 — 全部停航、受损、无航空反击能力；位置明确（29.1°N, 177.6°W附近），是当前唯一可确认、高价值、必须立即终结的目标。"
+        },
+        {
+          "name": "飞龙（未知）",
+          "value": 3,
+          "detail": "高 — 舰体未导出/未知，无法排除其仍具作战能力或正在隐蔽重组；是残局中唯一可能发起反击的日方航母。"
+        },
+        {
+          "name": "西侧零式在空编队",
+          "value": 2,
+          "detail": "中 — 7架零式分布于28.5°–29.0°N、178.6°–179.7°W，高度超10km，具备拦截能力但缺乏统一指挥与目标引导，难以有效阻滞美俯冲轰炸机接敌。"
+        },
+        {
+          "name": "停航护航舰（如长良、筑摩等）",
+          "value": 1,
+          "detail": "低 — 全部停航、无航速、无航空能力，不构成对美航母或猎杀行动的实质性干扰。"
+        }
+      ],
+      "why_type": "常驻图种（本地 / 无范式）"
+    },
+    {
+      "id": "cmp-threat-level-bar",
       "type": "bar",
       "title": "威胁等级分布",
-      "description": "由 threat_ratings 统计",
+      "description": "紧急/高/中/低条数",
       "series": [
         {
           "name": "紧急",
-          "value": 2
+          "value": 1,
+          "detail": "紧急"
         },
         {
           "name": "高",
-          "value": 3
+          "value": 1,
+          "detail": "高"
         },
         {
           "name": "中",
-          "value": 2
+          "value": 1,
+          "detail": "中"
         },
         {
           "name": "低",
-          "value": 0
+          "value": 1,
+          "detail": "低"
         }
-      ]
-    },
-    {
-      "id": "cmp-threat-perspectives",
-      "type": "bar",
-      "title": "视角下目标数",
-      "description": "各视角列出的目标条数",
-      "series": [
-        {
-          "name": "红方看蓝方",
-          "value": 3
-        },
-        {
-          "name": "蓝方看红方",
-          "value": 4
-        }
-      ]
-    },
-    {
-      "id": "cmp-map-encoding",
-      "type": "bar",
-      "title": "地图编码量",
-      "description": "高亮 / 轴线 / 圈",
-      "series": [
-        {
-          "name": "高亮",
-          "value": 6
-        },
-        {
-          "name": "轴线",
-          "value": 3
-        },
-        {
-          "name": "圈",
-          "value": 4
-        }
-      ]
+      ],
+      "why_type": "常驻图种（本地 / 无范式）"
     }
   ],
   "intent_findings": [],
@@ -201,44 +370,26 @@
     {
       "perspective": "红方看蓝方",
       "target": "赤城/加贺/苍龙损管实体",
-      "level": "紧急（猎杀价值）/ 低（对美即时打击）",
-      "evidence": "speed=0 且 damaged；攻击机不在空。双重评级：不打掉会留后患，但它们现在打不了美舰。"
+      "level": "紧急",
+      "evidence": "全部停航、受损、无航空反击能力；位置明确（29.1°N, 177.6°W附近），是当前唯一可确认、高价值、必须立即终结的目标。"
     },
     {
       "perspective": "红方看蓝方",
       "target": "飞龙（未知）",
       "level": "高",
-      "evidence": "无舰体数据，不能当已消灭；是残局反击的合理最大风险。"
+      "evidence": "舰体未导出/未知，无法排除其仍具作战能力或正在隐蔽重组；是残局中唯一可能发起反击的日方航母。"
     },
     {
       "perspective": "红方看蓝方",
-      "target": "西侧零式",
+      "target": "西侧零式在空编队",
       "level": "中",
-      "evidence": "在空但偏离母舰，可拦截猎杀机，难以突防到 TF16。"
+      "evidence": "7架零式分布于28.5°–29.0°N、178.6°–179.7°W，高度超10km，具备拦截能力但缺乏统一指挥与目标引导，难以有效阻滞美俯冲轰炸机接敌。"
     },
     {
-      "perspective": "蓝方看红方",
-      "target": "抵近无畏式",
-      "level": "紧急",
-      "evidence": "与伤舰同经度带，且同位置有航弹。"
-    },
-    {
-      "perspective": "蓝方看红方",
-      "target": "企业号/大黄蜂号",
-      "level": "高",
-      "evidence": "仍能放飞；航速低但不等于失去航空能力。"
-    },
-    {
-      "perspective": "蓝方看红方",
-      "target": "约克城号",
-      "level": "中",
-      "evidence": "停航，本时刻不是猎杀主动力。"
-    },
-    {
-      "perspective": "蓝方看红方",
-      "target": "中途岛机场",
-      "level": "高",
-      "evidence": "B-17/B-26/PBY持续从该地起飞，构成对损管舰的稳定补刀压力。"
+      "perspective": "红方看蓝方",
+      "target": "停航护航舰（如长良、筑摩等）",
+      "level": "低",
+      "evidence": "全部停航、无航速、无航空能力，不构成对美航母或猎杀行动的实质性干扰。"
     }
   ]
 }

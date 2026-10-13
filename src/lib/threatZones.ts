@@ -12,7 +12,7 @@ import type {
   ThreatZone,
 } from "./types";
 
-/** 本地骨架允许的 zone id（LLM 只能对这些做升降级） */
+/** 本地参考骨架 id（仅回退路径的 zone_overrides 白名单） */
 export const ZONE_SKELETON_IDS = [
   "nagumo",
   "midway",
@@ -29,6 +29,8 @@ export type ZoneOverride = {
   label?: string;
   /** 升为紧急时建议填写；无几何依据时必填否则回退 */
   evidence?: string;
+  /** true 或 level=无/不适用 → 不绘制该骨架圈 */
+  hidden?: boolean;
 };
 
 const LEVEL_SET = new Set<string>(["紧急", "高", "中", "低", "无/不适用"]);
@@ -150,10 +152,15 @@ export function inferZoneOverridesFromLlmZones(
     else if (/tf\s*17|yorktown|约克/i.test(`${id} ${label}`)) mapped = "tf17";
     else if (/在空|接触|air/i.test(`${id} ${label}`)) mapped = "air-contact";
     if (!mapped) continue;
+    const level = String(z.level ?? "");
+    const hide =
+      /无\/不适用|不适用|隐藏/.test(level) ||
+      (z as ThreatZone & { hidden?: boolean }).hidden === true;
     out.push({
       id: mapped,
-      level: String(z.level ?? ""),
+      level,
       label: z.label,
+      hidden: hide || undefined,
     });
   }
   return out;
@@ -237,10 +244,22 @@ export function applyZoneOverrides(
     overrideMap.set(o.id, o);
   }
 
+  const hiddenIds = new Set<string>();
+
   for (const [id, o] of overrideMap) {
     const base = byId.get(id)!;
     const nextLevel = normalizeZoneLevel(o.level);
-    if (!nextLevel || nextLevel === "无/不适用") continue;
+    const hide =
+      o.hidden === true || nextLevel === "无/不适用";
+
+    if (hide) {
+      // 隐藏与任务无关的骨架圈（prompt 要求带 evidence；缺省也放行以免落图僵死）
+      hiddenIds.add(id);
+      byId.delete(id);
+      continue;
+    }
+
+    if (!nextLevel) continue;
 
     if (nextLevel === "紧急" && base.level !== "紧急") {
       if (
@@ -278,8 +297,10 @@ export function applyZoneOverrides(
     z.level = sk && sk.level !== "紧急" ? sk.level : "高";
   }
 
-  // 保持骨架顺序
-  return skeleton.map((s) => byId.get(s.id) ?? s);
+  // 保持骨架顺序；已隐藏的 id 不输出
+  return skeleton
+    .filter((s) => !hiddenIds.has(s.id) && byId.has(s.id))
+    .map((s) => byId.get(s.id)!);
 }
 
 /** 从 LLM spec 抽取 overrides（优先 zone_overrides 字段） */
@@ -292,12 +313,114 @@ export function collectZoneOverrides(
   return inferZoneOverridesFromLlmZones(llmSpec.map?.threat_zones);
 }
 
-/** LLM 路径：骨架 + overrides → 最终 threat_zones */
+function packLatLonPoints(pack: SlicePack): [number, number][] {
+  return [...pack.sides.USN.units, ...pack.sides.IJN.units].map(
+    (u) => [u.latitude, u.longitude] as [number, number],
+  );
+}
+
+function nearPackGeometry(
+  center: [number, number],
+  points: [number, number][],
+  maxDeg = 1.25,
+): boolean {
+  if (!points.length) return true;
+  return points.some(
+    ([la, lo]) => Math.hypot(center[0] - la, center[1] - lo) <= maxDeg,
+  );
+}
+
+function clampRadiusNm(raw: unknown): number | null {
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.min(80, Math.max(8, Math.round(n)));
+}
+
+/**
+ * 采纳 LLM 自绘关注圈：圆心须靠近本切片单位，半径夹紧，紧急区≤2。
+ * 无效则返回 []（调用方回退骨架）。
+ */
+export function sanitizeLlmThreatZones(
+  pack: SlicePack,
+  raw: ThreatZone[] | undefined,
+  opts?: {
+    ratings?: SituationViewSpec["threat_ratings"];
+    maxZones?: number;
+    maxUrgent?: number;
+  },
+): ThreatZone[] {
+  const maxZones = opts?.maxZones ?? 6;
+  const maxUrgent = opts?.maxUrgent ?? 2;
+  const points = packLatLonPoints(pack);
+  const out: ThreatZone[] = [];
+
+  for (const z of raw ?? []) {
+    if (out.length >= maxZones) break;
+    const center = z.center;
+    if (
+      !Array.isArray(center) ||
+      center.length < 2 ||
+      !Number.isFinite(center[0]) ||
+      !Number.isFinite(center[1])
+    ) {
+      continue;
+    }
+    const c: [number, number] = [Number(center[0]), Number(center[1])];
+    if (!nearPackGeometry(c, points)) continue;
+
+    const level = normalizeZoneLevel(String(z.level ?? ""));
+    if (!level || level === "无/不适用") continue;
+
+    const radius = clampRadiusNm(z.radius_nm);
+    if (radius == null) continue;
+
+    const id = String(z.id ?? "").trim() || `z${out.length + 1}`;
+    const label = String(z.label ?? id).trim().slice(0, 40) || id;
+    const side =
+      z.side === "USN" || z.side === "IJN" ? z.side : undefined;
+
+    out.push({
+      id: id.slice(0, 40),
+      center: c,
+      radius_nm: radius,
+      level,
+      label,
+      side,
+    });
+  }
+
+  // 紧急配额
+  let urgentLeft = maxUrgent;
+  const ratingsUrgent = ratingsHasUrgent(opts?.ratings);
+  for (const z of out) {
+    if (z.level !== "紧急") continue;
+    if (urgentLeft > 0) {
+      urgentLeft -= 1;
+      continue;
+    }
+    // 超额紧急：有 ratings 紧急时仍降为高，避免整图血红
+    z.level = ratingsUrgent ? "高" : "高";
+  }
+
+  return out;
+}
+
+/**
+ * LLM 路径：优先采用模型输出的 map.threat_zones（任务可塑）；
+ * 若为空或校验后无有效圈，再回退「本地骨架 + zone_overrides」。
+ */
 export function mergeLlmThreatZones(
   pack: SlicePack,
   llmSpec: SituationViewSpec & { zone_overrides?: ZoneOverride[] },
   ratings?: SituationViewSpec["threat_ratings"],
 ): ThreatZone[] {
+  const fromLlm = sanitizeLlmThreatZones(pack, llmSpec.map?.threat_zones, {
+    ratings: ratings ?? llmSpec.threat_ratings,
+  });
+  if (fromLlm.length > 0) {
+    return fromLlm;
+  }
+
   const skeleton = buildThreatZoneSkeleton(pack);
   return applyZoneOverrides(skeleton, collectZoneOverrides(llmSpec), {
     pack,

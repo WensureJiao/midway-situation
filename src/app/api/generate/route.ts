@@ -122,7 +122,7 @@ export async function POST(req: Request) {
           : buildThreatRatingsFromPack(pack);
     const ratings = filterUsnObserverRatings(rawRatings);
 
-    // LLM：本地骨架定几何 + zone_overrides 升降级；本地/回退已是骨架
+    // LLM：优先采纳自绘 threat_zones；空/无效才回退骨架+overrides。本地模式用本地骨架。
     const threatZones =
       body.mode === "llm" && !used_fallback
         ? mergeLlmThreatZones(pack, spec, ratings)

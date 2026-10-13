@@ -1,12 +1,12 @@
 {
   "generated_by": "llm",
   "time_slice": "T1",
-  "title": "南云集结·开战潜力评估",
+  "title": "中途岛战役：南云集结态势（威胁潜力排序）",
   "phase_label": "初始态势：红蓝双方初始兵力配置，南云机动部队集结",
-  "narrative": "T1为战役起始切片，双方尚未接触，无在空飞机与弹幕。蓝方四艘航母（赤城、飞龙、苍龙、加贺）集中于东经179.7°附近，航向112.5°，整体指向中途岛；红方TF16（企业、大黄蜂）与TF17（约克城）分置中途岛西北至正北海域，航速15节但编队未齐速。美方当前最大威胁是南云舰队完整航空战力及其即将启动的侦察链——利根/筑摩水侦虽未升空，但已构成发现链起点，具备首波搜索能力。",
+  "narrative": "T1 阶段双方尚未接触，无在空飞机与弹幕；美方三航母（TF16/TF17）及中途岛岸基处于隐蔽集结状态，航向稳定但未放飞侦察；日方南云机动部队四航母完整在位，以约29.15°N, 179.75°W为中心呈松散集群，整体航向112.5°指向中途岛——此为当前唯一具备战役级威胁潜力的实体。水侦虽未升空，但利根、筑摩等舰已就绪，构成潜在发现链起点。",
   "map": {
     "center": [
-      29.2,
+      29.3,
       -178.5
     ],
     "zoom": 6,
@@ -20,7 +20,7 @@
     ],
     "axes": [
       {
-        "id": "a1",
+        "id": "ijn-thrust",
         "from": [
           29.15,
           -179.76
@@ -33,52 +33,41 @@
         "side": "IJN"
       },
       {
-        "id": "a2",
+        "id": "usn-approach",
         "from": [
-          30.01,
-          -177.25
+          29.99,
+          -177.24
         ],
         "to": [
           29.15,
           -179.76
         ],
-        "label": "TF16→南云群心",
+        "label": "TF16→南云",
         "side": "USN"
       }
     ],
     "threat_zones": [
       {
-        "id": "nagumo",
+        "id": "ijn-cv-cluster",
         "center": [
-          29.16218725,
-          -179.78483775
+          29.16,
+          -179.75
         ],
-        "radius_nm": 45,
+        "radius_nm": 42,
         "level": "高",
-        "label": "南云机动部队",
+        "label": "南云航母集群",
         "side": "IJN"
       },
       {
-        "id": "midway",
+        "id": "recon-belt",
         "center": [
-          28.206959,
-          -177.382232
+          29.16,
+          -179.78
         ],
-        "radius_nm": 30,
-        "level": "高",
-        "label": "中途岛岸基",
-        "side": "USN"
-      },
-      {
-        "id": "tf16",
-        "center": [
-          30.012257,
-          -177.253156
-        ],
-        "radius_nm": 35,
-        "level": "高",
-        "label": "TF16",
-        "side": "USN"
+        "radius_nm": 28,
+        "level": "紧急",
+        "label": "水侦接触带（利根/筑摩）",
+        "side": "IJN"
       }
     ]
   },
@@ -114,7 +103,7 @@
       "type": "scatter",
       "title": "敌我位置与登陆海域关系",
       "description": "原点=中途岛；横轴东向海里，纵轴北向海里；红美蓝日",
-      "why_type": "空间散点直接对照敌我相对登陆海域的几何关系",
+      "why_type": "常驻 · M：Spatial+Locate → Position ⇒ scatter",
       "series": [
         {
           "name": "中途岛",
@@ -308,92 +297,11 @@
       ]
     },
     {
-      "id": "cmp-force-range",
-      "type": "hbar",
-      "title": "距岛距离排序",
-      "description": "取样舰艇到中途岛的海里；近者更贴近登陆海域",
-      "why_type": "距离条形把「谁更靠近目标」排成可读序列",
-      "series": [
-        {
-          "name": "Portland",
-          "value": 91.5,
-          "side": "USN",
-          "detail": "美方 · USS Portland\n距中途岛约 91.5 nm · 方位 15°"
-        },
-        {
-          "name": "CVA-5 Yorkt…",
-          "value": 93,
-          "side": "USN",
-          "detail": "美方 · CVA-5 Yorktown\n距中途岛约 93 nm · 方位 16°"
-        },
-        {
-          "name": "Astoria",
-          "value": 95.2,
-          "side": "USN",
-          "detail": "美方 · USS Astoria\n距中途岛约 95.2 nm · 方位 16°"
-        },
-        {
-          "name": "Atlanta",
-          "value": 104.3,
-          "side": "USN",
-          "detail": "美方 · USS Atlanta\n距中途岛约 104.3 nm · 方位 4°"
-        },
-        {
-          "name": "New Orleans",
-          "value": 104.3,
-          "side": "USN",
-          "detail": "美方 · USS New Orleans\n距中途岛约 104.3 nm · 方位 5°"
-        },
-        {
-          "name": "CVA-7 Hornet",
-          "value": 105.9,
-          "side": "USN",
-          "detail": "美方 · CVA-7 Hornet\n距中途岛约 105.9 nm · 方位 5°"
-        },
-        {
-          "name": "Norrthampton",
-          "value": 107.3,
-          "side": "USN",
-          "detail": "美方 · USS Norrthampton\n距中途岛约 107.3 nm · 方位 3°"
-        },
-        {
-          "name": "Pensacola",
-          "value": 107.8,
-          "side": "USN",
-          "detail": "美方 · USS Pensacola\n距中途岛约 107.8 nm · 方位 6°"
-        },
-        {
-          "name": "CVA-6 Enter…",
-          "value": 108.5,
-          "side": "USN",
-          "detail": "美方 · CVA-6 Enterprise\n距中途岛约 108.5 nm · 方位 4°"
-        },
-        {
-          "name": "Minneapolis",
-          "value": 110.1,
-          "side": "USN",
-          "detail": "美方 · USS Minneapolis\n距中途岛约 110.1 nm · 方位 3°"
-        },
-        {
-          "name": "Kirishima",
-          "value": 135.9,
-          "side": "IJN",
-          "detail": "日方 · IJN Kirishima\n距中途岛约 135.9 nm · 方位 295°"
-        },
-        {
-          "name": "Hiryu",
-          "value": 137.3,
-          "side": "IJN",
-          "detail": "日方 · IJN Hiryu\n距中途岛约 137.3 nm · 方位 295°"
-        }
-      ]
-    },
-    {
       "id": "cmp-force-bearing",
       "type": "radar",
       "title": "相对中途岛方位分布",
       "description": "八方位兵力计数；美/日双轮廓对照集中方向",
-      "why_type": "方位玫瑰看敌我相对目标的方向集中度（意图指向）",
+      "why_type": "M：Spatial+Locate → Position ⇒ radar",
       "series": [
         {
           "name": "N",
@@ -514,105 +422,53 @@
       "type": "hbar",
       "title": "威胁目标排序",
       "description": "条长=等级分（1–4）；悬停看证据",
-      "why_type": "排序任务用条形图对齐「谁更优先」",
       "series": [
         {
           "name": "利根/筑摩水侦",
           "value": 4,
-          "detail": "紧急 — 虽未升空，但已搭载于侦察巡洋舰，具备T1末段即刻弹射能力，构成红方被发现链的首个可激活节点。"
+          "detail": "紧急 — 两舰均搭载5架水侦且处于战备停泊状态；其位置（29.18°N/-179.82°W与29.14°N/-179.86°W）构成前出侦察扇面基点，一旦弹射即启动发现链，威胁等级高于静态航母本身。"
         },
         {
           "name": "南云四航母",
           "value": 3,
-          "detail": "高 — 完整甲板、指向中途岛；尚未放飞故不是紧急。"
+          "detail": "高 — 完整甲板、齐备舰载机、统一航向112.5°直指中途岛；尚未放飞故不构成即时接触，但为战役核心威胁源。"
         },
         {
           "name": "护航驱逐舰",
           "value": 1,
-          "detail": "低 — 不参与航空作战主结构，无独立威胁输出能力。"
+          "detail": "低 — 数量多但无航空/远程侦察能力，不参与搜索或打击决策链，仅提供近程防空与反潜，不影响战役主动权归属。"
         }
-      ]
+      ],
+      "why_type": "常驻 · M：Ordering+Rank → Ordering ⇒ hbar"
     },
     {
-      "id": "cmp-threat-heat",
-      "type": "heatmap",
-      "title": "目标×等级",
-      "description": "每个目标落在哪一档；色深=等级分",
-      "why_type": "热力矩阵适合目标–等级对照筛排",
+      "id": "cmp-threat-level-bar",
+      "type": "bar",
+      "title": "威胁等级分布",
+      "description": "紧急/高/中/低条数",
       "series": [
         {
           "name": "紧急",
-          "group": "南云四航母",
-          "value": 0,
-          "detail": ""
-        },
-        {
-          "name": "高",
-          "group": "南云四航母",
-          "value": 3,
-          "detail": "完整甲板、指向中途岛；尚未放飞故不是紧急。"
-        },
-        {
-          "name": "中",
-          "group": "南云四航母",
-          "value": 0,
-          "detail": ""
-        },
-        {
-          "name": "低",
-          "group": "南云四航母",
-          "value": 0,
-          "detail": ""
-        },
-        {
-          "name": "紧急",
-          "group": "利根/筑摩水侦",
-          "value": 4,
-          "detail": "虽未升空，但已搭载于侦察巡洋舰，具备T1末段即刻弹射能力，构成红方被发现链的首个可激活节点。"
-        },
-        {
-          "name": "高",
-          "group": "利根/筑摩水侦",
-          "value": 0,
-          "detail": ""
-        },
-        {
-          "name": "中",
-          "group": "利根/筑摩水侦",
-          "value": 0,
-          "detail": ""
-        },
-        {
-          "name": "低",
-          "group": "利根/筑摩水侦",
-          "value": 0,
-          "detail": ""
-        },
-        {
-          "name": "紧急",
-          "group": "护航驱逐舰",
-          "value": 0,
-          "detail": ""
-        },
-        {
-          "name": "高",
-          "group": "护航驱逐舰",
-          "value": 0,
-          "detail": ""
-        },
-        {
-          "name": "中",
-          "group": "护航驱逐舰",
-          "value": 0,
-          "detail": ""
-        },
-        {
-          "name": "低",
-          "group": "护航驱逐舰",
           "value": 1,
-          "detail": "不参与航空作战主结构，无独立威胁输出能力。"
+          "detail": "紧急"
+        },
+        {
+          "name": "高",
+          "value": 1,
+          "detail": "高"
+        },
+        {
+          "name": "中",
+          "value": 0,
+          "detail": "中"
+        },
+        {
+          "name": "低",
+          "value": 1,
+          "detail": "低"
         }
-      ]
+      ],
+      "why_type": "常驻 · M：Comparative+Compare → Alignment ⇒ bar"
     }
   ],
   "intent_findings": [],
@@ -623,19 +479,19 @@
       "perspective": "红方看蓝方",
       "target": "南云四航母",
       "level": "高",
-      "evidence": "完整甲板、指向中途岛；尚未放飞故不是紧急。"
+      "evidence": "完整甲板、齐备舰载机、统一航向112.5°直指中途岛；尚未放飞故不构成即时接触，但为战役核心威胁源。"
     },
     {
       "perspective": "红方看蓝方",
       "target": "利根/筑摩水侦",
       "level": "紧急",
-      "evidence": "虽未升空，但已搭载于侦察巡洋舰，具备T1末段即刻弹射能力，构成红方被发现链的首个可激活节点。"
+      "evidence": "两舰均搭载5架水侦且处于战备停泊状态；其位置（29.18°N/-179.82°W与29.14°N/-179.86°W）构成前出侦察扇面基点，一旦弹射即启动发现链，威胁等级高于静态航母本身。"
     },
     {
       "perspective": "红方看蓝方",
       "target": "护航驱逐舰",
       "level": "低",
-      "evidence": "不参与航空作战主结构，无独立威胁输出能力。"
+      "evidence": "数量多但无航空/远程侦察能力，不参与搜索或打击决策链，仅提供近程防空与反潜，不影响战役主动权归属。"
     }
   ]
 }

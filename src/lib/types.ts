@@ -187,14 +187,16 @@ export interface SituationViewSpec {
     evidence: string;
   }[];
   /**
-   * LLM 可选：对本地关注圈骨架的升降级（服务端 merge 后丢弃）。
-   * id 仅限 nagumo / midway / tf16 / tf17 / air-contact。
+   * 可选：仅当 map.threat_zones 为空/校验失败、回退本地骨架时使用。
+   * 优先请直接写 map.threat_zones（按任务自绘）。
+   * id 仅限 nagumo / midway / tf16 / tf17 / air-contact；hidden 或 level=无/不适用 → 不绘制。
    */
   zone_overrides?: {
     id: string;
     level: string;
     label?: string;
     evidence?: string;
+    hidden?: boolean;
   }[];
 }
 

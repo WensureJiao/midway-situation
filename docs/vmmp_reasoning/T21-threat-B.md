@@ -1,12 +1,13 @@
-C：红方正通过Yorktown、Enterprise、Hornet三航母舰载机群（含140架在空）与中途岛陆基航空兵协同，压缩蓝方南云机动部队（Akagi/Soryu/Kaga）的侦察-打击窗口。  
-R：美舰载机已局部压至南云舰队附近（如Yorktown Leslie Dauntless #9在29.61°N, 177.99°W距Akagi仅约120km），形成“能发现即能打”的空间-时间耦合威胁链。  
-步骤名：Identify：从蓝方IJN摘要中锁定南云机动部队全部3艘主力航母（Akagi/Soryu/Kaga）及其当前航速10 kn/航向112.8°的统一运动状态。  
-步骤名：Locate：比对坐标，Akagi（28.92°N, 179.12°W）距Yorktown（29.55°N, 177.50°W）直线距离约165km，处于Dauntless俯冲轰炸机作战半径内。  
-步骤名：Filter：剔除蓝方无航空战力单位（如Nagara、Kirishima舰载仅2架），聚焦Akagi（ready0=26）、Soryu（ready0=29）、Kaga（ready0=11）三航母——其合计66架待发战机构成唯一可反击力量。  
-步骤名：Compare：美方在空140架中含52架Dauntless俯冲轰炸机与6架Devastator鱼雷机，对日方16架九七式+13架九九式形成数量与高度优势（Dauntless平均7621m vs Val 4572m）。  
-步骤名：Aggregate：将Akagi/Soryu/Kaga按“同编队、同航向、同暴露度”归为单一高危目标簇，其位置被Yorktown Thatch Wildcats #14（29.58°N, 177.61°W）等多批次战机持续覆盖。  
-步骤名：Assess：三航母中Soryu ready0=29最高、Akagi舰载35最多，但Kaga舰载仅12且ready0=11最低，综合判为“高价值-中脆弱”等级；Soryu为“高价值-高脆弱”最高等级。  
-步骤名：Rank：Soryu＞Akagi＞Kaga，依据是Soryu在空战机最多（29架ready）、位置居编队前导（28.89°N, 179.28°W最西）、且正被Yorktown Massey Devastators #12（29.41°N, 178.59°W）航迹指向。  
-步骤名：Verify：Soryu坐标（28.89°N, 179.28°W）与Yorktown Massey Devastators #12航向79.7°夹角＜15°，证实其正被定向突袭，威胁链闭环。  
-M：高亮Soryu因Comparative关系触发Filter操作下的Salience拓扑；轴线沿28.9°N纬度带对齐Akagi-Soryu-Kaga三舰，强化Grouping；威胁圈以Soryu为中心半径80km，覆盖其周边所有在空零式（如Hiryu Mori Zero #15）与美机交汇区。  
-E：所有排序依据均来自数据中具体坐标、航向、ready0数值及机型部署事实，未引入外部假设。
+结论：IJN Akagi为紧急威胁，系日方机动部队核心航母且已暴露于我方舰载机打击半径内。  
+C：我方正盯住IJN Akagi——其位置（28.92°N, 179.12°W）已被Yorktown Leslie Dauntless #9（29.61°N, 177.99°W）与Enterprise方向多架在空俯冲轰炸机持续交叉定位。  
+R：IJN Akagi距Yorktown直线距离约137海里、航向112.8°缓慢西行，正处我方无畏式俯冲轰炸机作战半径边缘，且其甲板ready0=26架战机中已有至少12架九七式/九九式在空并朝中途岛方向扇形展开。  
+Identify：从蓝方在空样本中识别出IJN Akagi为南云机动部队四艘航母中唯一未被击伤、舰载机战备率最高（ready0=26/35）、且位于编队前导位置的航空母舰。  
+Locate：通过T21广域搜索中Yorktown Thatch Wildcats #18（29.06°N, 179.03°W）与Soryu Abe Kate #1（28.94°N, 179.16°W）的相对坐标反推，确认IJN Akagi当前处于28.92°N, 179.12°W且无规避机动。  
+Filter：剔除IJN Kirishima（舰载仅2架）、IJN Haruna（ready0=1）、IJN Tone/Chikuma（侦察巡洋舰，无攻击性舰载机），聚焦具备完整航空打击链的航母平台。  
+Compare：对比IJN Akagi（ready0=26）、Soryu（ready0=29）、Kaga（ready0=11）、Hiryu（未列坐标但据在空零式推定远离主队），Akagi与Soryu构成双核心，但Akagi更靠东、更早进入我方攻击窗口。  
+Aggregate：将Akagi位置、航速（10 kn）、航向（112.8°）、舰载机战备量（35架）、在空攻击机群动向（九七式/九九式正飞向中途岛）聚合为高完整性打击节点。  
+Assess：该平台具备即时发动第二波攻击能力，且尚未遭我方首轮打击，威胁等级升至紧急——若不优先摧毁，其剩余舰载机可在1小时内重返战场压制我方航母起降。  
+Rank：在日方全部20艘舰船中，IJN Akagi优先级高于Soryu（虽ready0略高但位置偏西）、远高于Kaga（战备率不足1/3）及所有战列舰/巡洋舰。  
+Verify：所有判断均基于我方侦察机观测坐标、敌机航迹、舰船参数等美方单边可见证据，未引用日方内部状态或意图表述，亦未将我方航母列入威胁排序。  
+M：高亮目标为IJN Akagi；关注区为28.9°N–29.0°N / 179.0°W–179.3°W矩形海域；紧急区锁定其未来30分钟航迹带；日方威胁排序仅在我方态势图上以“Akagi＞Soryu＞Kaga”空间分层+尺寸标度呈现。  
+E：全程未出现“日方计划”“蓝方评估”“双方对称排名”等上帝视角表述，意图推断严格锚定在空敌机航向与编队位置等美方可观测行为证据上。
