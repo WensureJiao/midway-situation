@@ -163,6 +163,16 @@ function iconPath(kind: UnitIconKind): { d: string; size: number } {
   }
 }
 
+/** 高亮标签用短名，避免整屏刷满长舰名 */
+function shortUnitLabel(name: string): string {
+  const s = name
+    .replace(/^IJN\s+/i, "")
+    .replace(/^CVA-\d+\s+/i, "")
+    .replace(/^USS\s+/i, "")
+    .trim();
+  return s.length > 14 ? `${s.slice(0, 12)}…` : s;
+}
+
 function unitIcon(
   u: CompactUnit,
   opts: { highlight?: boolean } = {},
@@ -175,23 +185,44 @@ function unitIcon(
     air: isAir,
     facility: isFacility,
   });
-  const { d, size } = iconPath(kind);
-  const pad = opts.highlight ? 4 : 2;
-  const box = size + pad * 2;
+  const { d, size: baseSize } = iconPath(kind);
   const heading = Number.isFinite(u.heading_deg) ? u.heading_deg : 0;
   const rotate = isAir ? heading : 0;
-  const glow = opts.highlight
-    ? `filter:drop-shadow(0 0 2px rgba(212,175,55,.95));`
-    : "";
-  const stroke = isAir
-    ? ""
-    : ` stroke="rgba(255,255,255,.9)" stroke-width="1.1" stroke-linejoin="round"`;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${box}" height="${box}" viewBox="0 0 ${box} ${box}" style="display:block;overflow:visible"><g transform="translate(${pad},${pad}) rotate(${rotate} ${size / 2} ${size / 2})" style="${glow}"><path d="${d}" fill="${color}"${stroke}/></g></svg>`;
+
+  if (!opts.highlight) {
+    const pad = 2;
+    const box = baseSize + pad * 2;
+    const stroke = isAir
+      ? ""
+      : ` stroke="rgba(255,255,255,.9)" stroke-width="1.1" stroke-linejoin="round"`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${box}" height="${box}" viewBox="0 0 ${box} ${box}" style="display:block;overflow:visible"><g transform="translate(${pad},${pad}) rotate(${rotate} ${baseSize / 2} ${baseSize / 2})"><path d="${d}" fill="${color}"${stroke}/></g></svg>`;
+    return L.divIcon({
+      className: "unit-icon",
+      iconSize: [box, box],
+      iconAnchor: [box / 2, box / 2],
+      html: svg,
+    });
+  }
+
+  // 高亮：外圈脉冲环 + 放大符号 + 常显短名（截图对照必须一眼能认）
+  const glyphPx = Math.max(baseSize + 6, 18);
+  const ring = 40;
+  const label = shortUnitLabel(u.name).replace(/[<>&"]/g, "");
+  const stroke = ` stroke="#fff" stroke-width="1.6" stroke-linejoin="round"`;
+  const glyph = `<svg xmlns="http://www.w3.org/2000/svg" width="${glyphPx}" height="${glyphPx}" viewBox="0 0 ${baseSize} ${baseSize}" style="display:block;position:relative;z-index:2;filter:drop-shadow(0 0 2px #000)"><g transform="rotate(${rotate} ${baseSize / 2} ${baseSize / 2})"><path d="${d}" fill="${color}"${stroke}/></g></svg>`;
+  const html = `<div class="unit-hl" style="width:${ring}px;height:${ring + 18}px">
+    <div class="unit-hl-ring" style="width:${ring}px;height:${ring}px">
+      <span class="unit-hl-pulse"></span>
+      <span class="unit-hl-pulse unit-hl-pulse--delay"></span>
+      ${glyph}
+    </div>
+    <div class="unit-hl-label">${label}</div>
+  </div>`;
   return L.divIcon({
-    className: "unit-icon",
-    iconSize: [box, box],
-    iconAnchor: [box / 2, box / 2],
-    html: svg,
+    className: "unit-icon unit-icon--hl",
+    iconSize: [ring, ring + 18],
+    iconAnchor: [ring / 2, ring / 2],
+    html,
   });
 }
 
@@ -344,10 +375,11 @@ function MapIconLegend() {
           防空
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="inline-flex rounded-sm ring-2 ring-[#d4af37]/85">
+          <span className="relative inline-flex h-[20px] w-[20px] items-center justify-center">
+            <span className="absolute inset-0 rounded-full bg-[rgba(245,215,110,.35)] ring-[3px] ring-[#f5d76e]" />
             <LegendGlyph kind="carrier" color={us} px={11} />
           </span>
-          高亮
+          高亮（金环+舰名）
         </span>
       </div>
     </div>
@@ -505,6 +537,13 @@ export function SituationMap({
         {units.map((u) => {
           const hl = highlight.has(u.name);
           const icon = unitIcon(u, { highlight: hl });
+          const z = hl
+            ? 800
+            : u.unit_type === "Aircraft"
+              ? 200
+              : /航空母舰/.test(u.unit_class)
+                ? 300
+                : 100;
           if (u.unit_type === "Aircraft") {
             return (
               <Marker
@@ -512,7 +551,7 @@ export function SituationMap({
                 position={[u.latitude, u.longitude]}
                 icon={icon}
                 opacity={0.95}
-                zIndexOffset={200}
+                zIndexOffset={z}
               >
                 <Popup>
                   <div className="text-xs space-y-0.5">
@@ -531,6 +570,7 @@ export function SituationMap({
                 key={`${u.side}-${u.name}`}
                 position={[u.latitude, u.longitude]}
                 icon={icon}
+                zIndexOffset={z}
               >
                 <Popup>
                   <div className="text-xs">
@@ -546,7 +586,7 @@ export function SituationMap({
               key={`${u.side}-${u.name}`}
               position={[u.latitude, u.longitude]}
               icon={icon}
-              zIndexOffset={hl || /航空母舰/.test(u.unit_class) ? 300 : 100}
+              zIndexOffset={z}
             >
               <Popup>
                 <div className="text-xs space-y-0.5">
@@ -563,11 +603,6 @@ export function SituationMap({
                   )}
                 </div>
               </Popup>
-              {hl && (
-                <Tooltip direction="top" offset={[0, -8]} permanent={false}>
-                  {u.name}
-                </Tooltip>
-              )}
             </Marker>
           );
         })}

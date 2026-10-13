@@ -126,6 +126,65 @@ body {
   border: none !important;
 }
 
+/* 高亮单位：脉冲金环 + 常显短名（截图对照用） */
+.unit-hl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+.unit-hl-ring {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.unit-hl-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 3px solid #f5d76e;
+  background: rgba(245, 215, 110, 0.28);
+  box-shadow:
+    0 0 0 2px rgba(184, 134, 11, 0.55),
+    0 0 12px rgba(245, 215, 110, 0.85);
+  animation: unit-hl-pulse 1.4s ease-out infinite;
+}
+.unit-hl-pulse--delay {
+  animation-delay: 0.7s;
+}
+@keyframes unit-hl-pulse {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.95;
+  }
+  70% {
+    transform: scale(1.15);
+    opacity: 0.25;
+  }
+  100% {
+    transform: scale(1.25);
+    opacity: 0;
+  }
+}
+.unit-hl-label {
+  margin-top: 1px;
+  max-width: 72px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(20, 16, 8, 0.82);
+  color: #fde68a;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid rgba(245, 215, 110, 0.75);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
 .focus-pin {
   display: flex;
   flex-direction: column;
