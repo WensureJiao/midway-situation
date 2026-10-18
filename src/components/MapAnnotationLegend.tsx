@@ -1,15 +1,12 @@
 import type { SituationViewSpec } from "@/lib/types";
+import { drawnRadiusNm } from "@/lib/utils";
 import { inferCampaignBeat } from "@/lib/vmmpCompare";
+import { zoneLevelVisual } from "@/lib/zoneLevel";
 
 function sideName(side?: string) {
   if (side === "IJN") return "蓝方（日）";
   if (side === "USN") return "红方（美）";
   return "";
-}
-
-function zoneColor(level: string, _side?: string) {
-  if (level === "紧急") return "#9f1239";
-  return "#d97706";
 }
 
 export function MapAnnotationLegend({ spec }: { spec: SituationViewSpec }) {
@@ -115,7 +112,7 @@ export function MapAnnotationLegend({ spec }: { spec: SituationViewSpec }) {
 
       <div>
         <div className="mb-1 text-[11px] font-medium text-[var(--muted)]">
-          关注区
+          活动区
         </div>
         {zones.length ? (
           <ul className="space-y-1">
@@ -124,8 +121,8 @@ export function MapAnnotationLegend({ spec }: { spec: SituationViewSpec }) {
                 <span
                   className="mt-0.5 h-3 w-3 shrink-0 rounded-full border border-dashed"
                   style={{
-                    borderColor: zoneColor(String(z.level), z.side),
-                    background: `${zoneColor(String(z.level), z.side)}22`,
+                    borderColor: zoneLevelVisual(String(z.level)).color,
+                    background: `${zoneLevelVisual(String(z.level)).fill}33`,
                   }}
                 />
                 <span className="min-w-0">
@@ -133,7 +130,7 @@ export function MapAnnotationLegend({ spec }: { spec: SituationViewSpec }) {
                   <span className="ml-1.5 text-[10px] text-[var(--muted)]">
                     {z.level}
                     {sideName(z.side) ? ` · ${sideName(z.side)}` : ""}
-                    {z.radius_nm != null ? ` · ~${z.radius_nm} 海里` : ""}
+                    {z.radius_nm != null ? ` · ~${drawnRadiusNm(z.radius_nm)} 海里` : ""}
                   </span>
                 </span>
               </li>

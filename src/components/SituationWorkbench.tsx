@@ -9,6 +9,7 @@ import type {
   SituationViewSpec,
   SliceIndexItem,
   SlicePack,
+  TaskFocus,
 } from "@/lib/types";
 import { normalizeSituationSpec } from "@/lib/utils";
 import {
@@ -27,6 +28,7 @@ export function SituationWorkbench() {
   const [error, setError] = useState<string | null>(null);
   const [spec, setSpec] = useState<SituationViewSpec | null>(null);
   const [fallbackNote, setFallbackNote] = useState<string | null>(null);
+  const [taskFocus, setTaskFocus] = useState<TaskFocus>("threat");
   /** 刷新前按切片缓存本地结果，换切片再回来可复用 */
   const [specCache, setSpecCache] = useState<
     Partial<Record<string, SituationViewSpec>>
@@ -146,6 +148,23 @@ export function SituationWorkbench() {
             ))}
           </div>
 
+          <div className="flex overflow-hidden rounded-md text-xs ring-1 ring-[var(--line)]">
+            <button
+              type="button"
+              className={`px-2.5 py-1.5 ${taskFocus === "threat" ? "bg-[var(--accent)] font-semibold text-[var(--accent-fg)]" : "bg-[var(--panel-2)]"}`}
+              onClick={() => setTaskFocus("threat")}
+            >
+              威胁分析
+            </button>
+            <button
+              type="button"
+              className={`px-2.5 py-1.5 ${taskFocus === "intent" ? "bg-[var(--accent)] font-semibold text-[var(--accent-fg)]" : "bg-[var(--panel-2)]"}`}
+              onClick={() => setTaskFocus("intent")}
+            >
+              意图研判
+            </button>
+          </div>
+
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <Link
               href="/compare"
@@ -186,9 +205,14 @@ export function SituationWorkbench() {
           <SpatialStudyPanel
             pack={pack}
             spec={spec}
-            taskFocus="threat"
+            taskFocus={taskFocus}
+            label={
+              taskFocus === "intent"
+                ? "意图研判 · 本地基线"
+                : "威胁分析 · 本地基线"
+            }
             richCharts={false}
-            mapKey={`main-${sliceId}`}
+            mapKey={`main-${sliceId}-${taskFocus}`}
           />
         )}
       </main>

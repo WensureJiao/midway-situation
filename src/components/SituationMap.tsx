@@ -12,8 +12,9 @@ import {
   useMap,
 } from "react-leaflet";
 import L from "leaflet";
-import type { CompactUnit, SituationViewSpec, SlicePack } from "@/lib/types";
-import { nmToMeters } from "@/lib/utils";
+import type { CompactUnit, SituationViewSpec, SlicePack, ThreatZone } from "@/lib/types";
+import { zoneLevelLegend, zoneLevelVisual } from "@/lib/zoneLevel";
+import { drawnRadiusNm, nmToMeters } from "@/lib/utils";
 import "leaflet/dist/leaflet.css";
 
 type BasemapId = "satellite" | "ocean";
@@ -58,19 +59,89 @@ function FitToSpec({
 /** 飞到已解析好的坐标（由面板侧做威胁名→坐标映射） */
 function FocusCenterFly({
   center,
+  span,
+  points,
+  zone,
   tick,
 }: {
   center?: [number, number] | null;
+  /** 有起终点时按整段指向取景，而不是钉在一个点上 */
+  span?: [[number, number], [number, number]] | null;
+  /** 同一等级的多个目标一起取景 */
+  points?: [number, number][];
+  /** 活动区按整圈取景 */
+  zone?: { center: [number, number]; radius_nm: number } | null;
   tick?: number;
 }) {
   const map = useMap();
   useEffect(() => {
-    if (!center || !tick) return;
-    const [lat, lon] = center;
+    if (!tick) return;
+    if (zone?.center && zone.radius_nm > 0) {
+      const [lat, lon] = zone.center;
+      const dLat = zone.radius_nm / 60;
+      const cos = Math.cos((lat * Math.PI) / 180) || 1;
+      const dLon = zone.radius_nm / (60 * cos);
+      const bounds = L.latLngBounds(
+        [lat - dLat, lon - dLon],
+        [lat + dLat, lon + dLon],
+      );
+      if (!bounds.isValid()) return;
+      map.flyToBounds(bounds, {
+        padding: [48, 48],
+        maxZoom: 9,
+        duration: 0.6,
+      });
+      return;
+    }
+    if (span) {
+      const bounds = L.latLngBounds(span[0], span[1]);
+      if (!bounds.isValid()) return;
+      map.flyToBounds(bounds, {
+        padding: [56, 56],
+        maxZoom: 7,
+        duration: 0.6,
+      });
+      return;
+    }
+    if (points && points.length > 1) {
+      const bounds = L.latLngBounds(points);
+      if (!bounds.isValid()) return;
+      map.flyToBounds(bounds, {
+        padding: [72, 72],
+        maxZoom: 12,
+        duration: 0.6,
+      });
+      return;
+    }
+    const one = points?.[0] ?? center;
+    if (!one) return;
+    const [lat, lon] = one;
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
     map.flyTo([lat, lon], Math.max(map.getZoom(), 7), { duration: 0.6 });
-  }, [map, center, tick]);
+  }, [map, center, span, points, zone, tick]);
   return null;
+}
+
+function axisFocusLabelIcon(label: string, color: string) {
+  const safe = label
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+  const c = color.replace(/"/g, "");
+  return L.divIcon({
+    className: "axis-focus-label-icon",
+    iconSize: [140, 18],
+    iconAnchor: [70, 9],
+    html: `<div class="unit-hl-label axis-focus-label" style="color:${c};border-color:${c}" title="${safe}">${safe}</div>`,
+  });
+}
+
+function axisMidpoint(
+  from: [number, number],
+  to: [number, number],
+): [number, number] {
+  return [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2];
 }
 
 function focusPinIcon(label: string, color = "#dc2626") {
@@ -130,37 +201,108 @@ function classifyUnit(u: CompactUnit): UnitIconKind {
   return "ship";
 }
 
-/** 俯视图符号 path（正北朝上，随后按航向旋转） */
-function iconPath(kind: UnitIconKind): { d: string; size: number } {
+type IconMark = {
+  size: number;
+  d: string;
+  draw: "fill" | "stroke" | "plain";
+  /** 舰桥等白色部件 */
+  detail?: string;
+  /** 舰岛：与舰体同色系、更深一档 */
+  accent?: string;
+};
+
+/** 态势符号：舰首/机头朝上，再按航向旋转。 */
+function iconPath(kind: UnitIconKind): IconMark {
   switch (kind) {
     case "carrier":
-      return { size: 14, d: "M2 2 L12 2 L12 12 L2 12 Z" };
+      return {
+        size: 24,
+        draw: "fill",
+        d: "M7 3.4 L9.4 1.2 H16.2 L18.6 3.4 L19 21.2 H6.4 Z",
+        detail: "M11.5 4.2 H12.9 V18.4 H11.5 Z",
+        accent: "M19 6.2 H22.4 V13 H19 Z",
+      };
     case "battleship":
+      return {
+        size: 18,
+        draw: "fill",
+        d: "M9 0.6 L14 5.4 L13.2 16.8 H4.8 L4 5.4 Z",
+        detail: "M8.2 3.2 H9.8 V6.6 H8.2 Z M6.8 6.6 H11.2 V11.4 H6.8 Z",
+      };
     case "cruiser":
+      return {
+        size: 17,
+        draw: "fill",
+        d: "M8.5 0.5 L12.8 5 L12.1 15.8 H4.9 L4.2 5 Z",
+        detail: "M7.8 3 H9.2 V6.2 H7.8 Z M6.6 6.2 H10.4 V10.6 H6.6 Z",
+      };
     case "destroyer":
     case "ship":
-      return { size: 11, d: "M5.5 1 A4.5 4.5 0 1 1 5.49 1 Z" };
+      return {
+        size: 16,
+        draw: "fill",
+        d: "M8 0.4 L11.8 4.8 L11.2 15 H4.8 L4.2 4.8 Z",
+        detail: "M7.4 2.8 H8.6 V5.6 H7.4 Z M6.3 5.6 H9.7 V9.6 H6.3 Z",
+      };
     case "fighter":
     case "dive_bomber":
     case "torpedo":
     case "bomber":
     case "patrol":
     case "aircraft":
-      return { size: 9, d: "M4.5 0.8 L8.2 8.4 L4.5 6.6 L0.8 8.4 Z" };
+      return {
+        size: 16,
+        draw: "plain",
+        d: "M8 0.7 L9.2 5.5 L15.3 7.5 L15.3 9 L9.3 8.1 L8.8 12.2 L11.3 13.7 L11.3 15 L8 14.1 L4.7 15 L4.7 13.7 L7.2 12.2 L6.7 8.1 L0.7 9 L0.7 7.5 L6.8 5.5 Z",
+      };
     case "airfield":
       return {
         size: 22,
+        draw: "fill",
         d: "M3 8.5 L19 8.5 L19 13.5 L3 13.5 Z M8.5 3 L13.5 3 L13.5 19 L8.5 19 Z",
       };
     case "aa":
       return {
         size: 16,
+        draw: "fill",
         d: "M8 1.5 L14 5 L14 12 L8 15.5 L2 12 L2 5 Z",
       };
     case "facility":
     default:
-      return { size: 14, d: "M2 2 L12 2 L12 12 L2 12 Z" };
+      return { size: 14, draw: "fill", d: "M2 2 L12 2 L12 12 L2 12 Z" };
   }
+}
+
+function tintColor(hex: string, whiteMix: number): string {
+  const n = Number.parseInt(hex.replace("#", ""), 16);
+  const mix = (v: number) =>
+    Math.max(0, Math.min(255, Math.round(v * (1 - whiteMix) + 255 * whiteMix)))
+      .toString(16)
+      .padStart(2, "0");
+  return `#${mix((n >> 16) & 255)}${mix((n >> 8) & 255)}${mix(n & 255)}`;
+}
+
+function glyphSvg(
+  mark: IconMark,
+  color: string,
+  rotate: number,
+  px: number,
+): string {
+  const c = mark.size / 2;
+  const detail = mark.detail
+    ? `<path d="${mark.detail}" fill="#fff"/>`
+    : "";
+  const island = tintColor(color, 0.42);
+  const accent = mark.accent
+    ? `<path d="${mark.accent}" fill="${island}" stroke="${island}" stroke-width="1.6" stroke-linejoin="round"/>`
+    : "";
+  const body =
+    mark.draw === "stroke"
+      ? `<path d="${mark.d}" fill="none" stroke="${color}" stroke-width="2.15" stroke-linecap="round"/>`
+      : mark.draw === "plain"
+        ? `<path d="${mark.d}" fill="${color}" stroke="#fff" stroke-width="0.55" stroke-linejoin="round"/>`
+        : `<path d="${mark.d}" fill="${color}" stroke="#fff" stroke-width="0.9" stroke-linejoin="round"/>${detail}${accent}`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 ${mark.size} ${mark.size}" style="display:block;overflow:visible"><g transform="rotate(${rotate} ${c} ${c})">${body}</g></svg>`;
 }
 
 /** 高亮标签用短名，避免整屏刷满长舰名 */
@@ -175,7 +317,7 @@ function shortUnitLabel(name: string): string {
 
 function unitIcon(
   u: CompactUnit,
-  opts: { highlight?: boolean } = {},
+  opts: { highlight?: boolean; entityTag?: boolean } = {},
 ): L.DivIcon {
   const kind = classifyUnit(u);
   const isAir = u.unit_type === "Aircraft";
@@ -185,36 +327,39 @@ function unitIcon(
     air: isAir,
     facility: isFacility,
   });
-  const { d, size: baseSize } = iconPath(kind);
+  const mark = iconPath(kind);
   const heading = Number.isFinite(u.heading_deg) ? u.heading_deg : 0;
-  const rotate = isAir ? heading : 0;
+  const rotate = isFacility ? 0 : heading;
+
+  if (opts.entityTag) {
+    const label = shortUnitLabel(u.name).replace(/[<>&"]/g, "");
+    const html = `<div class="entity-tag">${glyphSvg(mark, color, rotate, 16)}<div class="entity-tag-label">${label}</div></div>`;
+    return L.divIcon({
+      className: "unit-icon",
+      iconSize: [72, 34],
+      iconAnchor: [36, 10],
+      html,
+    });
+  }
 
   if (!opts.highlight) {
-    const pad = 2;
-    const box = baseSize + pad * 2;
-    const stroke = isAir
-      ? ""
-      : ` stroke="rgba(255,255,255,.9)" stroke-width="1.1" stroke-linejoin="round"`;
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${box}" height="${box}" viewBox="0 0 ${box} ${box}" style="display:block;overflow:visible"><g transform="translate(${pad},${pad}) rotate(${rotate} ${baseSize / 2} ${baseSize / 2})"><path d="${d}" fill="${color}"${stroke}/></g></svg>`;
+    const box = mark.size + 2;
     return L.divIcon({
       className: "unit-icon",
       iconSize: [box, box],
       iconAnchor: [box / 2, box / 2],
-      html: svg,
+      html: glyphSvg(mark, color, rotate, box),
     });
   }
 
-  // 高亮：外圈脉冲环 + 放大符号 + 常显短名（截图对照必须一眼能认）
-  const glyphPx = Math.max(baseSize + 6, 18);
+  const glyphPx = Math.max(mark.size + 6, 18);
   const ring = 40;
   const label = shortUnitLabel(u.name).replace(/[<>&"]/g, "");
-  const stroke = ` stroke="#fff" stroke-width="1.6" stroke-linejoin="round"`;
-  const glyph = `<svg xmlns="http://www.w3.org/2000/svg" width="${glyphPx}" height="${glyphPx}" viewBox="0 0 ${baseSize} ${baseSize}" style="display:block;position:relative;z-index:2;filter:drop-shadow(0 0 2px #000)"><g transform="rotate(${rotate} ${baseSize / 2} ${baseSize / 2})"><path d="${d}" fill="${color}"${stroke}/></g></svg>`;
   const html = `<div class="unit-hl" style="width:${ring}px;height:${ring + 18}px">
     <div class="unit-hl-ring" style="width:${ring}px;height:${ring}px">
       <span class="unit-hl-pulse"></span>
       <span class="unit-hl-pulse unit-hl-pulse--delay"></span>
-      ${glyph}
+      <div style="position:relative;z-index:2;filter:drop-shadow(0 0 2px #000)">${glyphSvg(mark, color, rotate, glyphPx)}</div>
     </div>
     <div class="unit-hl-label">${label}</div>
   </div>`;
@@ -235,29 +380,44 @@ function LegendGlyph({
   color: string;
   px?: number;
 }) {
-  const { d, size } = iconPath(kind);
-  const isAir =
-    kind === "aircraft" ||
-    kind === "fighter" ||
-    kind === "dive_bomber" ||
-    kind === "torpedo" ||
-    kind === "bomber" ||
-    kind === "patrol";
+  const mark = iconPath(kind);
   return (
     <svg
       width={px}
       height={px}
-      viewBox={`0 0 ${size} ${size}`}
-      className="inline-block shrink-0"
+      viewBox={`0 0 ${mark.size} ${mark.size}`}
+      className="inline-block shrink-0 overflow-visible"
       aria-hidden
     >
-      <path
-        d={d}
-        fill={color}
-        stroke={isAir ? "none" : "rgba(255,255,255,.85)"}
-        strokeWidth={isAir ? 0 : 1.15}
-        strokeLinejoin="round"
-      />
+      {mark.draw === "stroke" ? (
+        <path
+          d={mark.d}
+          fill="none"
+          stroke={color}
+          strokeWidth={2.15}
+          strokeLinecap="round"
+        />
+      ) : (
+        <>
+          <path
+            d={mark.d}
+            fill={color}
+            stroke={mark.draw === "plain" ? "#fff" : "rgba(255,255,255,.9)"}
+            strokeWidth={mark.draw === "plain" ? 0.55 : 0.9}
+            strokeLinejoin="round"
+          />
+          {mark.detail ? <path d={mark.detail} fill="#fff" /> : null}
+          {mark.accent ? (
+            <path
+              d={mark.accent}
+              fill={tintColor(color, 0.42)}
+              stroke={tintColor(color, 0.42)}
+              strokeWidth={1.6}
+              strokeLinejoin="round"
+            />
+          ) : null}
+        </>
+      )}
     </svg>
   );
 }
@@ -287,7 +447,7 @@ function axisArrowIcon(side: string, bearing: number) {
 }
 
 /** 地图左下角图标图例；单位点用原样式，箭头用当前实心三角 */
-function MapIconLegend() {
+function MapIconLegend({ showEntityTag = false }: { showEntityTag?: boolean }) {
   const us = "#c45c4a";
   const ij = "#3b82a8";
   const usAir = "#e07a6a";
@@ -340,30 +500,42 @@ function MapIconLegend() {
           </span>
           日方指向
         </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-full border-[1.5px] border-dashed border-[#b45309] bg-[#d4a017]/35" />
-          关注区
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-full border-[1.5px] border-dashed border-[#9f1239] bg-[#e11d48]/40" />
-          紧急区
-        </span>
+        {zoneLevelLegend().map((z) => (
+          <span key={z.key} className="inline-flex items-center gap-1">
+            <span
+              className="inline-block h-3 w-3 rounded-full border-[1.5px] border-dashed"
+              style={{
+                borderColor: z.color,
+                background: `${z.fill}55`,
+              }}
+            />
+            {z.label}
+          </span>
+        ))}
+        {showEntityTag ? (
+          <span className="inline-flex items-center gap-1">
+            <span className="rounded bg-[#0f172a] px-1 py-0.5 text-[9px] font-semibold text-[#e2e8f0] ring-1 ring-[#94a3b8]">
+              实体
+            </span>
+            关键实体（支撑意图，不是威胁排序）
+          </span>
+        ) : null}
       </div>
       <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-t border-black/8 pt-1.5">
         <span className="inline-flex items-center gap-1">
-          <LegendGlyph kind="carrier" color={us} px={12} />
+          <LegendGlyph kind="carrier" color={us} px={20} />
           航母
         </span>
         <span className="inline-flex items-center gap-1">
-          <LegendGlyph kind="ship" color={ij} px={11} />
+          <LegendGlyph kind="ship" color={ij} px={14} />
           水面舰
         </span>
         <span className="inline-flex items-center gap-1">
-          <LegendGlyph kind="aircraft" color={usAir} px={9} />
+          <LegendGlyph kind="aircraft" color={usAir} px={15} />
           在空（美）
         </span>
         <span className="inline-flex items-center gap-1">
-          <LegendGlyph kind="aircraft" color={ijAir} px={9} />
+          <LegendGlyph kind="aircraft" color={ijAir} px={15} />
           在空（日）
         </span>
         <span className="inline-flex items-center gap-1">
@@ -393,6 +565,10 @@ export function SituationMap({
   focusLabel,
   focusColor = "#dc2626",
   focusTick,
+  focusAxis,
+  focusZone,
+  focusPoints,
+  markEntities = false,
 }: {
   pack: SlicePack;
   spec: SituationViewSpec;
@@ -404,6 +580,20 @@ export function SituationMap({
   focusColor?: string;
   /** 递增以重复触发定位 */
   focusTick?: number;
+  /** 意图「定位这条指向」：高亮整段轴线，而不是终点一个钉 */
+  focusAxis?: {
+    id?: string;
+    from: [number, number];
+    to: [number, number];
+    label?: string;
+    side?: string;
+  } | null;
+  /** 点活动区时高亮整圈 */
+  focusZone?: ThreatZone | null;
+  /** 同一最高等级的多个威胁点，一起打标 */
+  focusPoints?: { at: [number, number]; label: string; unitName?: string }[];
+  /** 意图页：高亮单位改成「实体」名牌，避免看成威胁金环 */
+  markEntities?: boolean;
 }) {
   const [basemap, setBasemap] = useState<BasemapId>("satellite");
   const tile = BASEMAPS[basemap];
@@ -421,10 +611,13 @@ export function SituationMap({
   const center = mapSpec.center ?? ([28.21, -177.38] as [number, number]);
   const zoom = mapSpec.zoom ?? 6;
 
-  const highlight = useMemo(
-    () => new Set(highlightNames),
-    [highlightNames],
-  );
+  const highlight = useMemo(() => {
+    const names = new Set(highlightNames);
+    for (const p of focusPoints ?? []) {
+      if (p.unitName) names.add(p.unitName);
+    }
+    return names;
+  }, [highlightNames, focusPoints]);
 
   const units = useMemo(() => {
     const all: CompactUnit[] = [
@@ -456,7 +649,7 @@ export function SituationMap({
           </button>
         ))}
       </div>
-      <MapIconLegend />
+      <MapIconLegend showEntityTag={markEntities} />
 
       <MapContainer
         center={center}
@@ -472,9 +665,69 @@ export function SituationMap({
           maxZoom={tile.maxZoom}
         />
         <FitToSpec center={center} zoom={zoom} />
-        <FocusCenterFly center={focusCenter} tick={focusTick} />
+        <FocusCenterFly
+          center={focusCenter}
+          span={
+            focusAxis
+              ? [focusAxis.from, focusAxis.to]
+              : null
+          }
+          points={
+            focusPoints && focusPoints.length > 1
+              ? focusPoints.map((p) => p.at)
+              : undefined
+          }
+          zone={
+            focusZone
+              ? {
+                  center: focusZone.center,
+                  radius_nm: drawnRadiusNm(focusZone.radius_nm),
+                }
+              : null
+          }
+          tick={focusTick}
+        />
 
-        {focusCenter && focusTick ? (
+        {focusAxis && focusTick ? (
+          <>
+            <Polyline
+              key={`focus-axis-hl-${focusTick}`}
+              positions={[focusAxis.from, focusAxis.to]}
+              pathOptions={{
+                className: "axis-focus-line",
+                color: focusColor,
+                weight: 7,
+                opacity: 0.95,
+                lineCap: "round",
+              }}
+              interactive={false}
+            />
+            <Marker
+              key={`focus-axis-label-${focusTick}`}
+              position={axisMidpoint(focusAxis.from, focusAxis.to)}
+              icon={axisFocusLabelIcon(
+                focusAxis.label || focusLabel || "作战指向",
+                focusColor,
+              )}
+              interactive={false}
+              zIndexOffset={950}
+            />
+          </>
+        ) : null}
+
+        {focusPoints && focusPoints.length > 1 && focusTick && !focusAxis
+          ? focusPoints.map((p) => (
+              <Marker
+                key={`focus-pin-${focusTick}-${p.label}`}
+                position={p.at}
+                icon={focusPinIcon(p.label, focusColor)}
+                interactive={false}
+                zIndexOffset={900}
+              />
+            ))
+          : null}
+
+        {focusCenter && focusTick && !focusAxis && !(focusPoints && focusPoints.length > 1) ? (
           <Marker
             key={`focus-pin-${focusTick}`}
             position={focusCenter}
@@ -485,30 +738,42 @@ export function SituationMap({
         ) : null}
 
         {threatZones.map((z) => {
-          // 等级着色 + 虚线圆，贴近参考界面的关注区样式
-          const urgent = z.level === "紧急";
+          const tone = zoneLevelVisual(String(z.level ?? ""));
+          const picked =
+            !!focusZone &&
+            (focusZone.id ? focusZone.id === z.id : focusZone.label === z.label);
           return (
             <Circle
-              key={z.id}
+              key={`${z.id}-${picked ? "focus" : "idle"}`}
               center={z.center}
-              radius={nmToMeters(z.radius_nm)}
+              radius={nmToMeters(drawnRadiusNm(z.radius_nm))}
               pathOptions={{
-                color: urgent ? "#9f1239" : "#d97706",
-                fillColor: urgent ? "#e11d48" : "#f59e0b",
-                fillOpacity: urgent ? 0.12 : 0.08,
-                weight: urgent ? 2.2 : 1.8,
-                dashArray: "10 7",
-                opacity: 0.95,
+                className: picked ? "zone-focus-line" : undefined,
+                color: picked ? focusColor || tone.color : tone.color,
+                fillColor: tone.fill,
+                fillOpacity: picked
+                  ? 0.22
+                  : focusZone
+                    ? tone.fillOpacity * 0.35
+                    : tone.fillOpacity,
+                weight: picked ? 5 : tone.weight,
+                dashArray: picked ? undefined : "10 7",
+                opacity: focusZone && !picked ? 0.3 : 0.95,
               }}
             >
               <Tooltip sticky>
-                {z.label} · {urgent ? "紧急区" : "关注区"} · ~{z.radius_nm} nm
+                {z.label} · {tone.label} · ~{drawnRadiusNm(z.radius_nm)} nm
               </Tooltip>
             </Circle>
           );
         })}
 
         {axes.flatMap((a) => {
+          const picked =
+            focusAxis &&
+            (focusAxis.id
+              ? focusAxis.id === a.id
+              : focusAxis.label === a.label);
           const color = a.side === "IJN" ? "#2563eb" : "#dc2626";
           return [
             <Polyline
@@ -518,7 +783,7 @@ export function SituationMap({
                 color,
                 weight: 3,
                 dashArray: "9 7",
-                opacity: 0.95,
+                opacity: focusAxis && !picked ? 0.35 : 0.95,
                 lineCap: "round",
               }}
             >
@@ -536,7 +801,10 @@ export function SituationMap({
 
         {units.map((u) => {
           const hl = highlight.has(u.name);
-          const icon = unitIcon(u, { highlight: hl });
+          const icon = unitIcon(u, {
+            highlight: hl && !markEntities,
+            entityTag: hl && markEntities,
+          });
           const z = hl
             ? 800
             : u.unit_type === "Aircraft"

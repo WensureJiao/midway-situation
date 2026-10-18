@@ -6,6 +6,7 @@ import {
   intentEvidenceItems,
   type CampaignBeat,
 } from "@/lib/vmmpCompare";
+import { expandBundledShipTarget } from "@/lib/splitShipTargets";
 import { useMemo, useState } from "react";
 import {
   Area,
@@ -250,9 +251,11 @@ export function ChartCard({
   const chartHeight = isHBar
     ? Math.max(compact ? 140 : 220, 28 + data.length * (compact ? 22 : 28))
     : isPie || isRadar || chart.id === "cmp-force-bearing"
-      ? // 扩展行饼图/雷达统一高度，避免一行里外框高低不一
+      ? // 底栏证据饼图与左侧散点对齐；扩展行饼图/雷达仍用较高框
         compact
-          ? 240
+          ? hideChromeTitle && isPie
+            ? 132
+            : 240
           : 300
       : isHeat
         ? Math.max(compact ? 120 : 160, 28 + new Set(data.map((d) => d.group)).size * 22)
@@ -431,13 +434,21 @@ export function ChartCard({
       {/* 棕色框只包住绘图区，标题文字在框外；饼图留出图例空间，避免裁切 */}
       <div
         className={`min-h-0 w-full min-w-0 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] ${
-          isPie ? "overflow-visible" : "overflow-hidden"
+          isPie && !(compact && hideChromeTitle)
+            ? "overflow-visible"
+            : "overflow-hidden"
         } ${compact ? "p-1.5" : "p-2"}`}
         style={{ height: chartHeight }}
       >
         {isPie ? (
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+            <PieChart
+              margin={
+                compact && hideChromeTitle
+                  ? { top: 2, right: 4, bottom: 2, left: 4 }
+                  : { top: 8, right: 8, bottom: 8, left: 8 }
+              }
+            >
               <Pie
                 data={
                   data.some((d) => Number(d.value) > 0)
@@ -446,11 +457,11 @@ export function ChartCard({
                 }
                 dataKey="value"
                 nameKey="name"
-                innerRadius={compact ? "32%" : "36%"}
-                outerRadius={compact ? "62%" : "68%"}
+                innerRadius={compact ? (hideChromeTitle ? "30%" : "32%") : "36%"}
+                outerRadius={compact ? (hideChromeTitle ? "58%" : "62%") : "68%"}
                 paddingAngle={3}
                 cx="50%"
-                cy="46%"
+                cy={compact && hideChromeTitle ? "40%" : "46%"}
                 label={({ value }) => (Number(value) > 0 ? String(value) : "")}
                 labelLine={false}
               >
@@ -493,11 +504,11 @@ export function ChartCard({
                 verticalAlign="bottom"
                 align="center"
                 iconType="circle"
-                iconSize={8}
+                iconSize={compact && hideChromeTitle ? 7 : 8}
                 wrapperStyle={{
-                  fontSize: 11,
-                  lineHeight: "16px",
-                  paddingTop: 2,
+                  fontSize: compact && hideChromeTitle ? 10 : 11,
+                  lineHeight: compact && hideChromeTitle ? "14px" : "16px",
+                  paddingTop: 0,
                 }}
               />
             </PieChart>
@@ -1043,14 +1054,16 @@ function ThreatLevelChart({
   const rows = useMemo(() => {
     return filtered
       .filter((r) => Boolean(r.target))
-      .map((r, i) => ({
-        id: `${r.target}-${i}`,
-        target: r.target,
-        level: r.level,
-        score: levelScore(r.level),
-        evidence: r.evidence,
-        fill: threatColor(r.level),
-      }))
+      .flatMap((r, i) =>
+        expandBundledShipTarget(r.target).map((target, j) => ({
+          id: `${target}-${i}-${j}`,
+          target,
+          level: r.level,
+          score: levelScore(r.level),
+          evidence: r.evidence,
+          fill: threatColor(r.level),
+        })),
+      )
       .sort(
         (a, b) =>
           b.score - a.score || a.target.localeCompare(b.target, "zh"),

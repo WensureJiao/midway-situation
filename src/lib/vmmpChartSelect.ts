@@ -73,11 +73,22 @@ export type ChartSlotDef = {
   type: ChartType;
 };
 
-/** 意图扩展：证据构成（饼）+ 证据维度轮廓（雷达） */
+/**
+ * 意图图槽：
+ * 常驻 = 相对岛散点（看指向落在哪）+ 证据构成饼（方向/实体/活动区）
+ * 扩展 = 证据维度雷达（仅有 VMMP）
+ */
 export const INTENT_CHART_SLOTS: ChartSlotDef[] = [
+  {
+    id: "cmp-force-landing",
+    topologies: ["Position"],
+    resident: true,
+    type: "scatter",
+  },
   {
     id: "cmp-intent-evidence",
     topologies: ["Connection"],
+    resident: true,
     type: "pie",
   },
   {

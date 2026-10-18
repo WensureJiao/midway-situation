@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ChartCard } from "@/components/SituationCharts";
 import { SkeletonDiffBar } from "@/components/SkeletonDiffBar";
 import { VmmpReasoningTrace } from "@/components/VmmpReasoningTrace";
@@ -18,10 +18,14 @@ import {
 } from "@/lib/vmmpCompare";
 import type {
   CompactUnit,
+  MapAxis,
   SituationViewSpec,
+  ThreatZone,
   SlicePack,
   TaskFocus,
 } from "@/lib/types";
+import { drawnRadiusNm } from "@/lib/utils";
+import { expandBundledShipTarget } from "@/lib/splitShipTargets";
 import { Check, Crosshair, MapPin } from "lucide-react";
 
 const PHASE_BEATS: CampaignBeat[] = [
@@ -38,6 +42,32 @@ function unitCentroid(units: CompactUnit[]): [number, number] | null {
   const lat = units.reduce((s, u) => s + u.latitude, 0) / units.length;
   const lon = units.reduce((s, u) => s + u.longitude, 0) / units.length;
   return [lat, lon];
+}
+
+/** 中文舰名对到快照里的英文舰体。单舰只取这一艘，避免四艘都落到同一活动区中心。 */
+const NAMED_HULLS: { mention: RegExp; unit: RegExp }[] = [
+  { mention: /赤城|akagi/i, unit: /akagi/i },
+  { mention: /加贺|kaga/i, unit: /kaga/i },
+  { mention: /苍龙|soryu/i, unit: /soryu/i },
+  { mention: /飞龙|hiryu/i, unit: /hiryu/i },
+  { mention: /利根|tone/i, unit: /tone/i },
+  { mention: /筑摩|chikuma/i, unit: /chikuma/i },
+  { mention: /企业|enterprise/i, unit: /enterprise/i },
+  { mention: /约克城|yorktown/i, unit: /yorktown/i },
+  { mention: /大黄蜂|hornet/i, unit: /hornet/i },
+];
+
+function hullsNamedIn(query: string, units: CompactUnit[]): CompactUnit[] {
+  const hits = NAMED_HULLS.filter((s) => s.mention.test(query));
+  const found: CompactUnit[] = [];
+  for (const hit of hits) {
+    const matches = units.filter((u) => hit.unit.test(u.name));
+    const hull =
+      matches.find((u) => u.unit_type === "Ship") ??
+      matches.find((u) => u.unit_type !== "Aircraft");
+    if (hull && !found.some((u) => u.name === hull.name)) found.push(hull);
+  }
+  return found;
 }
 
 /**
@@ -60,6 +90,15 @@ function resolveMapFocus(
   const zones = spec.map?.threat_zones ?? [];
   const axes = spec.map?.axes ?? [];
   const highlights = spec.map?.highlight_names ?? [];
+  const mentioned = NAMED_HULLS.filter((s) => s.mention.test(q));
+  const hulls = hullsNamedIn(q, all);
+  if (mentioned.length === 1) {
+    if (!hulls[0]) return null;
+    return [hulls[0].latitude, hulls[0].longitude];
+  }
+  if (mentioned.length > 1 && hulls.length) {
+    return unitCentroid(hulls);
+  }
 
   const byName = all.find((u) => {
     const n = u.name.toLowerCase();
@@ -185,14 +224,16 @@ function usnThreatRows(spec: SituationViewSpec) {
   return (spec.threat_ratings ?? [])
     .filter((r) => /红方看|美方看|USN/.test(r.perspective ?? ""))
     .filter((r) => Boolean(r.target))
-    .map((r, i) => ({
-      id: `${r.target}-${i}`,
-      target: r.target,
-      level: r.level,
-      evidence: r.evidence,
-      pct: levelPct(r.level),
-      tone: levelTone(r.level),
-    }))
+    .flatMap((r, i) =>
+      expandBundledShipTarget(r.target).map((target, j) => ({
+        id: `${target}-${i}-${j}`,
+        target,
+        level: r.level,
+        evidence: r.evidence,
+        pct: levelPct(r.level),
+        tone: levelTone(r.level),
+      })),
+    )
     .sort((a, b) => b.pct - a.pct);
 }
 
@@ -202,6 +243,54 @@ function firstSentence(text: string, max = 72): string {
   const m = t.match(/^(.+?[。！？.!?])/);
   const s = (m?.[1] ?? t).trim();
   return s.length > max ? `${s.slice(0, max)}…` : s;
+}
+
+function IntentPick({
+  item,
+  active,
+  onPick,
+}: {
+  item: PriorityItem;
+  active: boolean;
+  onPick: () => void;
+}) {
+  const tone = /紧急|高|中|低/.test(item.level)
+    ? levelTone(item.level)
+    : item.axis?.side === "USN"
+      ? "#dc2626"
+      : item.axis?.side === "IJN"
+        ? "#2563eb"
+        : "#64748b";
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      className={`flex w-full items-start gap-2 rounded-md bg-[var(--panel)] px-2.5 py-1.5 text-left ring-1 ${
+        active ? "" : "ring-[var(--line)] hover:ring-[var(--accent)]"
+      }`}
+      style={active ? { boxShadow: `0 0 0 2px ${tone}` } : undefined}
+    >
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center justify-between gap-2">
+          <span className="truncate text-xs font-medium text-[var(--ink)]">
+            {item.title}
+          </span>
+          <span
+            className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+              /紧急|高|中|低/.test(item.level)
+                ? levelBadgeClass(item.level)
+                : "bg-[var(--panel-2)] text-[var(--muted)] ring-1 ring-[var(--line)]"
+            }`}
+          >
+            {/紧急|高|中|低/.test(item.level) ? item.level : "指向"}
+          </span>
+        </span>
+        <span className="mt-0.5 block text-[10px] leading-snug text-[var(--muted)]">
+          {item.subtitle}
+        </span>
+      </span>
+    </button>
+  );
 }
 
 function SlotHead({
@@ -230,6 +319,10 @@ type PriorityItem = {
   subtitle: string;
   level: string;
   locateQuery: string;
+  /** 点这条时高亮整段轴线，而不是终点一个钉 */
+  axis?: MapAxis;
+  /** 点活动区时高亮整圈，而不是圆心一个钉 */
+  zone?: ThreatZone;
 };
 
 function buildPriorityItems(
@@ -238,7 +331,7 @@ function buildPriorityItems(
 ): PriorityItem[] {
   if (taskFocus === "threat") {
     return usnThreatRows(spec)
-      .slice(0, 5)
+      .slice(0, 8)
       .map((t, i) => ({
         id: t.id,
         rank: i + 1,
@@ -249,9 +342,14 @@ function buildPriorityItems(
       }));
   }
 
-  const axes = spec.map.axes ?? [];
+  const axes = [...(spec.map.axes ?? [])].sort((a, b) => {
+    const rank = (side?: string) => (side === "USN" ? 0 : side === "IJN" ? 1 : 2);
+    return rank(a.side) - rank(b.side);
+  });
   const highlights = spec.map.highlight_names ?? [];
-  const zones = spec.map.threat_zones ?? [];
+  const zones = [...(spec.map.threat_zones ?? [])].sort(
+    (a, b) => levelPct(String(b.level ?? "")) - levelPct(String(a.level ?? "")),
+  );
   const items: PriorityItem[] = [];
 
   axes.slice(0, 2).forEach((a, i) => {
@@ -259,34 +357,39 @@ function buildPriorityItems(
       id: `axis-${a.id || i}`,
       rank: items.length + 1,
       title: a.label || "作战指向",
-      subtitle: a.side === "IJN" ? "日方指向" : a.side === "USN" ? "美方指向" : "作战指向",
-      level: i === 0 ? "高" : "中",
+      subtitle:
+        a.side === "USN"
+          ? "美方视角 · 我方这一拍往哪打"
+          : a.side === "IJN"
+            ? "美方看到的日方指向"
+            : "作战指向",
+      level: "指向",
       locateQuery: a.label || highlights[0] || "",
+      axis: a,
     });
   });
 
-  highlights.slice(0, 3).forEach((name) => {
-    if (items.length >= 5) return;
+  zones.slice(0, 2).forEach((z) => {
+    items.push({
+      id: `z-${z.id}`,
+      rank: items.length + 1,
+      title: z.label,
+      subtitle: "活动区",
+      level: String(z.level || "中"),
+      locateQuery: z.label,
+      zone: z,
+    });
+  });
+
+  highlights.slice(0, 4).forEach((name) => {
     if (items.some((x) => x.title === name)) return;
     items.push({
       id: `hl-${name}`,
       rank: items.length + 1,
       title: name,
-      subtitle: "关键实体 · 支撑意图假设",
-      level: items.length < 2 ? "高" : "中",
+      subtitle: "支撑这条意图的单位，不按威胁高低排序",
+      level: "实体",
       locateQuery: name,
-    });
-  });
-
-  zones.slice(0, 2).forEach((z) => {
-    if (items.length >= 5) return;
-    items.push({
-      id: `z-${z.id}`,
-      rank: items.length + 1,
-      title: z.label,
-      subtitle: `活动区 · ${z.level}`,
-      level: String(z.level),
-      locateQuery: z.label,
     });
   });
 
@@ -300,25 +403,41 @@ function buildCoreJudgment(
 ) {
   const top = priorities[0];
   if (taskFocus === "threat") {
-    const topThreat = usnThreatRows(spec)[0];
+    const rows = usnThreatRows(spec);
+    const topLevel = rows[0]?.level ?? "";
+    const tied = topLevel
+      ? rows.filter((r) => r.level === topLevel)
+      : [];
+    const names = tied.map((r) => r.target);
     return {
-      title: top?.title || topThreat?.target || "待研判",
+      title:
+        names.length > 1
+          ? names.join("、")
+          : names[0] || top?.title || "待研判",
       body:
-        firstSentence(topThreat?.evidence || spec.narrative || "", 120) ||
+        firstSentence(tied[0]?.evidence || spec.narrative || "", 120) ||
         "暂无核心威胁判断",
-      locateQuery: top?.locateQuery || topThreat?.target || "",
-      hint: "当前最高优先威胁对象",
+      locateQuery: names[0] || top?.locateQuery || "",
+      locateQueries: names,
+      hint:
+        names.length > 1
+          ? `最高档「${topLevel}」共 ${names.length} 个，等级相同，一并作为核心对象`
+          : "当前最高优先威胁对象",
+      axis: undefined as MapAxis | undefined,
     };
   }
   const beat = inferCampaignBeat("", spec);
-  const axis = (spec.map.axes ?? [])[0];
+  const usnAxis = (spec.map.axes ?? []).find((a) => a.side === "USN");
+  const axis = usnAxis || (spec.map.axes ?? [])[0];
   return {
-    title: top?.title || axis?.label || `${beat}阶段`,
+    title: axis?.label || top?.title || `${beat}阶段`,
     body:
       firstSentence(spec.narrative || "", 120) ||
-      `当前更接近「${beat}」节拍；指向与关键实体见右侧排序。`,
-    locateQuery: top?.locateQuery || axis?.label || "",
-    hint: "当前核心意图判断",
+      `美方观察下，这一拍更接近「${beat}」。`,
+    locateQuery: axis?.label || top?.locateQuery || "",
+    locateQueries: [] as string[],
+    hint: `美方视角 · 我方主作战指向 · 更接近「${beat}」`,
+    axis,
   };
 }
 
@@ -336,7 +455,7 @@ function buildEvidenceWhy(
     }
     return (spec.map.threat_zones ?? []).slice(0, 3).map((z) => ({
       title: z.label,
-      detail: `关注区 · ${z.level}${z.radius_nm != null ? ` · 约 ${z.radius_nm} nm` : ""}`,
+      detail: `${z.level}区${z.radius_nm != null ? ` · 约 ${drawnRadiusNm(z.radius_nm)} nm` : ""}`,
     }));
   }
 
@@ -394,8 +513,15 @@ export function SpatialStudyPanel({
   const [focusColor, setFocusColor] = useState("#dc2626");
   const [focusKey, setFocusKey] = useState<string | null>(null);
   const [focusTick, setFocusTick] = useState(0);
-
-  const CORE_FOCUS_COLOR = "#9f1239";
+  const [focusAxis, setFocusAxis] = useState<MapAxis | null>(null);
+  const [focusPoints, setFocusPoints] = useState<
+    { at: [number, number]; label: string; unitName?: string }[]
+  >([]);
+  const [focusZone, setFocusZone] = useState<ThreatZone | null>(null);
+  /** 底栏按左侧图表自然高度对齐（取两图中较矮的一栏） */
+  const distColRef = useRef<HTMLDivElement>(null);
+  const rankColRef = useRef<HTMLDivElement>(null);
+  const [bottomRowH, setBottomRowH] = useState<number | null>(null);
 
   const priorities = useMemo(
     () => buildPriorityItems(spec, taskFocus),
@@ -409,6 +535,23 @@ export function SpatialStudyPanel({
     () => buildEvidenceWhy(spec, taskFocus),
     [spec, taskFocus],
   );
+  const coreItem = core.axis
+    ? priorities.find(
+        (p) =>
+          (core.axis?.id && p.axis?.id === core.axis.id) ||
+          p.title === core.axis?.label,
+      )
+    : priorities[0];
+  const coreLevel = /紧急|高|中|低/.test(coreItem?.level ?? "")
+    ? coreItem!.level
+    : taskFocus === "intent"
+      ? ""
+      : "紧急";
+  const coreColor = coreLevel
+    ? levelTone(coreLevel)
+    : core.axis?.side === "USN"
+      ? "#dc2626"
+      : "#2563eb";
 
   const taskCharts = useMemo(
     () =>
@@ -435,17 +578,102 @@ export function SpatialStudyPanel({
   const reasonSide: "A" | "B" | null =
     badge === "A" || badge === "B" ? badge : null;
 
+  useLayoutEffect(() => {
+    const a = distColRef.current;
+    const b = rankColRef.current;
+    if (!a || !b) {
+      setBottomRowH(null);
+      return;
+    }
+    const naturalH = (el: HTMLDivElement) => {
+      const prev = el.style.height;
+      el.style.height = "auto";
+      const h = Math.round(el.getBoundingClientRect().height);
+      el.style.height = prev;
+      return h;
+    };
+    const measure = () => {
+      const ha = naturalH(a);
+      const hb = naturalH(b);
+      if (ha <= 0 || hb <= 0) return;
+      const next = Math.min(ha, hb);
+      setBottomRowH((prev) => (prev === next ? prev : next));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(a);
+    ro.observe(b);
+    return () => ro.disconnect();
+  }, [taskFocus, slots.distribution, slots.ranking, spec.time_slice]);
+
   const locate = (
     query: string,
-    opts?: { color?: string; key?: string },
+    opts?: {
+      color?: string;
+      key?: string;
+      axis?: MapAxis;
+      queries?: string[];
+      zone?: ThreatZone;
+    },
   ) => {
-    const pos = resolveMapFocus(query, pack, spec);
-    if (!pos) return;
-    setFocusCenter(pos);
-    setFocusLabel(query.trim() || "目标位置");
+    if (opts?.zone?.center && opts.zone.radius_nm) {
+      setFocusPoints([]);
+      setFocusAxis(null);
+      setFocusCenter(null);
+      setFocusZone(opts.zone);
+      setFocusLabel(opts.zone.label || query.trim() || "活动区");
+      setFocusColor(opts.color || levelTone(String(opts.zone.level || "")));
+      setFocusKey(opts.key ?? null);
+      setFocusTick((n) => n + 1);
+      return;
+    }
+    if (opts?.axis?.from && opts.axis.to) {
+      setFocusPoints([]);
+      setFocusZone(null);
+      setFocusAxis(opts.axis);
+      setFocusCenter(null);
+      setFocusLabel(opts.axis.label || query.trim() || "作战指向");
+      setFocusColor(
+        opts.color || (opts.axis.side === "IJN" ? "#1d4ed8" : "#dc2626"),
+      );
+      setFocusKey(opts.key ?? null);
+      setFocusTick((n) => n + 1);
+      return;
+    }
+    const queries = (opts?.queries?.length ? opts.queries : [query]).filter(
+      Boolean,
+    );
+    const units = [
+      ...(pack.sides.USN?.units ?? []),
+      ...(pack.sides.IJN?.units ?? []),
+    ];
+    const points = queries
+      .map((q) => {
+        const at = resolveMapFocus(q, pack, spec);
+        if (!at) return null;
+        const hull = hullsNamedIn(q, units)[0];
+        const short = q.replace(/（[^）]*）/g, "").trim() || q;
+        return { at, label: short, unitName: hull?.name };
+      })
+      .filter(
+        (p): p is { at: [number, number]; label: string; unitName?: string } =>
+          Boolean(p),
+      );
+    if (!points.length) return;
+    setFocusZone(null);
+    setFocusAxis(null);
     setFocusColor(opts?.color || "#dc2626");
     setFocusKey(opts?.key ?? null);
     setFocusTick((n) => n + 1);
+    if (points.length > 1) {
+      setFocusPoints(points);
+      setFocusCenter(null);
+      setFocusLabel(points.map((p) => p.label).join("、"));
+      return;
+    }
+    setFocusPoints([]);
+    setFocusCenter(points[0].at);
+    setFocusLabel(points[0].label);
   };
 
   const frameTitle =
@@ -522,17 +750,58 @@ export function SpatialStudyPanel({
             focusLabel={focusLabel}
             focusColor={focusColor}
             focusTick={focusTick}
+            focusAxis={focusAxis}
+            focusZone={focusZone}
+            focusPoints={focusPoints}
+            markEntities={taskFocus === "intent"}
           />
         </div>
 
         <aside className="flex max-h-[min(62vh,680px)] flex-col divide-y divide-[var(--line)] bg-[var(--panel-2)]/35">
-          <div className="flex min-h-0 flex-1 flex-col p-3">
+          <div
+            className={`flex min-h-0 flex-1 flex-col p-3 ${taskFocus === "intent" ? "order-2" : ""}`}
+          >
+            {taskFocus === "intent" ? (
+              <div className="min-h-0 flex-1 space-y-3 overflow-auto">
+                <section>
+                  <SlotHead
+                    en="ENEMY AIM"
+                    zh="日方指向"
+                    title="我方看到的对方指向"
+                  />
+                  <p className="mb-1.5 text-[10px] leading-snug text-[var(--muted)]">
+                    对方往哪打。这是美方的观察，不是我方主指向。
+                  </p>
+                  <div className="space-y-1.5">
+                    {priorities.filter((p) => p.axis?.side === "IJN").length ? (
+                      priorities
+                        .filter((p) => p.axis?.side === "IJN")
+                        .map((p) => (
+                          <IntentPick
+                            key={p.id}
+                            item={p}
+                            active={focusKey === p.id}
+                            onPick={() =>
+                              locate(p.locateQuery, {
+                                color: "#2563eb",
+                                key: p.id,
+                                axis: p.axis,
+                              })
+                            }
+                          />
+                        ))
+                    ) : (
+                      <p className="text-[11px] text-[var(--muted)]">暂无日方指向</p>
+                    )}
+                  </div>
+                </section>
+              </div>
+            ) : (
+              <>
             <SlotHead
               en="PRIORITY"
               zh="优先度"
-              title={
-                taskFocus === "intent" ? "关键指向与实体排序" : "关键目标排序"
-              }
+              title="关键目标排序"
             />
             <p className="mb-1.5 text-[10px] text-[var(--muted)]">
               点击条目可在地图中高亮定位
@@ -540,14 +809,24 @@ export function SpatialStudyPanel({
             <div className="min-h-0 flex-1 space-y-2 overflow-auto px-0.5 py-0.5">
               {priorities.length ? (
                 priorities.map((p) => {
-                  const tone = levelTone(p.level);
+                  const tone = /紧急|高|中|低/.test(p.level)
+                    ? levelTone(p.level)
+                    : p.axis?.side === "USN"
+                      ? "#dc2626"
+                      : p.axis?.side === "IJN"
+                        ? "#2563eb"
+                        : "#9ca3af";
                   const active = focusKey === p.id;
                   return (
                     <button
                       key={p.id}
                       type="button"
                       onClick={() =>
-                        locate(p.locateQuery, { color: tone, key: p.id })
+                        locate(p.locateQuery, {
+                          color: tone,
+                          key: p.id,
+                          axis: p.axis,
+                        })
                       }
                       className={`flex w-full items-start gap-2 rounded-md bg-[var(--panel)] px-2.5 py-1.5 text-left ring-1 transition ${
                         active ? "" : "ring-[var(--line)] hover:ring-[var(--accent)]"
@@ -572,7 +851,7 @@ export function SpatialStudyPanel({
                           <span
                             className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${levelBadgeClass(p.level)}`}
                           >
-                            {/紧急|高|中|低/.test(p.level) ? p.level : "关注"}
+                            {/紧急|高|中|低|指向|实体/.test(p.level) ? p.level : "关注"}
                           </span>
                         </span>
                         <span className="mt-0.5 block line-clamp-2 text-[10px] leading-snug text-[var(--muted)]">
@@ -584,33 +863,60 @@ export function SpatialStudyPanel({
                 })
               ) : (
                 <p className="py-4 text-xs text-[var(--muted)]">
-                  {taskFocus === "intent"
-                    ? "暂无指向/关键实体条目"
-                    : "暂无美方视角威胁条目"}
+                  暂无美方视角威胁条目
                 </p>
               )}
             </div>
+              </>
+            )}
           </div>
 
-          <div className="shrink-0 p-3">
-            <SlotHead en="CORE NODE" zh="核心对象" title="当前核心判断" />
+          <div className={`shrink-0 p-3 ${taskFocus === "intent" ? "order-1" : ""}`}>
+            <SlotHead
+              en={taskFocus === "intent" ? "CLAIM" : "CORE NODE"}
+              zh={taskFocus === "intent" ? "意图结论" : "核心对象"}
+              title={taskFocus === "intent" ? "主作战指向" : "当前核心判断"}
+            />
             <div
               className="rounded-md bg-[var(--panel)] px-3 py-2.5 ring-1 ring-[var(--line)]"
               style={
                 focusKey === "core"
-                  ? { boxShadow: `0 0 0 2px ${CORE_FOCUS_COLOR}` }
+                  ? { boxShadow: `0 0 0 2px ${coreColor}` }
                   : undefined
               }
             >
               <div className="flex items-start gap-2">
                 <MapPin
                   className="mt-0.5 h-4 w-4 shrink-0"
-                  style={{ color: CORE_FOCUS_COLOR }}
+                  style={{ color: coreColor }}
                 />
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-[var(--ink)]">
-                    {core.title}
+                    {(core.locateQueries?.length ?? 0) > 1
+                      ? `${core.locateQueries.length} 个${/紧急/.test(core.hint) ? "紧急" : "同级"}目标`
+                      : core.title}
                   </div>
+                  {(core.locateQueries?.length ?? 0) > 1 ? (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {core.locateQueries.map((name) => {
+                        const placed = Boolean(resolveMapFocus(name, pack, spec));
+                        return (
+                          <span
+                            key={name}
+                            className={`rounded px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-[var(--line)] ${
+                              placed
+                                ? "bg-[var(--panel-2)] text-[var(--ink)]"
+                                : "bg-[var(--panel)] text-[var(--muted)] line-through"
+                            }`}
+                            title={placed ? "可在地图上定位" : "这一拍没有对应舰体坐标"}
+                          >
+                            {name}
+                            {placed ? "" : " · 无舰体"}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : null}
                   <p className="mt-1 text-[11px] leading-relaxed text-[var(--muted)]">
                     {core.body}
                   </p>
@@ -624,117 +930,258 @@ export function SpatialStudyPanel({
                 disabled={!core.locateQuery}
                 onClick={() =>
                   locate(core.locateQuery, {
-                    color: CORE_FOCUS_COLOR,
+                    color: coreColor,
                     key: "core",
+                    axis: core.axis,
+                    queries:
+                      (core.locateQueries?.length ?? 0) > 1
+                        ? core.locateQueries
+                        : undefined,
                   })
                 }
                 className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-medium text-white disabled:opacity-40"
-                style={{ background: CORE_FOCUS_COLOR }}
+                style={{ background: coreColor }}
               >
                 <Crosshair className="h-3.5 w-3.5" />
-                在地图中定位
+                {taskFocus === "intent"
+                  ? "定位这条指向"
+                  : (core.locateQueries?.length ?? 0) > 1
+                    ? `定位这 ${
+                        core.locateQueries.filter((name) =>
+                          resolveMapFocus(name, pack, spec),
+                        ).length
+                      } 个`
+                    : "在地图中定位"}
               </button>
             </div>
           </div>
         </aside>
       </div>
 
-      {/* 下：分布 → 排序 → 证据 → 阶段（本地四栏 + 右侧） */}
-      <div className="grid gap-0 border-b border-[var(--line)] sm:grid-cols-2 lg:grid-cols-4">
-        <div className="min-w-0 border-b border-[var(--line)] p-3 sm:border-r lg:border-b-0">
+      {/* 威胁：分布 → 排序 → 依据（无战役节拍）
+          意图：分布 → 证据构成 → 依据 → 战役节拍
+          整行高度取左侧两图中较矮一栏，依据/阶段超出可滚动 */}
+      <div
+        className={`grid items-start gap-0 border-b border-[var(--line)] sm:grid-cols-2 ${
+          taskFocus === "intent" ? "lg:grid-cols-4" : "lg:grid-cols-3"
+        }`}
+      >
+        <div
+          ref={distColRef}
+          className="flex min-h-0 min-w-0 flex-col border-b border-[var(--line)] p-3 sm:border-r lg:border-b-0"
+          style={bottomRowH ? { height: bottomRowH } : undefined}
+        >
           <SlotHead
             en="DISTRIBUTION"
             zh="分布"
-            title="敌我位置与登陆海域关系"
-          />
-          {slots.distribution ? (
-            <div className="min-w-0 max-w-full">
-              <ChartCard chart={slots.distribution} compact hideChromeTitle />
-            </div>
-          ) : (
-            <p className="text-xs text-[var(--muted)]">暂无分布图</p>
-          )}
-        </div>
-
-        <div className="min-w-0 border-b border-[var(--line)] p-3 lg:border-b-0 lg:border-r">
-          <SlotHead
-            en="RANKING"
-            zh="排序"
             title={
-              taskFocus === "intent" ? "意图证据强度排序" : "威胁优先级排序"
+              taskFocus === "intent"
+                ? "相对中途岛，指向落在哪一侧"
+                : "敌我位置与登陆海域关系"
             }
           />
-          {slots.ranking ? (
-            <div className="min-w-0 max-w-full">
-              <ChartCard chart={slots.ranking} compact hideChromeTitle />
-            </div>
-          ) : (
-            <p className="text-xs text-[var(--muted)]">暂无排序图</p>
-          )}
-        </div>
-
-        <div className="min-w-0 border-b border-[var(--line)] p-3 sm:border-r lg:border-b-0">
-          <SlotHead en="EVIDENCE" zh="判断依据" title="为什么重要" />
-          <ul className="space-y-2">
-            {evidence.map((e, i) => (
-              <li
-                key={`${e.title}-${i}`}
-                className="flex items-start gap-2 text-[11px] leading-snug"
-              >
-                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--accent)]" />
-                <span className="min-w-0">
-                  <span className="font-medium text-[var(--ink)]">
-                    {e.title}
-                  </span>
-                  <span className="mt-0.5 block break-words text-[var(--muted)]">
-                    {e.detail}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-          {threatReason?.trim() && !reasonSide ? (
-            <details className="mt-3 rounded-md bg-[var(--panel-2)] px-2 py-1.5 ring-1 ring-[var(--line)]">
-              <summary className="cursor-pointer text-[10px] font-medium text-[var(--muted)]">
-                展开完整推理路径
-              </summary>
-              <div className="mt-1 max-h-28 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-relaxed text-[var(--muted)]">
-                {threatReason.trim()}
+          <div className="min-h-0 min-w-0 flex-1 overflow-auto">
+            {slots.distribution ? (
+              <div className="min-w-0 max-w-full">
+                <ChartCard chart={slots.distribution} compact hideChromeTitle />
               </div>
-            </details>
-          ) : null}
+            ) : (
+              <p className="text-xs text-[var(--muted)]">暂无分布图</p>
+            )}
+          </div>
         </div>
 
-        <div className="min-w-0 p-3">
+        <div
+          ref={rankColRef}
+          className="flex min-h-0 min-w-0 flex-col border-b border-[var(--line)] p-3 lg:border-b-0 lg:border-r"
+          style={bottomRowH ? { height: bottomRowH } : undefined}
+        >
           <SlotHead
-            en="PHASE"
-            zh="阶段"
-            title="战役节拍（集结→终局）"
+            en={taskFocus === "intent" ? "EVIDENCE MIX" : "RANKING"}
+            zh={taskFocus === "intent" ? "构成" : "排序"}
+            title={
+              taskFocus === "intent"
+                ? "证据构成（方向 / 实体 / 活动区）"
+                : "威胁优先级排序"
+            }
           />
-          <div className="mt-1 flex flex-wrap gap-1">
-            {PHASE_BEATS.map((b) => {
-              const on = b === phaseBeat;
-              return (
-                <span
-                  key={b}
-                  className={`rounded px-1.5 py-0.5 text-[9px] font-medium tabular-nums ${
-                    on
-                      ? "bg-[var(--accent)] text-[var(--accent-fg)]"
-                      : "bg-[var(--panel-2)] text-[var(--muted)] ring-1 ring-[var(--line)]"
-                  }`}
-                >
-                  {CAMPAIGN_BEAT_CODE[b]} {b}
-                </span>
-              );
-            })}
-          </div>
-          <p className="mt-1.5 text-[10px] leading-snug text-[var(--muted)]">
-            当前更接近「{phaseBeat}」
-            {(pack.phase_label || spec.phase_label) && (
-              <> · {pack.phase_label || spec.phase_label}</>
+          <div className="min-h-0 min-w-0 flex-1 overflow-auto">
+            {slots.ranking ? (
+              <div className="min-w-0 max-w-full">
+                <ChartCard chart={slots.ranking} compact hideChromeTitle />
+              </div>
+            ) : (
+              <p className="text-xs text-[var(--muted)]">暂无排序图</p>
             )}
-          </p>
+          </div>
         </div>
+
+        <div
+          className="flex min-h-0 min-w-0 flex-col border-b border-[var(--line)] p-3 sm:border-r lg:border-b-0"
+          style={bottomRowH ? { height: bottomRowH } : undefined}
+        >
+          <SlotHead
+            en={taskFocus === "intent" ? "BASIS" : "EVIDENCE"}
+            zh={taskFocus === "intent" ? "依据" : "判断依据"}
+            title={taskFocus === "intent" ? "支撑这条意图的证据" : "为什么重要"}
+          />
+          {/* 左右留白，避免活动区按钮 ring / 选中描边被 overflow 裁切 */}
+          <div className="-mx-0.5 min-h-0 min-w-0 flex-1 overflow-auto px-1.5">
+            {taskFocus === "intent" ? (
+              <div className="space-y-3">
+                <p className="text-[10px] leading-snug text-[var(--muted)]">
+                  活动区和关键实体都是依据：说明上面的指向凭什么成立。点一下可在地图上定位。
+                </p>
+                <div>
+                  <div className="mb-1 text-[10px] font-semibold text-[var(--ink)]">
+                    活动区
+                  </div>
+                  <p className="mb-1.5 text-[10px] leading-snug text-[var(--muted)]">
+                    这一拍盯住的海域。紧急 / 高 / 中 / 低是圈有多急，不是给舰排名。
+                  </p>
+                  <div className="space-y-1.5">
+                    {priorities.filter((p) => p.id.startsWith("z-")).length ? (
+                      priorities
+                        .filter((p) => p.id.startsWith("z-"))
+                        .map((p) => (
+                          <IntentPick
+                            key={p.id}
+                            item={p}
+                            active={focusKey === p.id}
+                            onPick={() =>
+                              locate(p.locateQuery, {
+                                color: levelTone(p.level),
+                                key: p.id,
+                                zone: p.zone,
+                              })
+                            }
+                          />
+                        ))
+                    ) : (
+                      <p className="text-[11px] text-[var(--muted)]">
+                        暂无活动区
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <div className="mb-1 text-[10px] font-semibold text-[var(--ink)]">
+                    关键实体
+                  </div>
+                  <p className="mb-1.5 text-[10px] leading-snug text-[var(--muted)]">
+                    图上带「实体」名牌的单位。用来说明判断靠谁成立，不按谁更危险排序。
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {priorities.filter((p) => p.id.startsWith("hl-")).length ? (
+                      priorities
+                        .filter((p) => p.id.startsWith("hl-"))
+                        .map((p) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() =>
+                              locate(p.locateQuery, {
+                                color: "#334155",
+                                key: p.id,
+                              })
+                            }
+                            className={`rounded-md bg-[var(--panel)] px-2 py-1 text-left text-[11px] ring-1 ${
+                              focusKey === p.id
+                                ? "ring-[#334155]"
+                                : "ring-[var(--line)] hover:ring-[#64748b]"
+                            }`}
+                          >
+                            <span className="mr-1 text-[10px] font-semibold text-[#64748b]">
+                              实体
+                            </span>
+                            <span className="font-medium text-[var(--ink)]">
+                              {p.title
+                                .replace(/^IJN\s+/i, "")
+                                .replace(/^USS\s+/i, "")}
+                            </span>
+                          </button>
+                        ))
+                    ) : (
+                      <p className="text-[11px] text-[var(--muted)]">
+                        暂无关键实体
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {evidence.map((e, i) => (
+                  <li
+                    key={`${e.title}-${i}`}
+                    className="flex items-start gap-2 text-[11px] leading-snug"
+                  >
+                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--accent)]" />
+                    <span className="min-w-0">
+                      <span className="font-medium text-[var(--ink)]">
+                        {e.title}
+                      </span>
+                      <span className="mt-0.5 block break-words text-[var(--muted)]">
+                        {e.detail}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {threatReason?.trim() && !reasonSide ? (
+              <details className="mt-3 rounded-md bg-[var(--panel-2)] px-2 py-1.5 ring-1 ring-[var(--line)]">
+                <summary className="cursor-pointer text-[10px] font-medium text-[var(--muted)]">
+                  展开完整推理路径
+                </summary>
+                <div className="mt-1 max-h-28 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-relaxed text-[var(--muted)]">
+                  {threatReason.trim()}
+                </div>
+              </details>
+            ) : null}
+          </div>
+        </div>
+
+        {taskFocus === "intent" ? (
+          <div
+            className="flex min-h-0 min-w-0 flex-col p-3"
+            style={bottomRowH ? { height: bottomRowH } : undefined}
+          >
+            <SlotHead
+              en="PHASE"
+              zh="阶段"
+              title="战役节拍（集结→终局）"
+            />
+            <div className="min-h-0 min-w-0 flex-1 overflow-auto">
+              <div className="mt-1 flex flex-wrap gap-1">
+                {PHASE_BEATS.map((b) => {
+                  const on = b === phaseBeat;
+                  return (
+                    <span
+                      key={b}
+                      className={`rounded px-1.5 py-0.5 text-[9px] font-medium tabular-nums ${
+                        on
+                          ? "bg-[var(--accent)] text-[var(--accent-fg)]"
+                          : "bg-[var(--panel-2)] text-[var(--muted)] ring-1 ring-[var(--line)]"
+                      }`}
+                    >
+                      {CAMPAIGN_BEAT_CODE[b]} {b}
+                    </span>
+                  );
+                })}
+              </div>
+              <p className="mt-1.5 text-[10px] leading-snug text-[var(--muted)]">
+                当前更接近「{phaseBeat}」
+                {(pack.phase_label || spec.phase_label) && (
+                  <> · {pack.phase_label || spec.phase_label}</>
+                )}
+              </p>
+              <p className="mt-1 text-[10px] leading-snug text-[var(--muted)]">
+                节拍回答这一片处在集结、搜索、危机、残局还是终局。
+              </p>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {reasonSide ? (
@@ -744,6 +1191,7 @@ export function SpatialStudyPanel({
             reasoningIntent={intentReason}
             side={reasonSide}
             observerLabel="美方"
+            lockedFocus={taskFocus}
           />
           {richCharts ? (
             <div className="mt-2 flex flex-wrap items-center gap-1.5">

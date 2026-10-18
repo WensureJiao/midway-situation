@@ -13,6 +13,8 @@ type Props = {
   reasoningIntent?: string;
   side: "A" | "B";
   observerLabel?: string;
+  /** 由外层任务页锁定时，不再在推理块里二次切换任务 */
+  lockedFocus?: TaskFocus;
 };
 
 export function VmmpReasoningTrace({
@@ -20,8 +22,10 @@ export function VmmpReasoningTrace({
   reasoningIntent,
   side,
   observerLabel = "美方",
+  lockedFocus,
 }: Props) {
-  const [focus, setFocus] = useState<TaskFocus>("threat");
+  const [focusState, setFocus] = useState<TaskFocus>(lockedFocus ?? "threat");
+  const focus = lockedFocus ?? focusState;
   const reasoning =
     focus === "intent" ? reasoningIntent : reasoningThreat;
   const path =
@@ -44,30 +48,32 @@ export function VmmpReasoningTrace({
             先结论、后过程；扩展图对照结论阅读。
           </p>
         </div>
-        <div className="flex shrink-0 overflow-hidden rounded-md text-[10px] ring-1 ring-[var(--line)]">
-          <button
-            type="button"
-            className={`px-2 py-1 ${
-              focus === "threat"
-                ? "bg-[var(--panel-3)] font-semibold text-[var(--ink)]"
-                : "bg-[var(--panel)] text-[var(--muted)]"
-            }`}
-            onClick={() => setFocus("threat")}
-          >
-            威胁分析
-          </button>
-          <button
-            type="button"
-            className={`px-2 py-1 ${
-              focus === "intent"
-                ? "bg-[var(--panel-3)] font-semibold text-[var(--ink)]"
-                : "bg-[var(--panel)] text-[var(--muted)]"
-            }`}
-            onClick={() => setFocus("intent")}
-          >
-            意图研判
-          </button>
-        </div>
+        {lockedFocus ? null : (
+          <div className="flex shrink-0 overflow-hidden rounded-md text-[10px] ring-1 ring-[var(--line)]">
+            <button
+              type="button"
+              className={`px-2 py-1 ${
+                focus === "threat"
+                  ? "bg-[var(--panel-3)] font-semibold text-[var(--ink)]"
+                  : "bg-[var(--panel)] text-[var(--muted)]"
+              }`}
+              onClick={() => setFocus("threat")}
+            >
+              威胁分析
+            </button>
+            <button
+              type="button"
+              className={`px-2 py-1 ${
+                focus === "intent"
+                  ? "bg-[var(--panel-3)] font-semibold text-[var(--ink)]"
+                  : "bg-[var(--panel)] text-[var(--muted)]"
+              }`}
+              onClick={() => setFocus("intent")}
+            >
+              意图研判
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="mt-1.5 text-[10px] font-medium text-[var(--ink)]">

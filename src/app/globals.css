@@ -55,20 +55,20 @@ body {
 }
 
 .badge-critical {
-  background: #f3d2a8;
-  color: #7a3f08;
+  background: #f8d0d6;
+  color: #9f1239;
 }
 .badge-high {
-  background: #f0d4ce;
-  color: #6b2e26;
+  background: #fde4cc;
+  color: #c2410c;
 }
 .badge-mid {
-  background: #e4e0d4;
-  color: #4a463c;
+  background: #f8efc8;
+  color: #a16207;
 }
 .badge-low {
-  background: #dde6e2;
-  color: #355048;
+  background: #dce8dc;
+  color: #3f6b45;
 }
 
 /* 作战指向箭头：去掉 Leaflet divIcon 默认白底边框 */
@@ -121,9 +121,75 @@ body {
 /* Leaflet divIcon：去掉默认白底边框 */
 .leaflet-div-icon.axis-arrow-icon,
 .leaflet-div-icon.unit-icon,
-.leaflet-div-icon.focus-pin-icon {
+.leaflet-div-icon.focus-pin-icon,
+.leaflet-div-icon.entity-tag-icon,
+.leaflet-div-icon.axis-focus-label-icon {
   background: transparent !important;
   border: none !important;
+}
+
+/* 选中的作战指向：线本身按等级色脉冲 */
+.leaflet-overlay-pane path.axis-focus-line {
+  animation: axis-focus-glow 1.4s ease-out infinite;
+}
+/* 选中的活动区：整圈加粗并按等级色呼吸，不是圆心一个钉 */
+.leaflet-overlay-pane path.zone-focus-line {
+  animation: zone-focus-glow 1.4s ease-out infinite;
+}
+@keyframes zone-focus-glow {
+  0% {
+    stroke-opacity: 1;
+    fill-opacity: 0.28;
+  }
+  70% {
+    stroke-opacity: 0.55;
+    fill-opacity: 0.1;
+  }
+  100% {
+    stroke-opacity: 1;
+    fill-opacity: 0.28;
+  }
+}
+@keyframes axis-focus-glow {
+  0% {
+    stroke-opacity: 0.95;
+  }
+  70% {
+    stroke-opacity: 0.35;
+  }
+  100% {
+    stroke-opacity: 0.15;
+  }
+}
+.axis-focus-label {
+  max-width: 140px;
+}
+
+.entity-tag {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+.entity-tag-label {
+  margin-top: 1px;
+  max-width: 96px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(15, 23, 42, 0.9);
+  color: #e2e8f0;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid #94a3b8;
+}
+.entity-tag-label::before {
+  content: "实体 ";
+  font-weight: 600;
+  color: #cbd5e1;
 }
 
 /* 高亮单位：脉冲金环 + 常显短名（截图对照用） */

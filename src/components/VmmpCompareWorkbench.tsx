@@ -11,6 +11,7 @@ import type {
   SituationViewSpec,
   SliceIndexItem,
   SlicePack,
+  TaskFocus,
 } from "@/lib/types";
 import { normalizeSituationSpec } from "@/lib/utils";
 import {
@@ -20,15 +21,14 @@ import {
   Sparkles,
 } from "lucide-react";
 
-/** 对比页固定以威胁分析为主界面；意图图种沉底展示 */
-const TASK_FOCUS = "threat" as const;
+type SpecPair = { a: SituationViewSpec; b: SituationViewSpec };
 
 export function VmmpCompareWorkbench() {
   const [index, setIndex] = useState<SliceIndexItem[]>([]);
   const [sliceId, setSliceId] = useState("T1");
   const [pack, setPack] = useState<SlicePack | null>(null);
-  const [specA, setSpecA] = useState<SituationViewSpec | null>(null);
-  const [specB, setSpecB] = useState<SituationViewSpec | null>(null);
+  const [taskFocus, setTaskFocus] = useState<TaskFocus>("threat");
+  const [pairs, setPairs] = useState<Partial<Record<TaskFocus, SpecPair>>>({});
   const [reasonThreatA, setReasonThreatA] = useState("");
   const [reasonThreatB, setReasonThreatB] = useState("");
   const [reasonIntentA, setReasonIntentA] = useState("");
@@ -51,8 +51,7 @@ export function VmmpCompareWorkbench() {
     const item = index.find((i) => i.id === sliceId);
     if (!item) return;
     setPack(null);
-    setSpecA(null);
-    setSpecB(null);
+    setPairs({});
     setReasonThreatA("");
     setReasonThreatB("");
     setReasonIntentA("");
@@ -86,30 +85,37 @@ export function VmmpCompareWorkbench() {
     setReasonIntentB(iB);
   }, [sliceId]);
 
-  const tryLoadSaved = useCallback(async () => {
-    const base = `/data/vmmp_ab_visual/${sliceId}-${TASK_FOCUS}`;
-    try {
-      const [ra, rb] = await Promise.all([
-        fetch(`${base}-A.json`),
-        fetch(`${base}-B.json`),
-      ]);
-      if (!ra.ok || !rb.ok) return false;
-      const a = (await ra.json()) as SituationViewSpec;
-      const b = (await rb.json()) as SituationViewSpec;
-      setSpecA(normalizeSituationSpec(a));
-      setSpecB(normalizeSituationSpec(b));
-      setNotes([]);
-      void loadReasoning();
-      return true;
-    } catch {
-      return false;
-    }
-  }, [sliceId, loadReasoning]);
+  const tryLoadSaved = useCallback(
+    async (focus: TaskFocus) => {
+      const base = `/data/vmmp_ab_visual/${sliceId}-${focus}`;
+      try {
+        const [ra, rb] = await Promise.all([
+          fetch(`${base}-A.json`),
+          fetch(`${base}-B.json`),
+        ]);
+        if (!ra.ok || !rb.ok) return false;
+        const a = normalizeSituationSpec(
+          (await ra.json()) as SituationViewSpec,
+        );
+        const b = normalizeSituationSpec(
+          (await rb.json()) as SituationViewSpec,
+        );
+        setPairs((prev) => ({ ...prev, [focus]: { a, b } }));
+        setNotes([]);
+        void loadReasoning();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [sliceId, loadReasoning],
+  );
 
   useEffect(() => {
     if (!pack) return;
-    void tryLoadSaved();
-  }, [pack, tryLoadSaved]);
+    if (pairs[taskFocus]) return;
+    void tryLoadSaved(taskFocus);
+  }, [pack, taskFocus, pairs, tryLoadSaved]);
 
   const generatePair = useCallback(async () => {
     if (!pack) return;
@@ -125,7 +131,7 @@ export function VmmpCompareWorkbench() {
           body: JSON.stringify({
             time_slice: sliceId,
             mode: "llm",
-            task_focus: TASK_FOCUS,
+            task_focus: taskFocus,
             vmmp_mode,
             lock_charts: false,
           }),
@@ -179,8 +185,7 @@ export function VmmpCompareWorkbench() {
         callReason("intent", "A"),
         callReason("intent", "B"),
       ]);
-      setSpecA(a);
-      setSpecB(b);
+      setPairs((prev) => ({ ...prev, [taskFocus]: { a, b } }));
       setReasonThreatA(tA);
       setReasonThreatB(tB);
       setReasonIntentA(iA);
@@ -192,7 +197,7 @@ export function VmmpCompareWorkbench() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             time_slice: sliceId,
-            task_focus: TASK_FOCUS,
+            task_focus: taskFocus,
             spec_a: a,
             spec_b: b,
           }),
@@ -210,34 +215,29 @@ export function VmmpCompareWorkbench() {
     } finally {
       setLoading(false);
     }
-  }, [pack, sliceId]);
+  }, [pack, sliceId, taskFocus]);
 
+  const activePair = pairs[taskFocus];
+  const specA = activePair?.a ?? null;
+  const specB = activePair?.b ?? null;
   const activeSpec = abSide === "A" ? specA : specB;
   const activeThreatReason = abSide === "A" ? reasonThreatA : reasonThreatB;
   const activeIntentReason = abSide === "A" ? reasonIntentA : reasonIntentB;
   const rich = abSide === "B";
 
-  /** B 扩展：空间方位雷达 + 证据构成饼 / 维度轮廓雷达 */
-  const intentCharts = useMemo(() => {
-    if (!pack || !activeSpec || !rich) return [];
-    return buildTaskCompareCharts(activeSpec, "intent", pack.phase_label, {
-      rich: true,
-      pack,
-    });
-  }, [pack, activeSpec, rich]);
-
-  const bearingRadar = useMemo(() => {
+  /** B 扩展：威胁看方位雷达；意图看证据维度雷达（证据饼已在意图底栏） */
+  const extensionChart = useMemo(() => {
     if (!pack || !activeSpec || !rich) return undefined;
-    return buildTaskCompareCharts(activeSpec, "threat", pack.phase_label, {
-      rich: true,
-      pack,
-    }).find((c) => c.id === "cmp-force-bearing");
-  }, [pack, activeSpec, rich]);
-
-  const evidencePie = intentCharts.find((c) => c.id === "cmp-intent-evidence");
-  const evidenceRadar = intentCharts.find(
-    (c) => c.id === "cmp-intent-evidence-radar",
-  );
+    const charts = buildTaskCompareCharts(
+      activeSpec,
+      taskFocus,
+      pack.phase_label,
+      { rich: true, pack },
+    );
+    return taskFocus === "intent"
+      ? charts.find((c) => c.id === "cmp-intent-evidence-radar")
+      : charts.find((c) => c.id === "cmp-force-bearing");
+  }, [pack, activeSpec, rich, taskFocus]);
 
   return (
     <div className="min-h-screen">
@@ -268,6 +268,23 @@ export function VmmpCompareWorkbench() {
                 {s.id}
               </button>
             ))}
+          </div>
+
+          <div className="flex overflow-hidden rounded-md text-xs ring-1 ring-[var(--line)]">
+            <button
+              type="button"
+              className={`px-2.5 py-1.5 ${taskFocus === "threat" ? "bg-[var(--accent)] font-semibold text-[var(--accent-fg)]" : "bg-[var(--panel-2)]"}`}
+              onClick={() => setTaskFocus("threat")}
+            >
+              威胁分析
+            </button>
+            <button
+              type="button"
+              className={`px-2.5 py-1.5 ${taskFocus === "intent" ? "bg-[var(--accent)] font-semibold text-[var(--accent-fg)]" : "bg-[var(--panel-2)]"}`}
+              onClick={() => setTaskFocus("intent")}
+            >
+              意图研判
+            </button>
           </div>
 
           <div className="flex overflow-hidden rounded-md text-xs ring-1 ring-[var(--line)]">
@@ -329,50 +346,45 @@ export function VmmpCompareWorkbench() {
           <div className="flex h-[60vh] items-center justify-center rounded-lg bg-[var(--panel)] text-sm text-[var(--muted)] ring-1 ring-[var(--line)]">
             {loading
               ? "正在生成 A/B 态势与推理…"
-              : "点「生成 A/B」后，用顶部按钮切换无范式 / 有 VMMP。"}
+              : `当前是${taskFocus === "intent" ? "意图研判" : "威胁分析"}。点「生成 A/B」写出这一任务，或切换到已有预存的任务。`}
           </div>
         ) : (
           <>
             <SpatialStudyPanel
-              label={abSide === "A" ? "A · 无范式" : "B · 有 VMMP"}
+              label={
+                taskFocus === "intent"
+                  ? abSide === "A"
+                    ? "意图研判 · A · 无范式"
+                    : "意图研判 · B · 有 VMMP"
+                  : abSide === "A"
+                    ? "威胁分析 · A · 无范式"
+                    : "威胁分析 · B · 有 VMMP"
+              }
               badge={abSide}
               pack={pack}
               spec={activeSpec}
-              mapKey={`compare-${sliceId}-threat-${abSide}`}
-              taskFocus="threat"
+              mapKey={`compare-${sliceId}-${taskFocus}-${abSide}`}
+              taskFocus={taskFocus}
               reasoningThreat={activeThreatReason}
               reasoningIntent={activeIntentReason}
               richCharts={rich}
               showSkeletonDiff
             />
 
-            {bearingRadar || evidencePie || evidenceRadar ? (
+            {extensionChart ? (
               <section className="rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)]">
                 <div className="mb-2 px-1">
                   <h3 className="text-sm font-semibold text-[var(--ink)]">
                     范式扩展图
                   </h3>
                   <p className="mt-0.5 text-[10px] text-[var(--muted)]">
-                    仅有 VMMP 时出现；对照上方结论阅读 · 方位雷达 / 证据构成 /
-                    证据轮廓
+                    {taskFocus === "intent"
+                      ? "仅有 VMMP 时出现：证据维度轮廓，对照底栏证据构成阅读"
+                      : "仅有 VMMP 时出现：相对中途岛方位雷达，对照底栏分布阅读"}
                   </p>
                 </div>
-                <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-3">
-                  {bearingRadar ? (
-                    <div className="flex min-w-0 max-w-full flex-col">
-                      <ChartCard chart={bearingRadar} compact showWhyType />
-                    </div>
-                  ) : null}
-                  {evidencePie ? (
-                    <div className="flex min-w-0 max-w-full flex-col">
-                      <ChartCard chart={evidencePie} compact showWhyType />
-                    </div>
-                  ) : null}
-                  {evidenceRadar ? (
-                    <div className="flex min-w-0 max-w-full flex-col">
-                      <ChartCard chart={evidenceRadar} compact showWhyType />
-                    </div>
-                  ) : null}
+                <div className="max-w-md">
+                  <ChartCard chart={extensionChart} compact showWhyType />
                 </div>
               </section>
             ) : null}

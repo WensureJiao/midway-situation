@@ -10,6 +10,14 @@ export function nmToMeters(nm: number): number {
   return nm * 1852;
 }
 
+/** 活动圈名义半径偏大，地图上收到约三分之二。 */
+const ZONE_DRAW_SCALE = 0.65;
+
+export function drawnRadiusNm(nm: number): number {
+  if (!Number.isFinite(nm) || nm <= 0) return nm;
+  return Math.max(6, Math.round(nm * ZONE_DRAW_SCALE));
+}
+
 /** 是否为美方（红方）观察视角条目 */
 export function isUsnObserverPerspective(perspective?: string): boolean {
   const p = perspective ?? "";

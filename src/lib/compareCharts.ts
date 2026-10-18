@@ -12,6 +12,7 @@ import {
   type CampaignBeat,
 } from "./vmmpCompare";
 import { selectChartSlotIds } from "./vmmpChartSelect";
+import { expandBundledShipTarget } from "./splitShipTargets";
 
 const INTENT_BEATS: CampaignBeat[] = [
   "集结",
@@ -148,11 +149,13 @@ function threatRankSeries(
 ): ChartSpec["series"] {
   return [...(ratings ?? [])]
     .filter((r) => Boolean(r.target))
-    .map((r) => ({
-      name: r.target,
-      value: levelScoreValue(r.level),
-      detail: `${r.level}${r.evidence ? ` — ${r.evidence}` : ""}`,
-    }))
+    .flatMap((r) =>
+      expandBundledShipTarget(r.target).map((name) => ({
+        name,
+        value: levelScoreValue(r.level),
+        detail: `${r.level}${r.evidence ? ` — ${r.evidence}` : ""}`,
+      })),
+    )
     .sort((a, b) => b.value - a.value)
     .slice(0, 8);
 }
@@ -560,7 +563,9 @@ export function buildTaskCompareCharts(
 
   if (taskFocus === "intent") {
     const evidence = evidenceCompositionSeries(spec);
+    const landing = spatialCharts.filter((c) => c.id === "cmp-force-landing");
     const candidates: ChartSpec[] = [
+      ...landing,
       {
         id: "cmp-intent-evidence",
         type: "pie",
@@ -581,9 +586,11 @@ export function buildTaskCompareCharts(
     return applyVmmpChartSelection(candidates, "intent", rich);
   }
 
-  const ratings = (spec.threat_ratings ?? []).filter(
-    (r) => perspectiveBucket(r.perspective ?? "") === "红方看蓝方",
-  );
+  const ratings = (spec.threat_ratings ?? [])
+    .filter((r) => perspectiveBucket(r.perspective ?? "") === "红方看蓝方")
+    .flatMap((r) =>
+      expandBundledShipTarget(r.target).map((target) => ({ ...r, target })),
+    );
   const levelCounts = (["紧急", "高", "中", "低"] as const).map((lv) => ({
     name: lv,
     value: ratings.filter((r) => normalizeThreatLevel(r.level) === lv).length,
