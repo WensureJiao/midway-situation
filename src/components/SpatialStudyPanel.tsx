@@ -26,6 +26,7 @@ import type {
 } from "@/lib/types";
 import { drawnRadiusNm } from "@/lib/utils";
 import { expandBundledShipTarget } from "@/lib/splitShipTargets";
+import { levelColor } from "@/lib/zoneLevel";
 import { Check, Crosshair, MapPin } from "lucide-react";
 
 const PHASE_BEATS: CampaignBeat[] = [
@@ -205,10 +206,7 @@ function levelPct(level: string): number {
 }
 
 function levelTone(level: string): string {
-  if (/紧急/.test(level)) return "#9f1239";
-  if (/高/.test(level)) return "#e07a3a";
-  if (/中/.test(level)) return "#d4a017";
-  if (/低/.test(level)) return "#5b8c5a";
+  if (/紧急|高|中|低/.test(level)) return levelColor(level);
   return "#9ca3af";
 }
 
@@ -974,11 +972,7 @@ export function SpatialStudyPanel({
           <SlotHead
             en="DISTRIBUTION"
             zh="分布"
-            title={
-              taskFocus === "intent"
-                ? "相对中途岛，指向落在哪一侧"
-                : "敌我位置与登陆海域关系"
-            }
+            title="敌我位置与登陆海域关系"
           />
           <div className="min-h-0 min-w-0 flex-1 overflow-auto">
             {slots.distribution ? (

@@ -10,7 +10,7 @@ export function nmToMeters(nm: number): number {
   return nm * 1852;
 }
 
-/** 活动圈名义半径偏大，地图上收到约三分之二。 */
+/** 活动圈名义半径偏大，地图上收到约三分之二（仅显示，不改名义海里）。 */
 const ZONE_DRAW_SCALE = 0.65;
 
 export function drawnRadiusNm(nm: number): number {

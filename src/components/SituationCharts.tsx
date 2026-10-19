@@ -7,6 +7,7 @@ import {
   type CampaignBeat,
 } from "@/lib/vmmpCompare";
 import { expandBundledShipTarget } from "@/lib/splitShipTargets";
+import { levelColor } from "@/lib/zoneLevel";
 import { useMemo, useState } from "react";
 import {
   Area,
@@ -48,12 +49,12 @@ const INTENT_BEATS: CampaignBeat[] = [
 const USN = "#c45c4a";
 const IJN = "#3b82a8";
 
-/** 威胁等级分 → 色（与威胁排序面板一致） */
+/** 威胁等级分 → 色（与 zoneLevel 一致） */
 const LEVEL_SCORE_COLORS: Record<number, string> = {
-  4: "#9f1239", // 紧急 · 深红，与「高」拉开
-  3: "#e07a3a", // 高 · 橙红
-  2: "#d4a017", // 中 · 金
-  1: "#5b8c5a", // 低 · 绿
+  4: levelColor("紧急"),
+  3: levelColor("高"),
+  2: levelColor("中"),
+  1: levelColor("低"),
 };
 
 const LEVEL_SCORE_LEGEND = [
@@ -994,11 +995,11 @@ function isHiddenChart(chart: ChartSpec, hideFixed: boolean): boolean {
 }
 
 const THREAT_COLORS: Record<string, string> = {
-  紧急: "#9f1239",
-  高: "#e07a3a",
-  "高（发现链）": "#f0a060",
-  中: "#d4a017",
-  低: "#5b8c5a",
+  紧急: levelColor("紧急"),
+  高: levelColor("高"),
+  "高（发现链）": levelColor("高"),
+  中: levelColor("中"),
+  低: levelColor("低"),
   "无/不适用": "#9ca3af",
   无: "#9ca3af",
 };

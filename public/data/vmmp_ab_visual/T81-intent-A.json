@@ -3,7 +3,7 @@
   "time_slice": "T81",
   "title": "机库危机：南云甲板换弹窗口",
   "phase_label": "机库危机",
-  "narrative": "美方观察到南云机动部队正以约10节航速向东北偏东（81.5°）航行，三艘航母密集编组于29.07–29.14°N/177.82–178.02°W海域，甲板堆满未放飞的九七式与九九式，弹药转运中；我方TF16与TF17正缓慢西移，Enterprise与Hornet已抵近至29.54°N/178.47°W，Yorktown稍偏南，CAP野猫持续在28.6–29.7°N间巡弋压制日方高空零式；中途岛岸基残余B-17与辩护者正对南云集群投弹，航弹几何落点集中于赤城、加贺上空。",
+  "narrative": "美方观察到南云机动部队三艘航母（赤城、加贺、苍龙）正以10节航速向东北偏东航行，甲板堆满未放飞的九七式与九九式，弹药转运中；其上空已有数架美制俯冲轰炸机与B-17投弹轨迹，且6架零式CAP高度偏高、位置偏西，对低空突击拦截能力薄弱；我方TF16与TF17正缓慢压近至29.5°N/178.5°W一线，约克城号虽受损但仍在编队中维持航向。",
   "map": {
     "center": [
       29.1,
@@ -14,35 +14,34 @@
       "IJN Akagi",
       "IJN Kaga",
       "IJN Soryu",
-      "CVA-6 Enterprise",
-      "CVA-7 Hornet",
-      "CVA-5 Yorktown"
+      "Yorktown Thatch Wildcats #5",
+      "Hornet Mitchell Waldcats #6"
     ],
     "axes": [
       {
-        "id": "ijn-movement",
+        "id": "a1",
         "from": [
-          29.11,
-          -177.85
+          29.09,
+          -177.86
         ],
         "to": [
-          29.35,
-          -177.25
+          28.21,
+          -177.38
         ],
-        "label": "南云→中途岛（佯动航向）",
+        "label": "南云→中途岛",
         "side": "IJN"
       },
       {
-        "id": "usn-closure",
+        "id": "a2",
         "from": [
           29.54,
           -178.47
         ],
         "to": [
-          29.11,
-          -177.85
+          29.09,
+          -177.86
         ],
-        "label": "TF16→南云核心",
+        "label": "TF16→赤城",
         "side": "USN"
       }
     ],
@@ -51,34 +50,34 @@
         "id": "ijn-cv-cluster",
         "center": [
           29.1,
-          -177.89
+          -177.9
         ],
-        "radius_nm": 35,
+        "radius_nm": 16,
         "level": "紧急",
-        "label": "南云航母集群（换弹中）",
+        "label": "南云航母换弹集群",
         "side": "IJN"
       },
       {
-        "id": "midway-strike-corridor",
+        "id": "usn-approach-corridor",
         "center": [
-          28.75,
-          -178.35
+          29.32,
+          -178.25
         ],
-        "radius_nm": 25,
+        "radius_nm": 12,
         "level": "高",
-        "label": "美舰载机突击走廊",
+        "label": "美特混压近走廊",
         "side": "USN"
       },
       {
-        "id": "recon-gap",
+        "id": "midway-defensive-ring",
         "center": [
-          29.08,
-          -178.21
+          28.21,
+          -177.38
         ],
-        "radius_nm": 20,
+        "radius_nm": 10,
         "level": "中",
-        "label": "水侦回收间隙区",
-        "side": "IJN"
+        "label": "中途岛岸基防御圈",
+        "side": "USN"
       }
     ]
   },
@@ -317,17 +316,17 @@
         {
           "name": "Direction",
           "value": 2,
-          "detail": "1. 南云→中途岛（佯动航向）\n2. TF16→南云核心"
+          "detail": "1. 南云→中途岛\n2. TF16→赤城"
         },
         {
           "name": "Entity",
           "value": 4,
-          "detail": "1. IJN Akagi\n2. IJN Kaga\n3. IJN Soryu\n4. CVA-6 Enterprise"
+          "detail": "1. IJN Akagi\n2. IJN Kaga\n3. IJN Soryu\n4. Yorktown Thatch Wildcats #5"
         },
         {
           "name": "Zone",
           "value": 1,
-          "detail": "1. 南云航母集群（换弹中）（紧急）"
+          "detail": "1. 南云航母换弹集群（紧急）"
         }
       ]
     }

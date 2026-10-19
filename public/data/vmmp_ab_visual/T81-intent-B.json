@@ -3,19 +3,20 @@
   "time_slice": "T81",
   "title": "机库危机：南云甲板换弹窗口",
   "phase_label": "机库危机",
-  "narrative": "美方观察到南云机动部队三艘航母（赤城、加贺、苍龙）正密集进行鱼雷→炸弹换装，甲板堆满未放飞攻击机且ready=0比例极高；其编队航向持续指向中途岛（81.5°），但空中侦察链已回收，6架零式分散于西偏北空域，无有效搜索覆盖；与此同时，美舰载机群正从东南方向压近——约克城机群已投弹，企业/大黄蜂机群距日舰约120–150海里，航迹收敛于南云集群中心。",
+  "narrative": "美方观察到南云机动部队三艘航母（赤城、加贺、苍龙）正密集进行鱼雷换炸弹作业，甲板堆满未放飞攻击机且无有效起降能力；其编队航向稳定指向中途岛（81.5°），但上空已出现美方投弹轨迹与残存航弹；TF16与TF17正以极低速（0–2 kn）保持阵位，舰载机整备重心转向突击而非防御，表明我方正压近并准备利用日方换弹脆弱期。",
   "map": {
     "center": [
       29.1,
-      -178.1
+      -178.2
     ],
     "zoom": 6,
     "highlight_names": [
       "IJN Akagi",
       "IJN Kaga",
       "IJN Soryu",
-      "Yorktown Thatch Wildcats #5",
-      "Hornet Mitchell Waldcats #6"
+      "CVA-6 Enterprise",
+      "CVA-7 Hornet",
+      "CVA-5 Yorktown"
     ],
     "axes": [
       {
@@ -41,42 +42,31 @@
           29.11,
           -177.84
         ],
-        "label": "TF16→赤城",
+        "label": "TF16→南云集群",
         "side": "USN"
       }
     ],
     "threat_zones": [
       {
-        "id": "ijn-cv-cluster",
+        "id": "ijn-cv-vuln-zone",
         "center": [
           29.1,
-          -177.87
+          -177.89
         ],
-        "radius_nm": 38,
+        "radius_nm": 16,
         "level": "紧急",
         "label": "南云航母换弹核心区",
         "side": "IJN"
       },
       {
-        "id": "usn-approach-corridor",
+        "id": "usn-strike-convergence",
         "center": [
-          29.32,
+          29.35,
           -178.15
         ],
-        "radius_nm": 25,
+        "radius_nm": 14,
         "level": "高",
-        "label": "美突击机群压近走廊",
-        "side": "USN"
-      },
-      {
-        "id": "midway-defensive-ring",
-        "center": [
-          28.21,
-          -177.38
-        ],
-        "radius_nm": 20,
-        "level": "中",
-        "label": "中途岛岸基防御圈",
+        "label": "美舰载突击交汇区",
         "side": "USN"
       }
     ]
@@ -316,12 +306,12 @@
         {
           "name": "Direction",
           "value": 2,
-          "detail": "1. 南云→中途岛\n2. TF16→赤城"
+          "detail": "1. 南云→中途岛\n2. TF16→南云集群"
         },
         {
           "name": "Entity",
           "value": 4,
-          "detail": "1. IJN Akagi\n2. IJN Kaga\n3. IJN Soryu\n4. Yorktown Thatch Wildcats #5"
+          "detail": "1. IJN Akagi\n2. IJN Kaga\n3. IJN Soryu\n4. CVA-6 Enterprise"
         },
         {
           "name": "Zone",
@@ -340,12 +330,12 @@
         {
           "name": "Direction",
           "value": 2,
-          "detail": "1. 南云→中途岛\n2. TF16→赤城"
+          "detail": "1. 南云→中途岛\n2. TF16→南云集群"
         },
         {
           "name": "Entity",
           "value": 4,
-          "detail": "1. IJN Akagi\n2. IJN Kaga\n3. IJN Soryu\n4. Yorktown Thatch Wildcats #5"
+          "detail": "1. IJN Akagi\n2. IJN Kaga\n3. IJN Soryu\n4. CVA-6 Enterprise"
         },
         {
           "name": "Zone",

@@ -78,12 +78,13 @@ export function buildThreatZoneSkeleton(pack: SlicePack): ThreatZone[] {
 
   const zones: ThreatZone[] = [];
 
+  // 名义半径按「贴着兵力集群」收紧，便于精确盯区（非显示缩放）
   if (ijnCenter) {
     const damaged = ijnCarriers.some((u) => u.damaged);
     zones.push({
       id: "nagumo",
       center: ijnCenter,
-      radius_nm: damaged ? 25 : 45,
+      radius_nm: damaged ? 12 : 18,
       level: damaged ? "紧急" : "高",
       label: damaged ? "南云损管群" : "南云机动部队",
       side: "IJN",
@@ -93,7 +94,7 @@ export function buildThreatZoneSkeleton(pack: SlicePack): ThreatZone[] {
     zones.push({
       id: "midway",
       center: [midway.latitude, midway.longitude],
-      radius_nm: 30,
+      radius_nm: 12,
       level: "高",
       label: "中途岛岸基",
       side: "USN",
@@ -103,7 +104,7 @@ export function buildThreatZoneSkeleton(pack: SlicePack): ThreatZone[] {
     zones.push({
       id: "tf16",
       center: [enterprise.latitude, enterprise.longitude],
-      radius_nm: 35,
+      radius_nm: 14,
       level: "高",
       label: "TF16",
       side: "USN",
@@ -112,7 +113,7 @@ export function buildThreatZoneSkeleton(pack: SlicePack): ThreatZone[] {
     zones.push({
       id: "tf17",
       center: [yorktown.latitude, yorktown.longitude],
-      radius_nm: 30,
+      radius_nm: 12,
       level: "高",
       label: "TF17",
       side: "USN",
@@ -127,7 +128,7 @@ export function buildThreatZoneSkeleton(pack: SlicePack): ThreatZone[] {
     zones.push({
       id: "air-contact",
       center: airC,
-      radius_nm: 50,
+      radius_nm: 16,
       level: "紧急",
       label: `在空接触带（${air.length}）`,
     });
@@ -333,7 +334,8 @@ function nearPackGeometry(
 function clampRadiusNm(raw: unknown): number | null {
   const n = typeof raw === "number" ? raw : Number(raw);
   if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.min(80, Math.max(8, Math.round(n)));
+  // 上限收紧：大圈不利于精确定位，宁可多圈小圈
+  return Math.min(40, Math.max(8, Math.round(n)));
 }
 
 /**

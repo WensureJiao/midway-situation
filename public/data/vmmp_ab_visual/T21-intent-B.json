@@ -1,9 +1,9 @@
 {
   "generated_by": "llm",
   "time_slice": "T21",
-  "title": "广域搜索：侦察接触与方向判明",
+  "title": "广域搜索：侦察接触与方向研判",
   "phase_label": "广域搜索",
-  "narrative": "双方正以扇形前出侦察机压缩不确定性：美PBY与舰载机群已东向压至179°W附近，与南云机动部队同经度带；日方利根/筑摩水侦持续北伸，最远达29.03°N，威胁TF16隐蔽性。当前无直接交火圈，但空间接近度显著提升，作战轴线由‘未知方位’转向‘西北—东南对向运动’。佯动迹象不显，真实打击重心仍聚焦航母集群相对位置与航向连续性。",
+  "narrative": "美方三支航母特混舰队（TF16/TF17）正以29.5°N为轴线向西偏南缓进，多批次无畏式与野猫已前出至178°W–179°W扇区，逼近南云机动部队经度带；日方水侦（Tone/Chikuma系）持续北伸至29.06°N、178.21°W空域，构成对TF16隐蔽性的直接威胁；南云四航母集群（Akagi/Kaga/Soryu/Hiryu）维持112.8°航向，其九七式与九九式机群呈扇形东向散开，指向中途岛与美舰队可能方位，意图尚未收敛但主攻轴线已初显。",
   "map": {
     "center": [
       29.2,
@@ -11,27 +11,24 @@
     ],
     "zoom": 6,
     "highlight_names": [
-      "Task Force 16 Hornet-Enterprise Spuance",
-      "Task Force 17 Yorktown Fletcher",
-      "Nagumo's Task Force",
       "IJN Tone",
       "IJN Chikuma",
       "Yorktown Thatch Wildcats #11",
-      "Soryu Abe Kate #1",
+      "Yorktown Leslie Dauntless #9",
       "Hiryu Kobayashi Val #10"
     ],
     "axes": [
       {
         "id": "a1",
         "from": [
-          28.92,
-          -179.12
+          28.95,
+          -179.18
         ],
         "to": [
-          29.55,
-          -177.5
+          28.21,
+          -177.38
         ],
-        "label": "主接触轴（西→东）",
+        "label": "南云→中途岛",
         "side": "IJN"
       },
       {
@@ -44,32 +41,43 @@
           28.92,
           -179.12
         ],
-        "label": "反向压制轴（东→西）",
+        "label": "TF16→南云主力",
         "side": "USN"
       }
     ],
     "threat_zones": [
       {
-        "id": "z1",
+        "id": "ijn-cv-cluster",
         "center": [
-          29,
-          -179.2
+          28.93,
+          -179.14
         ],
-        "radius_nm": 35,
+        "radius_nm": 38,
         "level": "高",
-        "label": "南云机动部队核心活动区（含赤城/加贺/苍龙/飞龙）",
+        "label": "南云航母集群",
         "side": "IJN"
       },
       {
-        "id": "z2",
+        "id": "recon-belt",
         "center": [
-          29.53,
-          -177.55
+          29.06,
+          -178.21
         ],
-        "radius_nm": 25,
+        "radius_nm": 28,
+        "level": "紧急",
+        "label": "水侦接触带",
+        "side": "IJN"
+      },
+      {
+        "id": "strike-arc-east",
+        "center": [
+          29,
+          -178.75
+        ],
+        "radius_nm": 32,
         "level": "中",
-        "label": "TF16/TF17联合前出空域（野猫+无畏密集区）",
-        "side": "USN"
+        "label": "日舰载机东向突击弧",
+        "side": "IJN"
       }
     ]
   },
@@ -101,68 +109,248 @@
   ],
   "charts": [
     {
-      "id": "cmp-intent-axes",
-      "type": "bar",
-      "title": "作战指向（按方）",
-      "description": "由 map.axes 统计",
+      "id": "cmp-force-landing",
+      "type": "scatter",
+      "title": "敌我位置与登陆海域关系",
+      "description": "原点=中途岛；横轴东向海里，纵轴北向海里；红美蓝日",
+      "why_type": "常驻 · M：Spatial+Locate → Position ⇒ scatter",
       "series": [
         {
-          "name": "USN",
-          "value": 1,
-          "side": "USN"
+          "name": "中途岛",
+          "value": 0,
+          "x": 0,
+          "y": 0,
+          "side": "both",
+          "group": "登陆海域",
+          "detail": "登陆/目标海域锚点 · 中途岛\n(28.21°N, 177.38°W)"
         },
         {
-          "name": "IJN",
-          "value": 1,
-          "side": "IJN"
-        }
-      ]
-    },
-    {
-      "id": "cmp-intent-zones",
-      "type": "bar",
-      "title": "关注区等级",
-      "description": "由 map.threat_zones 统计",
-      "series": [
-        {
-          "name": "紧急",
-          "value": 0
+          "name": "CVA-5 Yorktown",
+          "value": 82.1,
+          "x": -24,
+          "y": 78.5,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 航空母舰\n相对中途岛：东 -24 nm / 北 78.5 nm\n距离约 82.1 nm · 方位 343°"
         },
         {
-          "name": "高",
-          "value": 1
+          "name": "CVA-6 Enterprise",
+          "value": 81.1,
+          "x": -6.4,
+          "y": 80.8,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 航空母舰\n相对中途岛：东 -6.4 nm / 北 80.8 nm\n距离约 81.1 nm · 方位 355°"
         },
         {
-          "name": "中",
-          "value": 1
+          "name": "CVA-7 Hornet",
+          "value": 81.1,
+          "x": -6.3,
+          "y": 80.8,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 航空母舰\n相对中途岛：东 -6.3 nm / 北 80.8 nm\n距离约 81.1 nm · 方位 356°"
         },
         {
-          "name": "低",
-          "value": 0
+          "name": "IJN Akagi",
+          "value": 101.1,
+          "x": -91.7,
+          "y": 42.7,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 航空母舰\n相对中途岛：东 -91.7 nm / 北 42.7 nm\n距离约 101.1 nm · 方位 295°"
+        },
+        {
+          "name": "IJN Soryu",
+          "value": 108.6,
+          "x": -100.6,
+          "y": 41,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 航空母舰\n相对中途岛：东 -100.6 nm / 北 41 nm\n距离约 108.6 nm · 方位 292°"
+        },
+        {
+          "name": "IJN Kaga",
+          "value": 100.8,
+          "x": -90,
+          "y": 45.5,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 航空母舰\n相对中途岛：东 -90 nm / 北 45.5 nm\n距离约 100.8 nm · 方位 297°"
+        },
+        {
+          "name": "IJN Kirishima",
+          "value": 99.4,
+          "x": -89.4,
+          "y": 43.5,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 战列舰\n相对中途岛：东 -89.4 nm / 北 43.5 nm\n距离约 99.4 nm · 方位 296°"
+        },
+        {
+          "name": "IJN Haruna",
+          "value": 108.5,
+          "x": -98.1,
+          "y": 46.4,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 战列舰\n相对中途岛：东 -98.1 nm / 北 46.4 nm\n距离约 108.5 nm · 方位 295°"
+        },
+        {
+          "name": "USS Portland",
+          "value": 81.7,
+          "x": -25.6,
+          "y": 77.5,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 重巡洋舰\n相对中途岛：东 -25.6 nm / 北 77.5 nm\n距离约 81.7 nm · 方位 342°"
+        },
+        {
+          "name": "USS Astoria",
+          "value": 83.6,
+          "x": -22.6,
+          "y": 80.4,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 重巡洋舰\n相对中途岛：东 -22.6 nm / 北 80.4 nm\n距离约 83.6 nm · 方位 344°"
+        },
+        {
+          "name": "USS Atlanta",
+          "value": 79.7,
+          "x": -8,
+          "y": 79.3,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 防空巡洋舰\n相对中途岛：东 -8 nm / 北 79.3 nm\n距离约 79.7 nm · 方位 354°"
+        },
+        {
+          "name": "USS Norrthampton",
+          "value": 83.1,
+          "x": -10.2,
+          "y": 82.4,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 重巡洋舰\n相对中途岛：东 -10.2 nm / 北 82.4 nm\n距离约 83.1 nm · 方位 353°"
+        },
+        {
+          "name": "USS New Orleans",
+          "value": 79.3,
+          "x": -5.4,
+          "y": 79.1,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 重巡洋舰\n相对中途岛：东 -5.4 nm / 北 79.1 nm\n距离约 79.3 nm · 方位 356°"
+        },
+        {
+          "name": "USS Minneapolis",
+          "value": 85.7,
+          "x": -9.1,
+          "y": 85.2,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 重巡洋舰\n相对中途岛：东 -9.1 nm / 北 85.2 nm\n距离约 85.7 nm · 方位 354°"
+        },
+        {
+          "name": "USS Pensacola",
+          "value": 83.4,
+          "x": -3.2,
+          "y": 83.4,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · 重巡洋舰\n相对中途岛：东 -3.2 nm / 北 83.4 nm\n距离约 83.4 nm · 方位 358°"
+        },
+        {
+          "name": "IJN Nagara",
+          "value": 102.4,
+          "x": -90.5,
+          "y": 47.8,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 轻巡洋舰\n相对中途岛：东 -90.5 nm / 北 47.8 nm\n距离约 102.4 nm · 方位 298°"
+        },
+        {
+          "name": "IJN Tone",
+          "value": 105,
+          "x": -95.1,
+          "y": 44.5,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 重巡洋舰-侦察巡洋舰\n相对中途岛：东 -95.1 nm / 北 44.5 nm\n距离约 105 nm · 方位 295°"
+        },
+        {
+          "name": "IJN Chikuma",
+          "value": 105.7,
+          "x": -97.1,
+          "y": 41.8,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 重巡洋舰-侦察巡洋舰\n相对中途岛：东 -97.1 nm / 北 41.8 nm\n距离约 105.7 nm · 方位 293°"
+        },
+        {
+          "name": "IJN Kazagumo",
+          "value": 109.3,
+          "x": -99.6,
+          "y": 45.1,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 驱逐舰\n相对中途岛：东 -99.6 nm / 北 45.1 nm\n距离约 109.3 nm · 方位 294°"
+        },
+        {
+          "name": "IJN Hagikazi",
+          "value": 99.6,
+          "x": -91.1,
+          "y": 40.4,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · 驱逐舰\n相对中途岛：东 -91.1 nm / 北 40.4 nm\n距离约 99.6 nm · 方位 294°"
         }
       ]
     },
     {
       "id": "cmp-intent-evidence",
       "type": "pie",
-      "title": "证据片段构成",
-      "description": "由轴线/高亮/圈/叙述抽取",
+      "title": "证据构成",
+      "description": "Direction / Entity / Zone 占比",
+      "why_type": "常驻 · M：Associative+Relate → Connection ⇒ pie",
       "series": [
         {
-          "name": "方向",
-          "value": 2
+          "name": "Direction",
+          "value": 2,
+          "detail": "1. 南云→中途岛\n2. TF16→南云主力"
         },
         {
-          "name": "关键实体",
-          "value": 4
+          "name": "Entity",
+          "value": 4,
+          "detail": "1. IJN Tone\n2. IJN Chikuma\n3. Yorktown Thatch Wildcats #11\n4. Yorktown Leslie Dauntless #9"
         },
         {
-          "name": "活动区",
-          "value": 2
+          "name": "Zone",
+          "value": 1,
+          "detail": "1. 南云航母集群（高）"
+        }
+      ]
+    },
+    {
+      "id": "cmp-intent-evidence-radar",
+      "type": "radar",
+      "title": "证据维度轮廓",
+      "description": "Direction · Entity · Zone 相对强弱",
+      "why_type": "M：Comparative+Compare → Alignment ⇒ radar",
+      "series": [
+        {
+          "name": "Direction",
+          "value": 2,
+          "detail": "1. 南云→中途岛\n2. TF16→南云主力"
         },
         {
-          "name": "叙述依据",
-          "value": 0
+          "name": "Entity",
+          "value": 4,
+          "detail": "1. IJN Tone\n2. IJN Chikuma\n3. Yorktown Thatch Wildcats #11\n4. Yorktown Leslie Dauntless #9"
+        },
+        {
+          "name": "Zone",
+          "value": 1,
+          "detail": "1. 南云航母集群（高）"
         }
       ]
     }

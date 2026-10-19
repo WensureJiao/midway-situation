@@ -119,9 +119,11 @@ export function MapAnnotationLegend({ spec }: { spec: SituationViewSpec }) {
             {zones.map((z) => (
               <li key={z.id || z.label} className="flex items-start gap-2">
                 <span
-                  className="mt-0.5 h-3 w-3 shrink-0 rounded-full border border-dashed"
+                  className="mt-0.5 h-3 w-3 shrink-0 rounded-full border"
                   style={{
                     borderColor: zoneLevelVisual(String(z.level)).color,
+                    borderStyle: zoneLevelVisual(String(z.level))
+                      .legendBorderStyle,
                     background: `${zoneLevelVisual(String(z.level)).fill}33`,
                   }}
                 />

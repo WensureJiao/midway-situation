@@ -96,11 +96,17 @@ function FocusCenterFly({
     if (span) {
       const bounds = L.latLngBounds(span[0], span[1]);
       if (!bounds.isValid()) return;
-      map.flyToBounds(bounds, {
-        padding: [56, 56],
-        maxZoom: 7,
-        duration: 0.6,
-      });
+      // 指向定位：飞向中点并放大；勿用低 maxZoom 的 fitBounds（长轴会越点越小）
+      const fitZoom = map.getBoundsZoom(bounds, false, L.point(48, 48));
+      const zoom = Math.min(
+        Math.max(
+          Number.isFinite(fitZoom) ? fitZoom : 8,
+          map.getZoom(),
+          8,
+        ),
+        11,
+      );
+      map.flyTo(bounds.getCenter(), zoom, { duration: 0.65 });
       return;
     }
     if (points && points.length > 1) {
@@ -178,10 +184,9 @@ type UnitIconKind =
 
 function sideColor(
   side: string,
-  opts: { damaged?: boolean; air?: boolean; facility?: boolean } = {},
+  opts: { air?: boolean; facility?: boolean } = {},
 ): string {
   if (opts.facility) return "#c4a35a";
-  if (opts.damaged) return "#d97706";
   if (side === "IJN") return opts.air ? "#6eb0d0" : "#3b82a8";
   return opts.air ? "#e07a6a" : "#c45c4a";
 }
@@ -330,7 +335,6 @@ function unitIcon(
   const isAir = u.unit_type === "Aircraft";
   const isFacility = u.unit_type === "Facility";
   const color = sideColor(String(u.side), {
-    damaged: u.damaged,
     air: isAir,
     facility: isFacility,
   });
@@ -469,23 +473,23 @@ function MapIconLegend({ showEntityTag = false }: { showEntityTag?: boolean }) {
   const ijAir = "#6eb0d0";
   const fac = "#c4a35a";
   return (
-    <div className="pointer-events-none absolute bottom-3 left-3 z-[1000] max-w-[min(100%-1.5rem,480px)] rounded-md bg-white/90 px-2.5 py-2 text-[10px] leading-none text-[var(--ink)] shadow-md ring-1 ring-black/12 backdrop-blur-sm">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-        <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#c45c4a]" />
+    <div className="pointer-events-none absolute bottom-2 left-2 z-[1000] max-w-[min(100%-1rem,340px)] rounded bg-white/88 px-1.5 py-1 text-[9px] leading-none text-[var(--ink)] shadow-sm ring-1 ring-black/10 backdrop-blur-sm">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="inline-flex items-center gap-0.5">
+          <span className="inline-block h-2 w-2 rounded-full bg-[#c45c4a]" />
           美方
         </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#3b82a8]" />
+        <span className="inline-flex items-center gap-0.5">
+          <span className="inline-block h-2 w-2 rounded-full bg-[#3b82a8]" />
           日方
         </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="relative inline-flex h-3 w-7 items-center">
-            <span className="inline-block h-0 w-full border-t-2 border-dashed border-[#dc2626]" />
+        <span className="inline-flex items-center gap-0.5">
+          <span className="relative inline-flex h-2.5 w-5 items-center">
+            <span className="inline-block h-0 w-full border-t border-dashed border-[#dc2626]" />
             <svg
-              className="absolute -right-0.5 -top-0.5"
-              width="9"
-              height="9"
+              className="absolute -right-0.5 -top-px"
+              width="7"
+              height="7"
               viewBox="0 0 18 18"
               aria-hidden
             >
@@ -497,13 +501,13 @@ function MapIconLegend({ showEntityTag = false }: { showEntityTag?: boolean }) {
           </span>
           美方指向
         </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="relative inline-flex h-3 w-7 items-center">
-            <span className="inline-block h-0 w-full border-t-2 border-dashed border-[#2563eb]" />
+        <span className="inline-flex items-center gap-0.5">
+          <span className="relative inline-flex h-2.5 w-5 items-center">
+            <span className="inline-block h-0 w-full border-t border-dashed border-[#2563eb]" />
             <svg
-              className="absolute -right-0.5 -top-0.5"
-              width="9"
-              height="9"
+              className="absolute -right-0.5 -top-px"
+              width="7"
+              height="7"
               viewBox="0 0 18 18"
               aria-hidden
             >
@@ -516,55 +520,56 @@ function MapIconLegend({ showEntityTag = false }: { showEntityTag?: boolean }) {
           日方指向
         </span>
         {zoneLevelLegend().map((z) => (
-          <span key={z.key} className="inline-flex items-center gap-1">
+          <span key={z.key} className="inline-flex items-center gap-0.5">
             <span
-              className="inline-block h-3 w-3 rounded-full border-[1.5px] border-dashed"
+              className="inline-block h-2 w-2 rounded-full border"
               style={{
                 borderColor: z.color,
-                background: `${z.fill}55`,
+                borderStyle: z.legendBorderStyle,
+                background: `${z.fill}66`,
               }}
             />
             {z.label}
           </span>
         ))}
         {showEntityTag ? (
-          <span className="inline-flex items-center gap-1">
-            <span className="rounded bg-[#0f172a] px-1 py-0.5 text-[9px] font-semibold text-[#e2e8f0] ring-1 ring-[#94a3b8]">
+          <span className="inline-flex items-center gap-0.5">
+            <span className="rounded bg-[#0f172a] px-0.5 py-px text-[8px] font-semibold text-[#e2e8f0] ring-1 ring-[#94a3b8]">
               实体
             </span>
-            关键实体（支撑意图，不是威胁排序）
+            关键实体
           </span>
         ) : null}
       </div>
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-t border-black/8 pt-1.5">
-        <span className="inline-flex items-center gap-1">
-          <LegendGlyph kind="carrier" color={us} px={20} />
+      <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 border-t border-black/8 pt-1">
+        <span className="inline-flex items-center gap-0.5">
+          <LegendGlyph kind="carrier" color={us} px={14} />
           航母
         </span>
-        <span className="inline-flex items-center gap-1">
-          <LegendGlyph kind="ship" color={ij} px={15} />
+        <span className="inline-flex items-center gap-0.5">
+          <LegendGlyph kind="ship" color={ij} px={12} />
           水面舰
         </span>
-        <span className="inline-flex items-center gap-1">
-          <LegendGlyph kind="aircraft" color={usAir} px={15} />
+        <span className="inline-flex items-center gap-0.5">
+          <LegendGlyph kind="aircraft" color={usAir} px={11} />
           在空（美）
         </span>
-        <span className="inline-flex items-center gap-1">
-          <LegendGlyph kind="aircraft" color={ijAir} px={15} />
+        <span className="inline-flex items-center gap-0.5">
+          <LegendGlyph kind="aircraft" color={ijAir} px={11} />
           在空（日）
         </span>
-        <span className="inline-flex items-center gap-1">
-          <LegendGlyph kind="airfield" color={fac} px={14} />
+        <span className="inline-flex items-center gap-0.5">
+          <LegendGlyph kind="airfield" color={fac} px={11} />
           机场
         </span>
-        <span className="inline-flex items-center gap-1">
-          <LegendGlyph kind="aa" color={fac} px={12} />
+        <span className="inline-flex items-center gap-0.5">
+          <LegendGlyph kind="aa" color={fac} px={10} />
           防空
         </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="relative inline-flex h-[20px] w-[20px] items-center justify-center">
-            <span className="absolute inset-0 rounded-full bg-[rgba(245,215,110,.35)] ring-[3px] ring-[#f5d76e]" />
-            <LegendGlyph kind="carrier" color={us} px={11} />
+        <span className="inline-flex items-center gap-0.5">
+          <span className="relative inline-flex h-[14px] w-[14px] items-center justify-center">
+            <span className="absolute inset-0 rounded-full bg-[rgba(245,215,110,.35)] ring-2 ring-[#f5d76e]" />
+            <LegendGlyph kind="carrier" color={us} px={8} />
           </span>
           高亮
         </span>
@@ -772,7 +777,7 @@ export function SituationMap({
                     ? tone.fillOpacity * 0.35
                     : tone.fillOpacity,
                 weight: picked ? 5 : tone.weight,
-                dashArray: picked ? undefined : "10 7",
+                dashArray: picked ? undefined : tone.dashArray,
                 opacity: focusZone && !picked ? 0.3 : 0.95,
               }}
             >
