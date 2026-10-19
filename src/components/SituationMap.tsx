@@ -205,44 +205,49 @@ type IconMark = {
   size: number;
   d: string;
   draw: "fill" | "stroke" | "plain";
-  /** 舰桥等白色部件 */
+  /** 非正方形 viewBox（侧面船形用宽幅） */
+  vbW?: number;
+  vbH?: number;
+  /** 舰桥窗等白色细部 */
   detail?: string;
   /** 舰岛：与舰体同色系、更深一档 */
   accent?: string;
 };
 
-/** 态势符号：舰首/机头朝上，再按航向旋转。 */
+function markView(mark: IconMark) {
+  return { w: mark.vbW ?? mark.size, h: mark.vbH ?? mark.size };
+}
+
+/** 态势符号：航母方形；水面舰顶视船体；飞机顶视；尖端/舰首朝航向。 */
 function iconPath(kind: UnitIconKind): IconMark {
   switch (kind) {
     case "carrier":
+      // 实心细长剪影：舰首朝上，右舷一体舰岛
       return {
-        size: 24,
+        size: 26,
         draw: "fill",
-        d: "M7 3.4 L9.4 1.2 H16.2 L18.6 3.4 L19 21.2 H6.4 Z",
-        detail: "M11.5 4.2 H12.9 V18.4 H11.5 Z",
-        accent: "M19 6.2 H22.4 V13 H19 Z",
+        d: "M13 0.7 L16.8 5.4 L16.4 7 L20.5 7 L20.5 13.4 L16.3 13.4 L16.1 20.6 L14.6 25.2 L11.4 25.2 L9.9 20.6 L9.5 5.4 Z",
       };
     case "battleship":
+      // 顶视船体：尖艏、两舷、舰桥翼、收艉（刻法对齐飞机）
       return {
         size: 18,
-        draw: "fill",
-        d: "M9 0.6 L14 5.4 L13.2 16.8 H4.8 L4 5.4 Z",
-        detail: "M8.2 3.2 H9.8 V6.6 H8.2 Z M6.8 6.6 H11.2 V11.4 H6.8 Z",
+        draw: "plain",
+        d: "M9 0.5 L11.4 3.6 L11.6 7.2 L14.2 8.4 L14.2 9.8 L11.6 9.4 L11.2 14.2 L9.8 17.4 L8.2 17.4 L6.8 14.2 L6.4 9.4 L3.8 9.8 L3.8 8.4 L6.4 7.2 L6.6 3.6 Z",
       };
     case "cruiser":
       return {
-        size: 17,
-        draw: "fill",
-        d: "M8.5 0.5 L12.8 5 L12.1 15.8 H4.9 L4.2 5 Z",
-        detail: "M7.8 3 H9.2 V6.2 H7.8 Z M6.6 6.2 H10.4 V10.6 H6.6 Z",
+        size: 16,
+        draw: "plain",
+        d: "M8 0.5 L10.2 3.2 L10.4 6.4 L12.6 7.4 L12.6 8.6 L10.4 8.2 L10.1 12.6 L9 15.4 L7 15.4 L5.9 12.6 L5.6 8.2 L3.4 8.6 L3.4 7.4 L5.6 6.4 L5.8 3.2 Z",
       };
     case "destroyer":
     case "ship":
+      // 图例「水面舰」
       return {
-        size: 16,
-        draw: "fill",
-        d: "M8 0.4 L11.8 4.8 L11.2 15 H4.8 L4.2 4.8 Z",
-        detail: "M7.4 2.8 H8.6 V5.6 H7.4 Z M6.3 5.6 H9.7 V9.6 H6.3 Z",
+        size: 15,
+        draw: "plain",
+        d: "M7.5 0.4 L9.5 3 L9.7 6 L11.6 7 L11.6 8.1 L9.7 7.7 L9.4 11.8 L8.4 14.5 L6.6 14.5 L5.6 11.8 L5.3 7.7 L3.4 8.1 L3.4 7 L5.3 6 L5.5 3 Z",
       };
     case "fighter":
     case "dive_bomber":
@@ -288,9 +293,11 @@ function glyphSvg(
   rotate: number,
   px: number,
 ): string {
-  const c = mark.size / 2;
+  const { w, h } = markView(mark);
+  const cx = w / 2;
+  const cy = h / 2;
   const detail = mark.detail
-    ? `<path d="${mark.detail}" fill="#fff"/>`
+    ? `<path d="${mark.detail}" fill="#fff" fill-opacity=".92"/>`
     : "";
   const island = tintColor(color, 0.42);
   const accent = mark.accent
@@ -301,8 +308,8 @@ function glyphSvg(
       ? `<path d="${mark.d}" fill="none" stroke="${color}" stroke-width="2.15" stroke-linecap="round"/>`
       : mark.draw === "plain"
         ? `<path d="${mark.d}" fill="${color}" stroke="#fff" stroke-width="0.55" stroke-linejoin="round"/>`
-        : `<path d="${mark.d}" fill="${color}" stroke="#fff" stroke-width="0.9" stroke-linejoin="round"/>${detail}${accent}`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 ${mark.size} ${mark.size}" style="display:block;overflow:visible"><g transform="rotate(${rotate} ${c} ${c})">${body}</g></svg>`;
+        : `<path d="${mark.d}" fill="${color}" stroke="#fff" stroke-width="0.75" stroke-linejoin="round"/>${detail}${accent}`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 ${w} ${h}" style="display:block;overflow:visible"><g transform="rotate(${rotate} ${cx} ${cy})">${body}</g></svg>`;
 }
 
 /** 高亮标签用短名，避免整屏刷满长舰名 */
@@ -343,7 +350,8 @@ function unitIcon(
   }
 
   if (!opts.highlight) {
-    const box = mark.size + 2;
+    const { w, h } = markView(mark);
+    const box = Math.max(w, h) + 2;
     return L.divIcon({
       className: "unit-icon",
       iconSize: [box, box],
@@ -352,7 +360,8 @@ function unitIcon(
     });
   }
 
-  const glyphPx = Math.max(mark.size + 6, 18);
+  const { w: mw, h: mh } = markView(mark);
+  const glyphPx = Math.max(Math.max(mw, mh) + 6, 18);
   const ring = 40;
   const label = shortUnitLabel(u.name).replace(/[<>&"]/g, "");
   const html = `<div class="unit-hl" style="width:${ring}px;height:${ring + 18}px">
@@ -381,11 +390,15 @@ function LegendGlyph({
   px?: number;
 }) {
   const mark = iconPath(kind);
+  const { w, h } = markView(mark);
+  const wide = w > h;
+  const dispW = wide ? Math.round(px * (w / h)) : px;
+  const dispH = px;
   return (
     <svg
-      width={px}
-      height={px}
-      viewBox={`0 0 ${mark.size} ${mark.size}`}
+      width={dispW}
+      height={dispH}
+      viewBox={`0 0 ${w} ${h}`}
       className="inline-block shrink-0 overflow-visible"
       aria-hidden
     >
@@ -403,10 +416,12 @@ function LegendGlyph({
             d={mark.d}
             fill={color}
             stroke={mark.draw === "plain" ? "#fff" : "rgba(255,255,255,.9)"}
-            strokeWidth={mark.draw === "plain" ? 0.55 : 0.9}
+            strokeWidth={mark.draw === "plain" ? 0.55 : 0.75}
             strokeLinejoin="round"
           />
-          {mark.detail ? <path d={mark.detail} fill="#fff" /> : null}
+          {mark.detail ? (
+            <path d={mark.detail} fill="#fff" fillOpacity={0.92} />
+          ) : null}
           {mark.accent ? (
             <path
               d={mark.accent}
@@ -527,7 +542,7 @@ function MapIconLegend({ showEntityTag = false }: { showEntityTag?: boolean }) {
           航母
         </span>
         <span className="inline-flex items-center gap-1">
-          <LegendGlyph kind="ship" color={ij} px={14} />
+          <LegendGlyph kind="ship" color={ij} px={15} />
           水面舰
         </span>
         <span className="inline-flex items-center gap-1">
@@ -551,7 +566,7 @@ function MapIconLegend({ showEntityTag = false }: { showEntityTag?: boolean }) {
             <span className="absolute inset-0 rounded-full bg-[rgba(245,215,110,.35)] ring-[3px] ring-[#f5d76e]" />
             <LegendGlyph kind="carrier" color={us} px={11} />
           </span>
-          高亮（金环+舰名）
+          高亮
         </span>
       </div>
     </div>
@@ -656,12 +671,12 @@ export function SituationMap({
         zoom={zoom}
         className="h-full w-full rounded-lg"
         zoomControl
-        attributionControl
+        attributionControl={false}
       >
         <TileLayer
           key={basemap}
           url={tile.url}
-          attribution={tile.attribution}
+          attribution=""
           maxZoom={tile.maxZoom}
         />
         <FitToSpec center={center} zoom={zoom} />
