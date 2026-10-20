@@ -1,9 +1,9 @@
 {
   "generated_by": "llm",
   "time_slice": "T21",
-  "title": "广域搜索：美机压近，日水侦突破",
+  "title": "广域搜索：接触临界点",
   "phase_label": "广域搜索",
-  "narrative": "美方三支航母特混舰队（TF16/17）已前出至29.5°N/177.5°W附近，多批无畏式与野猫正向西偏南方向机动，部分已抵达178°W经度带，逼近南云机动部队；日方赤城、加贺、苍龙、飞龙四航母集群位于28.9°N/179.2°W海域，航向稳定东南，舰载侦察机（杰克式）已突破至29.06°N/178.21°W空域，构成对TF16隐蔽性的紧急威胁；南云主力尚未被直接瞄准，但其暴露位置与高就绪率（平均ready0=22）使其成为战役级高威胁目标。",
+  "narrative": "美方三支航母特混舰队（TF16/17）已前出至29.5°N附近，多批无畏式与野猫正压向南云机动部队经度带（179°W）；日方水侦（Tone/Chikuma系）已抵中途岛以北空域，构成对TF16隐蔽性的直接威胁；南云四航母集群（Akagi/Kaga/Soryu/Hiryu）虽尚未被精确定位，但其舰载机群（九七式/九九式/零式）已在28.9–29.0°N、179.0–179.3°W形成高密度活动区，暴露度急剧升高。",
   "map": {
     "center": [
       29.2,
@@ -29,20 +29,20 @@
           28.92,
           -179.12
         ],
-        "label": "美特混→南云",
+        "label": "TF16→南云主力",
         "side": "USN"
       },
       {
         "id": "a2",
         "from": [
-          29.06,
-          -178.21
+          28.95,
+          -179.18
         ],
         "to": [
-          29.55,
-          -177.5
+          28.21,
+          -177.38
         ],
-        "label": "日水侦→TF16",
+        "label": "Tone水侦→中途岛",
         "side": "IJN"
       }
     ],
@@ -53,7 +53,7 @@
           28.94,
           -179.15
         ],
-        "radius_nm": 42,
+        "radius_nm": 18,
         "level": "高",
         "label": "南云航母集群",
         "side": "IJN"
@@ -64,20 +64,20 @@
           29.06,
           -178.21
         ],
-        "radius_nm": 28,
+        "radius_nm": 16,
         "level": "紧急",
-        "label": "水侦接触带（杰克式）",
+        "label": "水侦接触带（Tone/Chikuma系）",
         "side": "IJN"
       },
       {
         "id": "strike-approach",
         "center": [
-          29.25,
-          -178.75
+          29,
+          -179.29
         ],
-        "radius_nm": 35,
+        "radius_nm": 14,
         "level": "中",
-        "label": "日九七式/九九式接敌走廊",
+        "label": "日舰载机突击航路",
         "side": "IJN"
       }
     ]
@@ -114,7 +114,6 @@
       "type": "scatter",
       "title": "敌我位置与登陆海域关系",
       "description": "原点=中途岛；横轴东向海里，纵轴北向海里；红美蓝日",
-      "why_type": "常驻 · M：Spatial+Locate → Position ⇒ scatter",
       "series": [
         {
           "name": "中途岛",
@@ -305,14 +304,14 @@
           "group": "日方",
           "detail": "日方 · 驱逐舰\n相对中途岛：东 -91.1 nm / 北 40.4 nm\n距离约 99.6 nm · 方位 294°"
         }
-      ]
+      ],
+      "why_type": "常驻 · M：Spatial+Locate → Position ⇒ scatter"
     },
     {
       "id": "cmp-force-bearing",
       "type": "radar",
-      "title": "相对中途岛方位分布",
-      "description": "八方位兵力计数；美/日双轮廓对照集中方向",
-      "why_type": "M：Spatial+Locate → Position ⇒ radar",
+      "title": "问：相对岛，敌我方位扇区如何分布？（方位玫瑰）",
+      "description": "美/日舰艇相对中途岛八方位计数；突起=兵力所在扇区",
       "series": [
         {
           "name": "N",
@@ -426,7 +425,73 @@
           "group": "日方",
           "detail": "日方 · NW\n1. 日·Akagi\n2. 日·Kaga\n3. 日·Kirishima\n4. 日·Haruna\n5. 日·Nagara\n6. 日·Tone\n7. 日·Chikuma\n8. 日·Kazagumo\n9. 日·Hagikazi"
         }
-      ]
+      ],
+      "why_type": "VMMP · M：Spatial+Locate → Position ⇒ radar · 适切100"
+    },
+    {
+      "id": "cmp-alt-bands",
+      "type": "grouped_bar",
+      "title": "问：美/日在空兵力落在哪些高度带？",
+      "description": "分组柱：各高度带架次（结构分布）",
+      "series": [
+        {
+          "name": "0–3 km",
+          "value": 21,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方在空 21 架 · 0–3 km"
+        },
+        {
+          "name": "0–3 km",
+          "value": 5,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方在空 5 架 · 0–3 km"
+        },
+        {
+          "name": "3–6 km",
+          "value": 19,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方在空 19 架 · 3–6 km"
+        },
+        {
+          "name": "3–6 km",
+          "value": 26,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方在空 26 架 · 3–6 km"
+        },
+        {
+          "name": "6–9 km",
+          "value": 54,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方在空 54 架 · 6–9 km"
+        },
+        {
+          "name": "6–9 km",
+          "value": 0,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方在空 0 架 · 6–9 km"
+        },
+        {
+          "name": "≥9 km",
+          "value": 18,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方在空 18 架 · ≥9 km"
+        },
+        {
+          "name": "≥9 km",
+          "value": 5,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方在空 5 架 · ≥9 km"
+        }
+      ],
+      "why_type": "VMMP · M：Associative+Aggregate → Grouping ⇒ grouped_bar · 适切100"
     },
     {
       "id": "cmp-threat-rank",
@@ -435,19 +500,19 @@
       "description": "条长=等级分（1–4）；悬停看证据",
       "series": [
         {
-          "name": "杰克式水上侦察机",
+          "name": "杰克式水侦",
           "value": 4,
-          "detail": "紧急 — Tone与Chikuma所携杰克式已升至11 km高空，前出至29.06°N/178.21°W，该位置距TF16仅约120 nm，且航向直指Enterprise/Hornet集结区，构成对美航母隐蔽性的即时、可验证威胁。"
+          "detail": "紧急 — 11 km 高空、扇区已伸到中途岛经度以北，直接威胁 TF16/17 的隐蔽。"
         },
         {
           "name": "南云四航母",
           "value": 3,
-          "detail": "高 — 赤城、加贺、苍龙、飞龙均处于水面航行状态，坐标集中于28.9°N/179.2°W，舰载机就绪率高（26–29架），且已被美方前出PBY与俯冲轰炸机群大致定位，是必须优先摧毁的战役重心。"
+          "detail": "高 — 位置已大致可被前出飞机接触，是必须摧毁的重心；本时刻未必每艘都在被瞄准，但暴露度高。"
         },
         {
-          "name": "九七式/九九式攻击机群",
+          "name": "贴着本队的九七式/九九式",
           "value": 2,
-          "detail": "中 — Soryu与Hiryu释放的九七式鱼雷机与九九式俯冲轰炸机正沿112.8°航向扇形展开，部分已进入178.5°W以东空域，具备15–20分钟内发起突击的能力，但当前未形成明确指向，威胁等级低于已接触的水侦链。"
+          "detail": "中 — 具备对舰/对岛载荷潜力，但航向未收敛，立即突击概率低于已接触的美机对日舰。"
         }
       ],
       "why_type": "常驻 · M：Ordering+Rank → Ordering ⇒ hbar"
@@ -490,19 +555,19 @@
       "perspective": "红方看蓝方",
       "target": "南云四航母",
       "level": "高",
-      "evidence": "赤城、加贺、苍龙、飞龙均处于水面航行状态，坐标集中于28.9°N/179.2°W，舰载机就绪率高（26–29架），且已被美方前出PBY与俯冲轰炸机群大致定位，是必须优先摧毁的战役重心。"
+      "evidence": "位置已大致可被前出飞机接触，是必须摧毁的重心；本时刻未必每艘都在被瞄准，但暴露度高。"
     },
     {
       "perspective": "红方看蓝方",
-      "target": "杰克式水上侦察机",
+      "target": "杰克式水侦",
       "level": "紧急",
-      "evidence": "Tone与Chikuma所携杰克式已升至11 km高空，前出至29.06°N/178.21°W，该位置距TF16仅约120 nm，且航向直指Enterprise/Hornet集结区，构成对美航母隐蔽性的即时、可验证威胁。"
+      "evidence": "11 km 高空、扇区已伸到中途岛经度以北，直接威胁 TF16/17 的隐蔽。"
     },
     {
       "perspective": "红方看蓝方",
-      "target": "九七式/九九式攻击机群",
+      "target": "贴着本队的九七式/九九式",
       "level": "中",
-      "evidence": "Soryu与Hiryu释放的九七式鱼雷机与九九式俯冲轰炸机正沿112.8°航向扇形展开，部分已进入178.5°W以东空域，具备15–20分钟内发起突击的能力，但当前未形成明确指向，威胁等级低于已接触的水侦链。"
+      "evidence": "具备对舰/对岛载荷潜力，但航向未收敛，立即突击概率低于已接触的美机对日舰。"
     }
   ]
 }

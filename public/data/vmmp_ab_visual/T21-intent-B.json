@@ -1,9 +1,9 @@
 {
   "generated_by": "llm",
   "time_slice": "T21",
-  "title": "广域搜索：侦察接触与方向研判",
+  "title": "广域搜索：接触带初现",
   "phase_label": "广域搜索",
-  "narrative": "美方三支航母特混舰队（TF16/TF17）正以29.5°N为轴线向西偏南缓进，多批次无畏式与野猫已前出至178°W–179°W扇区，逼近南云机动部队经度带；日方水侦（Tone/Chikuma系）持续北伸至29.06°N、178.21°W空域，构成对TF16隐蔽性的直接威胁；南云四航母集群（Akagi/Kaga/Soryu/Hiryu）维持112.8°航向，其九七式与九九式机群呈扇形东向散开，指向中途岛与美舰队可能方位，意图尚未收敛但主攻轴线已初显。",
+  "narrative": "美方三支航母特混舰队（TF16/17）正以约15节向西北偏西航进，其前出侦察机群已压至178°W—179°W经度带，与南云机动部队形成初步空域重叠；日方水侦（Tone/Chikuma系）持续北伸至29.06°N，构成对TF16隐蔽性的直接威胁；南云主力仍维持112.8°航向，未转向中途岛，但九七式与九九式已开始扇形前出，指向特征符合‘佯动掩护真实打击准备’的意图假设。",
   "map": {
     "center": [
       29.2,
@@ -28,7 +28,7 @@
           28.21,
           -177.38
         ],
-        "label": "南云→中途岛",
+        "label": "南云→中途岛（佯动轴）",
         "side": "IJN"
       },
       {
@@ -41,7 +41,7 @@
           28.92,
           -179.12
         ],
-        "label": "TF16→南云主力",
+        "label": "TF16→南云（主压近轴）",
         "side": "USN"
       }
     ],
@@ -49,12 +49,12 @@
       {
         "id": "ijn-cv-cluster",
         "center": [
-          28.93,
-          -179.14
+          28.92,
+          -179.12
         ],
-        "radius_nm": 38,
+        "radius_nm": 18,
         "level": "高",
-        "label": "南云航母集群",
+        "label": "南云航母集群（真实重心）",
         "side": "IJN"
       },
       {
@@ -63,21 +63,21 @@
           29.06,
           -178.21
         ],
-        "radius_nm": 28,
+        "radius_nm": 16,
         "level": "紧急",
-        "label": "水侦接触带",
+        "label": "水侦接触带（发现链前沿）",
         "side": "IJN"
       },
       {
-        "id": "strike-arc-east",
+        "id": "tf16-approach-corridor",
         "center": [
-          29,
-          -178.75
+          29.55,
+          -177.85
         ],
-        "radius_nm": 32,
+        "radius_nm": 14,
         "level": "中",
-        "label": "日舰载机东向突击弧",
-        "side": "IJN"
+        "label": "TF16压近走廊（意图验证区）",
+        "side": "USN"
       }
     ]
   },
@@ -113,7 +113,6 @@
       "type": "scatter",
       "title": "敌我位置与登陆海域关系",
       "description": "原点=中途岛；横轴东向海里，纵轴北向海里；红美蓝日",
-      "why_type": "常驻 · M：Spatial+Locate → Position ⇒ scatter",
       "series": [
         {
           "name": "中途岛",
@@ -304,19 +303,205 @@
           "group": "日方",
           "detail": "日方 · 驱逐舰\n相对中途岛：东 -91.1 nm / 北 40.4 nm\n距离约 99.6 nm · 方位 294°"
         }
-      ]
+      ],
+      "why_type": "常驻 · M：Spatial+Locate → Position ⇒ scatter"
+    },
+    {
+      "id": "cmp-force-bearing",
+      "type": "radar",
+      "title": "问：相对岛，敌我方位扇区如何分布？（方位玫瑰）",
+      "description": "美/日舰艇相对中途岛八方位计数；突起=兵力所在扇区",
+      "series": [
+        {
+          "name": "N",
+          "value": 10,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · N\n1. 美·CVA-5 Yorktown\n2. 美·CVA-6 Enterprise\n3. 美·CVA-7 Hornet\n4. 美·Portland\n5. 美·Astoria\n6. 美·Atlanta\n7. 美·Norrthampton\n8. 美·New Orleans\n9. 美·Minneapolis\n10. 美·Pensacola"
+        },
+        {
+          "name": "N",
+          "value": 0,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · N\n1. 美·CVA-5 Yorktown\n2. 美·CVA-6 Enterprise\n3. 美·CVA-7 Hornet\n4. 美·Portland\n5. 美·Astoria\n6. 美·Atlanta\n7. 美·Norrthampton\n8. 美·New Orleans\n9. 美·Minneapolis\n10. 美·Pensacola"
+        },
+        {
+          "name": "NE",
+          "value": 0,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · NE\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "NE",
+          "value": 0,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · NE\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "E",
+          "value": 0,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · E\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "E",
+          "value": 0,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · E\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "SE",
+          "value": 0,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · SE\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "SE",
+          "value": 0,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · SE\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "S",
+          "value": 0,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · S\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "S",
+          "value": 0,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · S\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "SW",
+          "value": 0,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · SW\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "SW",
+          "value": 0,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · SW\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "W",
+          "value": 0,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · W\n1. 日·Soryu"
+        },
+        {
+          "name": "W",
+          "value": 1,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · W\n1. 日·Soryu"
+        },
+        {
+          "name": "NW",
+          "value": 0,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · NW\n1. 日·Akagi\n2. 日·Kaga\n3. 日·Kirishima\n4. 日·Haruna\n5. 日·Nagara\n6. 日·Tone\n7. 日·Chikuma\n8. 日·Kazagumo\n9. 日·Hagikazi"
+        },
+        {
+          "name": "NW",
+          "value": 9,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · NW\n1. 日·Akagi\n2. 日·Kaga\n3. 日·Kirishima\n4. 日·Haruna\n5. 日·Nagara\n6. 日·Tone\n7. 日·Chikuma\n8. 日·Kazagumo\n9. 日·Hagikazi"
+        }
+      ],
+      "why_type": "VMMP · M：Spatial+Locate → Position ⇒ radar · 适切100"
+    },
+    {
+      "id": "cmp-alt-bands",
+      "type": "grouped_bar",
+      "title": "问：美/日在空兵力落在哪些高度带？",
+      "description": "分组柱：各高度带架次（结构分布）",
+      "series": [
+        {
+          "name": "0–3 km",
+          "value": 21,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方在空 21 架 · 0–3 km"
+        },
+        {
+          "name": "0–3 km",
+          "value": 5,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方在空 5 架 · 0–3 km"
+        },
+        {
+          "name": "3–6 km",
+          "value": 19,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方在空 19 架 · 3–6 km"
+        },
+        {
+          "name": "3–6 km",
+          "value": 26,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方在空 26 架 · 3–6 km"
+        },
+        {
+          "name": "6–9 km",
+          "value": 54,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方在空 54 架 · 6–9 km"
+        },
+        {
+          "name": "6–9 km",
+          "value": 0,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方在空 0 架 · 6–9 km"
+        },
+        {
+          "name": "≥9 km",
+          "value": 18,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方在空 18 架 · ≥9 km"
+        },
+        {
+          "name": "≥9 km",
+          "value": 5,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方在空 5 架 · ≥9 km"
+        }
+      ],
+      "why_type": "VMMP · M：Evolutionary/Transition+Trace/Infer → Hierarchy ⇒ grouped_bar · 适切100"
     },
     {
       "id": "cmp-intent-evidence",
       "type": "pie",
       "title": "证据构成",
       "description": "Direction / Entity / Zone 占比",
-      "why_type": "常驻 · M：Associative+Relate → Connection ⇒ pie",
       "series": [
         {
           "name": "Direction",
           "value": 2,
-          "detail": "1. 南云→中途岛\n2. TF16→南云主力"
+          "detail": "1. 南云→中途岛（佯动轴）\n2. TF16→南云（主压近轴）"
         },
         {
           "name": "Entity",
@@ -326,33 +511,31 @@
         {
           "name": "Zone",
           "value": 1,
-          "detail": "1. 南云航母集群（高）"
+          "detail": "1. 南云航母集群（真实重心）（高）"
         }
-      ]
+      ],
+      "why_type": "常驻 · M：Associative+Relate → Connection ⇒ pie"
     },
     {
-      "id": "cmp-intent-evidence-radar",
-      "type": "radar",
-      "title": "证据维度轮廓",
-      "description": "Direction · Entity · Zone 相对强弱",
-      "why_type": "M：Comparative+Compare → Alignment ⇒ radar",
+      "id": "cmp-highlight-range",
+      "type": "hbar",
+      "title": "问：高亮实体距中途岛各多少海里？",
+      "description": "条长=真实距离",
       "series": [
         {
-          "name": "Direction",
-          "value": 2,
-          "detail": "1. 南云→中途岛\n2. TF16→南云主力"
+          "name": "Chikuma",
+          "value": 105.7,
+          "side": "IJN",
+          "detail": "IJN Chikuma 距中途岛约 105.7 nm"
         },
         {
-          "name": "Entity",
-          "value": 4,
-          "detail": "1. IJN Tone\n2. IJN Chikuma\n3. Yorktown Thatch Wildcats #11\n4. Yorktown Leslie Dauntless #9"
-        },
-        {
-          "name": "Zone",
-          "value": 1,
-          "detail": "1. 南云航母集群（高）"
+          "name": "Tone",
+          "value": 105,
+          "side": "IJN",
+          "detail": "IJN Tone 距中途岛约 105 nm"
         }
-      ]
+      ],
+      "why_type": "VMMP · M：Associative+Relate → Proximity ⇒ hbar · 适切56"
     }
   ],
   "intent_findings": [],

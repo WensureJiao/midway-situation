@@ -3,10 +3,10 @@
   "time_slice": "T1",
   "title": "南云集结·开战潜力排序",
   "phase_label": "初始态势：红蓝双方初始兵力配置，南云机动部队集结",
-  "narrative": "T1 阶段无空中接触，双方均未放飞侦察机；红方三航母（TF16双舰+TF17）呈北—西北弧线部署，航向指向西南，具备向中途岛以西扇区展开搜索的机动潜力；蓝方南云机动部队四航母集群集中于东经179.7°W附近，整体航向112.5°（东南），明确指向中途岛；水侦虽未升空，但利根、筑摩等侦察巡洋舰已就位，构成潜在发现链起点。",
+  "narrative": "T1 阶段双方尚未接触，无在空飞机，战场处于静默临界点。美方TF16与TF17正以15节向西北航进，距中途岛约120–180海里；日方南云机动部队四航母集群集中于东经179.7°W附近，整体航向112.5°，明确指向中途岛。威胁本质是‘发现先手权’——日方水侦（利根/筑摩）虽未起飞，但已就位待命，构成最紧迫的感知链入口；四艘满载航母集群是战役重心，具备完整打击能力但尚未释放，故定级为‘高’而非‘紧急’。",
   "map": {
     "center": [
-      29.4,
+      29.3,
       -178.5
     ],
     "zoom": 6,
@@ -35,8 +35,8 @@
       {
         "id": "a2",
         "from": [
-          29.97,
-          -177.22
+          30.01,
+          -177.25
         ],
         "to": [
           29.15,
@@ -53,7 +53,7 @@
           29.16,
           -179.75
         ],
-        "radius_nm": 40,
+        "radius_nm": 18,
         "level": "高",
         "label": "南云航母集群",
         "side": "IJN"
@@ -64,7 +64,7 @@
           29.16,
           -179.78
         ],
-        "radius_nm": 25,
+        "radius_nm": 12,
         "level": "紧急",
         "label": "水侦接触带（利根/筑摩）",
         "side": "IJN"
@@ -103,7 +103,6 @@
       "type": "scatter",
       "title": "敌我位置与登陆海域关系",
       "description": "原点=中途岛；横轴东向海里，纵轴北向海里；红美蓝日",
-      "why_type": "常驻 · M：Spatial+Locate → Position ⇒ scatter",
       "series": [
         {
           "name": "中途岛",
@@ -294,14 +293,14 @@
           "group": "日方",
           "detail": "日方 · 驱逐舰\n相对中途岛：东 -133.5 nm / 北 59.1 nm\n距离约 146 nm · 方位 294°"
         }
-      ]
+      ],
+      "why_type": "常驻 · M：Spatial+Locate → Position ⇒ scatter"
     },
     {
       "id": "cmp-force-bearing",
       "type": "radar",
-      "title": "相对中途岛方位分布",
-      "description": "八方位兵力计数；美/日双轮廓对照集中方向",
-      "why_type": "M：Spatial+Locate → Position ⇒ radar",
+      "title": "问：相对岛，敌我方位扇区如何分布？（方位玫瑰）",
+      "description": "美/日舰艇相对中途岛八方位计数；突起=兵力所在扇区",
       "series": [
         {
           "name": "N",
@@ -415,7 +414,73 @@
           "group": "日方",
           "detail": "日方 · NW\n1. 日·Akagi\n2. 日·Hiryu\n3. 日·Kaga\n4. 日·Kirishima\n5. 日·Haruna\n6. 日·Nagara\n7. 日·Tone\n8. 日·Chikuma\n9. 日·Kazagumo"
         }
-      ]
+      ],
+      "why_type": "VMMP · M：Spatial+Locate → Position ⇒ radar · 适切100"
+    },
+    {
+      "id": "cmp-hunt-range",
+      "type": "hbar",
+      "title": "问：本片关键间隔各多少海里？",
+      "description": "高亮优先；条色=贴身/可及/疏远，说明远近研判含义",
+      "series": [
+        {
+          "name": "Soryu→岛",
+          "value": 145.2,
+          "side": "IJN",
+          "detail": "高亮 · IJN Soryu 距中途岛约 145.2 nm\n【疏远 >120 nm】接触尚远，或护航易脱节、猎杀未到位",
+          "group": "疏远"
+        },
+        {
+          "name": "Chikuma→岛",
+          "value": 142.3,
+          "side": "IJN",
+          "detail": "高亮 · IJN Chikuma 距中途岛约 142.3 nm\n【疏远 >120 nm】接触尚远，或护航易脱节、猎杀未到位",
+          "group": "疏远"
+        },
+        {
+          "name": "Tone→岛",
+          "value": 141.6,
+          "side": "IJN",
+          "detail": "高亮 · IJN Tone 距中途岛约 141.6 nm\n【疏远 >120 nm】接触尚远，或护航易脱节、猎杀未到位",
+          "group": "疏远"
+        },
+        {
+          "name": "Akagi→岛",
+          "value": 137.8,
+          "side": "IJN",
+          "detail": "高亮 · IJN Akagi 距中途岛约 137.8 nm\n【疏远 >120 nm】接触尚远，或护航易脱节、猎杀未到位",
+          "group": "疏远"
+        },
+        {
+          "name": "Hiryu→岛",
+          "value": 137.3,
+          "side": "IJN",
+          "detail": "高亮 · IJN Hiryu 距中途岛约 137.3 nm\n【疏远 >120 nm】接触尚远，或护航易脱节、猎杀未到位",
+          "group": "疏远"
+        },
+        {
+          "name": "Kaga→岛",
+          "value": 137.3,
+          "side": "IJN",
+          "detail": "高亮 · IJN Kaga 距中途岛约 137.3 nm\n【疏远 >120 nm】接触尚远，或护航易脱节、猎杀未到位",
+          "group": "疏远"
+        },
+        {
+          "name": "Akagi↔Soryu",
+          "value": 8.9,
+          "side": "IJN",
+          "detail": "高亮两两 · IJN Akagi ↔ IJN Soryu 约 8.9 nm\n【贴身 <50 nm】掩护有效或打击临近，时间窗口紧迫",
+          "group": "贴身"
+        },
+        {
+          "name": "Akagi↔Tone",
+          "value": 3.7,
+          "side": "IJN",
+          "detail": "高亮两两 · IJN Akagi ↔ IJN Tone 约 3.7 nm\n【贴身 <50 nm】掩护有效或打击临近，时间窗口紧迫",
+          "group": "贴身"
+        }
+      ],
+      "why_type": "VMMP · M：Comparative+Compare → Alignment ⇒ hbar · 适切100"
     },
     {
       "id": "cmp-threat-rank",
@@ -426,22 +491,22 @@
         {
           "name": "利根水侦",
           "value": 4,
-          "detail": "紧急 — 虽未升空，但已搭载于前出侦察巡洋舰，具备T+0分钟弹射能力，是日方首轮发现链最可能启动点。"
+          "detail": "紧急 — 两舰均搭载5架水侦且处于战备状态，弹射准备就绪；其侦察半径覆盖TF16/TF17当前航路，是日方最早可能发现美舰队的节点。"
         },
         {
           "name": "筑摩水侦",
           "value": 4,
-          "detail": "紧急 — 虽未升空，但已搭载于前出侦察巡洋舰，具备T+0分钟弹射能力，是日方首轮发现链最可能启动点。"
+          "detail": "紧急 — 两舰均搭载5架水侦且处于战备状态，弹射准备就绪；其侦察半径覆盖TF16/TF17当前航路，是日方最早可能发现美舰队的节点。"
         },
         {
           "name": "南云四航母",
           "value": 3,
-          "detail": "高 — 完整甲板、齐备舰载机、统一航向指向中途岛；尚未放飞故不构成即时接触威胁。"
+          "detail": "高 — 完整甲板、齐备舰载机、航向直指中途岛；尚未放飞侦察或攻击波次，无即时杀伤链。"
         },
         {
           "name": "护航驱逐舰",
           "value": 1,
-          "detail": "低 — 纯水面护航单位，无航空或远程侦察能力，不参与战役级发现与打击链。"
+          "detail": "低 — 纯水面护航力量，无航空/远程侦察能力，不参与发现或打击决策链，不影响战役主动权归属。"
         }
       ],
       "why_type": "常驻 · M：Ordering+Rank → Ordering ⇒ hbar"
@@ -484,19 +549,19 @@
       "perspective": "红方看蓝方",
       "target": "南云四航母",
       "level": "高",
-      "evidence": "完整甲板、齐备舰载机、统一航向指向中途岛；尚未放飞故不构成即时接触威胁。"
+      "evidence": "完整甲板、齐备舰载机、航向直指中途岛；尚未放飞侦察或攻击波次，无即时杀伤链。"
     },
     {
       "perspective": "红方看蓝方",
       "target": "利根/筑摩水侦",
       "level": "紧急",
-      "evidence": "虽未升空，但已搭载于前出侦察巡洋舰，具备T+0分钟弹射能力，是日方首轮发现链最可能启动点。"
+      "evidence": "两舰均搭载5架水侦且处于战备状态，弹射准备就绪；其侦察半径覆盖TF16/TF17当前航路，是日方最早可能发现美舰队的节点。"
     },
     {
       "perspective": "红方看蓝方",
       "target": "护航驱逐舰",
       "level": "低",
-      "evidence": "纯水面护航单位，无航空或远程侦察能力，不参与战役级发现与打击链。"
+      "evidence": "纯水面护航力量，无航空/远程侦察能力，不参与发现或打击决策链，不影响战役主动权归属。"
     }
   ]
 }

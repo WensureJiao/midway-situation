@@ -2,12 +2,12 @@
   "generated_by": "llm",
   "time_slice": "T21",
   "title": "广域搜索：接触临界点",
-  "phase_label": "广域搜索：双方侦察机顶出，开始大范围扇区搜索与接触",
-  "narrative": "美方在空飞机已前出至178°W–179°W带，多架无畏式与野猫位于南云舰队同经度空域（29.0°N附近），构成实质性接触；日方水侦（如Tone/Chikuma搭载）正向北延伸至29.06°N、-178.21°W，逼近TF16隐蔽扇区；赤城、加贺、苍龙、飞龙四航母虽舰体未导出，但其集群位置（28.92°N, -179.12°W）已被多源侦察交叉确认，暴露度极高。",
+  "phase_label": "广域搜索",
+  "narrative": "美方侦察机（含PBY与舰载机）已前出至179°W附近，部分俯冲轰炸机与野猫正逼近南云机动部队经度带，形成局部空域接触；日方水侦持续北伸，最远达29.06°N/178.21°W，对TF16隐蔽构成直接威胁；赤城、加贺、苍龙、飞龙四航母虽未被精确定位，但其集群位置（28.9°N/179.1°W）已被多源航迹收敛，暴露度高，是当前最高优先级打击重心。",
   "map": {
     "center": [
-      29.2,
-      -178.3
+      29,
+      -178.5
     ],
     "zoom": 6,
     "highlight_names": [
@@ -51,7 +51,7 @@
           28.92,
           -179.12
         ],
-        "radius_nm": 40,
+        "radius_nm": 18,
         "level": "高",
         "label": "南云航母集群",
         "side": "IJN"
@@ -62,20 +62,9 @@
           29.06,
           -178.21
         ],
-        "radius_nm": 30,
+        "radius_nm": 16,
         "level": "紧急",
         "label": "水侦接触带",
-        "side": "IJN"
-      },
-      {
-        "id": "kido-butai-air",
-        "center": [
-          28.98,
-          -179.25
-        ],
-        "radius_nm": 25,
-        "level": "高",
-        "label": "九七/九九式突击编队",
         "side": "IJN"
       }
     ]
@@ -112,7 +101,6 @@
       "type": "scatter",
       "title": "敌我位置与登陆海域关系",
       "description": "原点=中途岛；横轴东向海里，纵轴北向海里；红美蓝日",
-      "why_type": "常驻图种（本地 / 无范式）",
       "series": [
         {
           "name": "中途岛",
@@ -303,7 +291,350 @@
           "group": "日方",
           "detail": "日方 · 驱逐舰\n相对中途岛：东 -91.1 nm / 北 40.4 nm\n距离约 99.6 nm · 方位 294°"
         }
-      ]
+      ],
+      "why_type": "常驻（A/B 共用）"
+    },
+    {
+      "id": "cmp-air-profile",
+      "type": "scatter",
+      "title": "问：在空飞机相对岛的东向×高度？",
+      "description": "横轴东向 nm，纵轴高度 km",
+      "series": [
+        {
+          "name": "中途岛",
+          "value": 1,
+          "x": 0,
+          "y": 0,
+          "side": "both",
+          "group": "登陆海域",
+          "detail": "高度基准 · 中途岛（东向 0 / 高度 0）"
+        },
+        {
+          "name": "Yorktown Thatch Wildcats #14",
+          "value": 10.4,
+          "x": -12.1,
+          "y": 10.4,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Yorktown Thatch Wildcats #14\n东向 -12.1 nm · 高度 10.4 km\n距岛约 83 nm"
+        },
+        {
+          "name": "Yorktown Thatch Wildcats #16",
+          "value": 10.4,
+          "x": -13.5,
+          "y": 10.4,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Yorktown Thatch Wildcats #16\n东向 -13.5 nm · 高度 10.4 km\n距岛约 82 nm"
+        },
+        {
+          "name": "Yorktown Thatch Wildcats #21",
+          "value": 10.4,
+          "x": -16.9,
+          "y": 10.4,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Yorktown Thatch Wildcats #21\n东向 -16.9 nm · 高度 10.4 km\n距岛约 81.5 nm"
+        },
+        {
+          "name": "Yorktown Thatch Wildcats #3",
+          "value": 9.5,
+          "x": -11.5,
+          "y": 9.5,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Yorktown Thatch Wildcats #3\n东向 -11.5 nm · 高度 9.5 km\n距岛约 94.6 nm"
+        },
+        {
+          "name": "Yorktown Thatch Wildcats #2",
+          "value": 9.5,
+          "x": -11.5,
+          "y": 9.5,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Yorktown Thatch Wildcats #2\n东向 -11.5 nm · 高度 9.5 km\n距岛约 94.6 nm"
+        },
+        {
+          "name": "Enterprise Gray Wildcats #1",
+          "value": 9.5,
+          "x": -11.5,
+          "y": 9.5,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Enterprise Gray Wildcats #1\n东向 -11.5 nm · 高度 9.5 km\n距岛约 94.6 nm"
+        },
+        {
+          "name": "Yorktown Thatch Wildcats #7",
+          "value": 9.5,
+          "x": -11.5,
+          "y": 9.5,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Yorktown Thatch Wildcats #7\n东向 -11.5 nm · 高度 9.5 km\n距岛约 94.6 nm"
+        },
+        {
+          "name": "Yorktown Thatch Wildcats #5",
+          "value": 9.5,
+          "x": -11.5,
+          "y": 9.5,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Yorktown Thatch Wildcats #5\n东向 -11.5 nm · 高度 9.5 km\n距岛约 94.6 nm"
+        },
+        {
+          "name": "Enterprise Gray Wildcats #7",
+          "value": 9.4,
+          "x": -11.5,
+          "y": 9.4,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Enterprise Gray Wildcats #7\n东向 -11.5 nm · 高度 9.4 km\n距岛约 94.6 nm"
+        },
+        {
+          "name": "Yorktown Thatch Wildcats #11",
+          "value": 9.4,
+          "x": -11.5,
+          "y": 9.4,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Yorktown Thatch Wildcats #11\n东向 -11.5 nm · 高度 9.4 km\n距岛约 94.6 nm"
+        },
+        {
+          "name": "Yorktown Thatch Wildcats #1",
+          "value": 9.4,
+          "x": -11.5,
+          "y": 9.4,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Yorktown Thatch Wildcats #1\n东向 -11.5 nm · 高度 9.4 km\n距岛约 94.6 nm"
+        },
+        {
+          "name": "Enterprise Gray Wildcats #13",
+          "value": 8.7,
+          "x": -65.3,
+          "y": 8.7,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Enterprise Gray Wildcats #13\n东向 -65.3 nm · 高度 8.7 km\n距岛约 87.5 nm"
+        },
+        {
+          "name": "Enterprise Gray Wildcats #14",
+          "value": 8.6,
+          "x": -65,
+          "y": 8.6,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Enterprise Gray Wildcats #14\n东向 -65 nm · 高度 8.6 km\n距岛约 87.1 nm"
+        },
+        {
+          "name": "Enterprise Gray Wildcats #5",
+          "value": 8.6,
+          "x": -12,
+          "y": 8.6,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Enterprise Gray Wildcats #5\n东向 -12 nm · 高度 8.6 km\n距岛约 94.6 nm"
+        },
+        {
+          "name": "Yorktown Thatch Wildcats #13",
+          "value": 8.5,
+          "x": -73.7,
+          "y": 8.5,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Yorktown Thatch Wildcats #13\n东向 -73.7 nm · 高度 8.5 km\n距岛约 93.5 nm"
+        },
+        {
+          "name": "Yorktown Leslie Dauntless #9",
+          "value": 7.6,
+          "x": -32,
+          "y": 7.6,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Yorktown Leslie Dauntless #9\n东向 -32 nm · 高度 7.6 km\n距岛约 90.2 nm"
+        },
+        {
+          "name": "Yorktown Leslie Dauntless #8",
+          "value": 7.6,
+          "x": -69.3,
+          "y": 7.6,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Yorktown Leslie Dauntless #8\n东向 -69.3 nm · 高度 7.6 km\n距岛约 113.7 nm"
+        },
+        {
+          "name": "Hornet Rodee Dauntless #9",
+          "value": 7.6,
+          "x": -97.4,
+          "y": 7.6,
+          "side": "USN",
+          "group": "美方",
+          "detail": "Hornet Rodee Dauntless #9\n东向 -97.4 nm · 高度 7.6 km\n距岛约 139.2 nm"
+        },
+        {
+          "name": "Tone Jake Okada #1",
+          "value": 11,
+          "x": -33.4,
+          "y": 11,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Tone Jake Okada #1\n东向 -33.4 nm · 高度 11 km\n距岛约 174.1 nm"
+        },
+        {
+          "name": "Chikuma Komura Jake #1",
+          "value": 11,
+          "x": -15.2,
+          "y": 11,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Chikuma Komura Jake #1\n东向 -15.2 nm · 高度 11 km\n距岛约 47.6 nm"
+        },
+        {
+          "name": "Kirishima Iwabuchi Jake #1",
+          "value": 11,
+          "x": -26.6,
+          "y": 11,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Kirishima Iwabuchi Jake #1\n东向 -26.6 nm · 高度 11 km\n距岛约 156.7 nm"
+        },
+        {
+          "name": "Haruna Tokama Jake #1",
+          "value": 11,
+          "x": -11,
+          "y": 11,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Haruna Tokama Jake #1\n东向 -11 nm · 高度 11 km\n距岛约 94.7 nm"
+        },
+        {
+          "name": "Haruna Tokama Jake #3",
+          "value": 11,
+          "x": -5.4,
+          "y": 11,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Haruna Tokama Jake #3\n东向 -5.4 nm · 高度 11 km\n距岛约 126.3 nm"
+        },
+        {
+          "name": "Akagi Chihaya Val  #11",
+          "value": 4.6,
+          "x": -97.2,
+          "y": 4.6,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Akagi Chihaya Val  #11\n东向 -97.2 nm · 高度 4.6 km\n距岛约 107.6 nm"
+        },
+        {
+          "name": "Hiryu Kobayashi Val #8",
+          "value": 4.6,
+          "x": -102.2,
+          "y": 4.6,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Hiryu Kobayashi Val #8\n东向 -102.2 nm · 高度 4.6 km\n距岛约 112.4 nm"
+        },
+        {
+          "name": "Soryu Ikeda Val #11",
+          "value": 4.6,
+          "x": -110.4,
+          "y": 4.6,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Soryu Ikeda Val #11\n东向 -110.4 nm · 高度 4.6 km\n距岛约 119.8 nm"
+        },
+        {
+          "name": "Hiryu Kobayashi Val #10",
+          "value": 4.6,
+          "x": -100.8,
+          "y": 4.6,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Hiryu Kobayashi Val #10\n东向 -100.8 nm · 高度 4.6 km\n距岛约 111.5 nm"
+        },
+        {
+          "name": "Hiryu Kobayashi Val #9",
+          "value": 4.6,
+          "x": -102.3,
+          "y": 4.6,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Hiryu Kobayashi Val #9\n东向 -102.3 nm · 高度 4.6 km\n距岛约 112.8 nm"
+        },
+        {
+          "name": "Hiryu Kobayashi Val #12",
+          "value": 4.6,
+          "x": -101.7,
+          "y": 4.6,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Hiryu Kobayashi Val #12\n东向 -101.7 nm · 高度 4.6 km\n距岛约 111.9 nm"
+        },
+        {
+          "name": "Hiryu Kobayashi Val #15",
+          "value": 4.6,
+          "x": -102,
+          "y": 4.6,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Hiryu Kobayashi Val #15\n东向 -102 nm · 高度 4.6 km\n距岛约 112.2 nm"
+        },
+        {
+          "name": "Akagi Chihaya Val  #9",
+          "value": 4.6,
+          "x": -99.5,
+          "y": 4.6,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Akagi Chihaya Val  #9\n东向 -99.5 nm · 高度 4.6 km\n距岛约 108.4 nm"
+        },
+        {
+          "name": "Soryu Ikeda Val #7",
+          "value": 4.6,
+          "x": -107.8,
+          "y": 4.6,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Soryu Ikeda Val #7\n东向 -107.8 nm · 高度 4.6 km\n距岛约 116.2 nm"
+        },
+        {
+          "name": "Soryu Ikeda Val #10",
+          "value": 4.6,
+          "x": -112.5,
+          "y": 4.6,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Soryu Ikeda Val #10\n东向 -112.5 nm · 高度 4.6 km\n距岛约 122 nm"
+        },
+        {
+          "name": "Soryu Ikeda Val #6",
+          "value": 3.7,
+          "x": -108.9,
+          "y": 3.7,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Soryu Ikeda Val #6\n东向 -108.9 nm · 高度 3.7 km\n距岛约 117.8 nm"
+        },
+        {
+          "name": "Hiryu Mori Zero #15",
+          "value": 3.7,
+          "x": -104.8,
+          "y": 3.7,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Hiryu Mori Zero #15\n东向 -104.8 nm · 高度 3.7 km\n距岛约 115.6 nm"
+        },
+        {
+          "name": "Hiryu Mori Zero #16",
+          "value": 3.7,
+          "x": -103.2,
+          "y": 3.7,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "Hiryu Mori Zero #16\n东向 -103.2 nm · 高度 3.7 km\n距岛约 113.6 nm"
+        }
+      ],
+      "why_type": "A 选 · 无 VMMP：启发式见空间就收（偏散点） ⇒ scatter · 适切100"
     },
     {
       "id": "cmp-threat-rank",
@@ -312,47 +643,22 @@
       "description": "条长=等级分（1–4）；悬停看证据",
       "series": [
         {
-          "name": "Tone水侦及高空杰克式",
+          "name": "水侦/发现链",
           "value": 4,
-          "detail": "紧急 — 11 km高空水侦已抵29.06°N、-178.21°W，直接威胁TF16/17隐蔽性，发现即触发后续打击链。"
+          "detail": "紧急 — 杰克式水侦已升至11 km高空、覆盖29.06°N/178.21°W，直接威胁TF16/17隐蔽性，发现即触发日方反击流程。"
         },
         {
-          "name": "Chikuma水侦及高空杰克式",
-          "value": 4,
-          "detail": "紧急 — 11 km高空水侦已抵29.06°N、-178.21°W，直接威胁TF16/17隐蔽性，发现即触发后续打击链。"
-        },
-        {
-          "name": "赤城",
+          "name": "南云四航母",
           "value": 3,
-          "detail": "高 — 四航母集群坐标已由PBY与在空美机交叉定位，处于俯冲轰炸机作战半径内，是战役摧毁重心。"
+          "detail": "高 — 位置已由多架前出美机航迹收敛至28.9°N/179.1°W区域，是战役重心且暴露度高，具备立即组织打击条件。"
         },
         {
-          "name": "加贺",
-          "value": 3,
-          "detail": "高 — 四航母集群坐标已由PBY与在空美机交叉定位，处于俯冲轰炸机作战半径内，是战役摧毁重心。"
-        },
-        {
-          "name": "苍龙",
-          "value": 3,
-          "detail": "高 — 四航母集群坐标已由PBY与在空美机交叉定位，处于俯冲轰炸机作战半径内，是战役摧毁重心。"
-        },
-        {
-          "name": "飞龙",
-          "value": 3,
-          "detail": "高 — 四航母集群坐标已由PBY与在空美机交叉定位，处于俯冲轰炸机作战半径内，是战役摧毁重心。"
-        },
-        {
-          "name": "九七式鱼雷机与九九式俯冲轰炸机编队",
-          "value": 3,
-          "detail": "高 — 多架九七式（低空）与九九式（中空）正朝西北方向机动，航向收敛于TF16方位角，具备即时突击能力。"
-        },
-        {
-          "name": "雾岛/榛名等战列舰护航群",
+          "name": "九七式/九九式攻击机群",
           "value": 2,
-          "detail": "中 — 提供防空与反潜屏障，但不构成独立打击源，当前威胁等级低于航母与航空兵。"
+          "detail": "中 — 多架九七式与九九式正以低空/中空向东南扇区机动，具备对舰或对岛突击潜力，但航向尚未收敛，暂无明确接敌指向。"
         }
       ],
-      "why_type": "常驻图种（本地 / 无范式）"
+      "why_type": "常驻（A/B 共用）"
     },
     {
       "id": "cmp-threat-level-bar",
@@ -362,12 +668,12 @@
       "series": [
         {
           "name": "紧急",
-          "value": 2,
+          "value": 1,
           "detail": "紧急"
         },
         {
           "name": "高",
-          "value": 5,
+          "value": 1,
           "detail": "高"
         },
         {
@@ -381,7 +687,7 @@
           "detail": "低"
         }
       ],
-      "why_type": "常驻图种（本地 / 无范式）"
+      "why_type": "常驻（A/B 共用）"
     }
   ],
   "intent_findings": [],
@@ -390,27 +696,21 @@
   "threat_ratings": [
     {
       "perspective": "红方看蓝方",
-      "target": "赤城/加贺/苍龙/飞龙",
+      "target": "南云四航母",
       "level": "高",
-      "evidence": "四航母集群坐标已由PBY与在空美机交叉定位，处于俯冲轰炸机作战半径内，是战役摧毁重心。"
+      "evidence": "位置已由多架前出美机航迹收敛至28.9°N/179.1°W区域，是战役重心且暴露度高，具备立即组织打击条件。"
     },
     {
       "perspective": "红方看蓝方",
-      "target": "Tone/Chikuma水侦及高空杰克式",
+      "target": "水侦/发现链",
       "level": "紧急",
-      "evidence": "11 km高空水侦已抵29.06°N、-178.21°W，直接威胁TF16/17隐蔽性，发现即触发后续打击链。"
+      "evidence": "杰克式水侦已升至11 km高空、覆盖29.06°N/178.21°W，直接威胁TF16/17隐蔽性，发现即触发日方反击流程。"
     },
     {
       "perspective": "红方看蓝方",
-      "target": "九七式鱼雷机与九九式俯冲轰炸机编队",
-      "level": "高",
-      "evidence": "多架九七式（低空）与九九式（中空）正朝西北方向机动，航向收敛于TF16方位角，具备即时突击能力。"
-    },
-    {
-      "perspective": "红方看蓝方",
-      "target": "雾岛/榛名等战列舰护航群",
+      "target": "九七式/九九式攻击机群",
       "level": "中",
-      "evidence": "提供防空与反潜屏障，但不构成独立打击源，当前威胁等级低于航母与航空兵。"
+      "evidence": "多架九七式与九九式正以低空/中空向东南扇区机动，具备对舰或对岛突击潜力，但航向尚未收敛，暂无明确接敌指向。"
     }
   ]
 }

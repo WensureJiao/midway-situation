@@ -1,12 +1,12 @@
 {
   "generated_by": "llm",
   "time_slice": "T21",
-  "title": "广域搜索：接触带前移，日方侦察指向中途岛，美方打击力量压近南云",
+  "title": "广域搜索：接触带成型，日方指向中途岛，美方压向南云",
   "phase_label": "广域搜索",
-  "narrative": "美方三支航母特混舰队正以248°–257°航向稳步东偏北推进，多批无畏式与野猫已前出至西经178.2°–179.3°海域，逼近南云机动部队；日方水侦（Tone/Chikuma搭载）持续向北扇区延伸，最远达29.06°N/178.21°W，构成对TF16/17隐蔽性的直接威胁；南云四航母集群维持112.8°航向，其九七式与九九式机群正向中途岛方向扇形展开，显示主攻意图未变；当前阶段核心态势是‘发现链加速闭合’，而非交火爆发。",
+  "narrative": "美方三支航母特混舰队（TF16/17）已前出至29.5°N/177.5°W一线，多架无畏式与野猫正以230°–290°航向向西偏北扇区持续顶进，部分已抵达178.5°W附近，逼近南云机动部队经度；日方水侦（Tone/Chikuma搭载）已前出至29.06°N/178.21°W，构成对TF16隐蔽性的直接威胁；南云四航母集群（Akagi/Kaga/Soryu/Hiryu）保持112.8°航向向东偏南，其九七式与九九式机群正沿相似方向前伸，主指向明确为中途岛方位。",
   "map": {
     "center": [
-      29.2,
+      29,
       -178.3
     ],
     "zoom": 6,
@@ -14,12 +14,12 @@
       "IJN Akagi",
       "IJN Soryu",
       "IJN Kaga",
+      "IJN Hiryu",
       "IJN Tone",
       "IJN Chikuma",
       "Yorktown Thatch Wildcats #11",
       "Yorktown Short Dauntless #6",
-      "Soryu Abe Kate #1",
-      "Hiryu Kobayashi Val #10"
+      "Yorktown Leslie Dauntless #9"
     ],
     "axes": [
       {
@@ -45,7 +45,7 @@
           28.92,
           -179.12
         ],
-        "label": "TF16→南云",
+        "label": "美特混→南云",
         "side": "USN"
       }
     ],
@@ -56,7 +56,7 @@
           28.92,
           -179.12
         ],
-        "radius_nm": 40,
+        "radius_nm": 18,
         "level": "高",
         "label": "南云航母集群",
         "side": "IJN"
@@ -67,7 +67,7 @@
           29.06,
           -178.21
         ],
-        "radius_nm": 30,
+        "radius_nm": 16,
         "level": "紧急",
         "label": "水侦接触带",
         "side": "IJN"
@@ -75,12 +75,12 @@
       {
         "id": "usn-approach-corridor",
         "center": [
-          29.35,
+          29.3,
           -178.5
         ],
-        "radius_nm": 25,
+        "radius_nm": 12,
         "level": "中",
-        "label": "美机压近走廊",
+        "label": "美机西进走廊",
         "side": "USN"
       }
     ]
@@ -117,7 +117,6 @@
       "type": "scatter",
       "title": "敌我位置与登陆海域关系",
       "description": "原点=中途岛；横轴东向海里，纵轴北向海里；红美蓝日",
-      "why_type": "常驻图种（本地 / 无范式）",
       "series": [
         {
           "name": "中途岛",
@@ -308,31 +307,187 @@
           "group": "日方",
           "detail": "日方 · 驱逐舰\n相对中途岛：东 -91.1 nm / 北 40.4 nm\n距离约 99.6 nm · 方位 294°"
         }
-      ]
+      ],
+      "why_type": "常驻（A/B 共用）"
+    },
+    {
+      "id": "cmp-alt-bands",
+      "type": "grouped_bar",
+      "title": "问：美/日在空兵力落在哪些高度带？",
+      "description": "分组柱：各高度带架次（结构分布）",
+      "series": [
+        {
+          "name": "0–3 km",
+          "value": 21,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方在空 21 架 · 0–3 km"
+        },
+        {
+          "name": "0–3 km",
+          "value": 5,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方在空 5 架 · 0–3 km"
+        },
+        {
+          "name": "3–6 km",
+          "value": 19,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方在空 19 架 · 3–6 km"
+        },
+        {
+          "name": "3–6 km",
+          "value": 26,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方在空 26 架 · 3–6 km"
+        },
+        {
+          "name": "6–9 km",
+          "value": 54,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方在空 54 架 · 6–9 km"
+        },
+        {
+          "name": "6–9 km",
+          "value": 0,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方在空 0 架 · 6–9 km"
+        },
+        {
+          "name": "≥9 km",
+          "value": 18,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方在空 18 架 · ≥9 km"
+        },
+        {
+          "name": "≥9 km",
+          "value": 5,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方在空 5 架 · ≥9 km"
+        }
+      ],
+      "why_type": "A 选 · 无 VMMP：启发式见空间就收（偏散点） ⇒ grouped_bar · 适切100"
     },
     {
       "id": "cmp-intent-evidence",
       "type": "pie",
       "title": "证据构成",
       "description": "Direction / Entity / Zone 占比",
-      "why_type": "常驻图种（本地 / 无范式）",
       "series": [
         {
           "name": "Direction",
           "value": 2,
-          "detail": "1. 南云→中途岛\n2. TF16→南云"
+          "detail": "1. 南云→中途岛\n2. 美特混→南云"
         },
         {
           "name": "Entity",
           "value": 4,
-          "detail": "1. IJN Akagi\n2. IJN Soryu\n3. IJN Kaga\n4. IJN Tone"
+          "detail": "1. IJN Akagi\n2. IJN Soryu\n3. IJN Kaga\n4. IJN Hiryu"
         },
         {
           "name": "Zone",
           "value": 1,
           "detail": "1. 南云航母集群（高）"
         }
-      ]
+      ],
+      "why_type": "常驻（A/B 共用）"
+    },
+    {
+      "id": "cmp-evidence-focus",
+      "type": "scatter",
+      "title": "问：高亮实体/圈心相对岛在哪？",
+      "description": "只画高亮与活动区圆心",
+      "series": [
+        {
+          "name": "中途岛",
+          "value": 0,
+          "x": 0,
+          "y": 0,
+          "side": "both",
+          "group": "登陆海域",
+          "detail": "中途岛锚点"
+        },
+        {
+          "name": "Akagi",
+          "value": 101.1,
+          "x": -91.7,
+          "y": 42.7,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "高亮实体 · IJN Akagi\n东 -91.7 / 北 42.7 nm"
+        },
+        {
+          "name": "Soryu",
+          "value": 108.6,
+          "x": -100.6,
+          "y": 41,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "高亮实体 · IJN Soryu\n东 -100.6 / 北 41 nm"
+        },
+        {
+          "name": "Tone",
+          "value": 105,
+          "x": -95.1,
+          "y": 44.5,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "高亮实体 · IJN Tone\n东 -95.1 / 北 44.5 nm"
+        },
+        {
+          "name": "Chikuma",
+          "value": 105.7,
+          "x": -97.1,
+          "y": 41.8,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "高亮实体 · IJN Chikuma\n东 -97.1 / 北 41.8 nm"
+        },
+        {
+          "name": "Kaga",
+          "value": 100.8,
+          "x": -90,
+          "y": 45.5,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "高亮实体 · IJN Kaga\n东 -90 / 北 45.5 nm"
+        },
+        {
+          "name": "南云航母集群",
+          "value": 101.4,
+          "x": -91.9,
+          "y": 42.8,
+          "side": "IJN",
+          "group": "活动区",
+          "detail": "活动区圆心 · 南云航母集群（高）\n东 -91.9 / 北 42.8 nm"
+        },
+        {
+          "name": "水侦接触带",
+          "value": 67.3,
+          "x": -43.8,
+          "y": 51.2,
+          "side": "IJN",
+          "group": "活动区",
+          "detail": "活动区圆心 · 水侦接触带（紧急）\n东 -43.8 / 北 51.2 nm"
+        },
+        {
+          "name": "美机西进走廊",
+          "value": 88.3,
+          "x": -59.1,
+          "y": 65.6,
+          "side": "USN",
+          "group": "活动区",
+          "detail": "活动区圆心 · 美机西进走廊（中）\n东 -59.1 / 北 65.6 nm"
+        }
+      ],
+      "why_type": "A 选 · 无 VMMP：启发式见空间就收（偏散点） ⇒ scatter · 适切70"
     }
   ],
   "intent_findings": [],

@@ -39,7 +39,6 @@ import { SankeyFlow } from "@/components/SankeyFlow";
 import { chartTypeLabel } from "@/lib/chartTypes";
 import {
   HUNT_RANGE_BANDS,
-  concludeAxisRose,
   concludeForceRose,
   huntRangeBand,
 } from "@/lib/compareCharts";
@@ -54,49 +53,6 @@ const INTENT_BEATS: CampaignBeat[] = [
 
 const USN = "#c45c4a";
 const IJN = "#3b82a8";
-const AXIS_FROM = "#64748b";
-const AXIS_TO = "#ca8a04";
-
-/** 指向方位玫瑰：读法 + 看图结论 */
-function AxisRoseHelp({
-  compact,
-  series,
-}: {
-  compact?: boolean;
-  series: ChartSpec["series"];
-}) {
-  const conclusion = concludeAxisRose(series);
-  return (
-    <div
-      className={`flex flex-col gap-0.5 leading-snug text-[var(--muted)] ${
-        compact ? "text-[9px]" : "text-[10px]"
-      }`}
-    >
-      <div className="flex flex-wrap gap-2.5">
-        <span className="inline-flex items-center gap-1">
-          <span
-            className="inline-block h-2 w-2 rounded-full"
-            style={{ background: AXIS_FROM }}
-          />
-          <span className="font-medium text-[var(--ink)]">起点</span>
-          <span>· 轴线根，动作从哪一扇区发起</span>
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <span
-            className="inline-block h-2 w-2 rounded-full"
-            style={{ background: AXIS_TO }}
-          />
-          <span className="font-medium text-[var(--ink)]">终点</span>
-          <span>· 箭头尖，意图指向哪一扇区</span>
-        </span>
-      </div>
-      <p>
-        读法：终点集中≈同向压迫；起终拉开≈长程跨扇区。与兵力玫瑰对照，看「声明指向」是否合拍。
-      </p>
-      <p className="font-medium text-[var(--ink)]">{conclusion}</p>
-    </div>
-  );
-}
 
 /** 兵力方位玫瑰：读法 + 看图结论 */
 function ForceRoseHelp({
@@ -495,8 +451,6 @@ export function ChartCard({
                   <span className="text-[var(--muted)]">· 点大≈半径</span>
                 ) : null}
               </div>
-            ) : chart.id === "cmp-axis-geometry" ? (
-              <AxisRoseHelp compact series={series} />
             ) : chart.id === "cmp-force-bearing" ? (
               <ForceRoseHelp compact series={series} />
             ) : chart.id === "cmp-hunt-range" ? (
@@ -544,11 +498,7 @@ export function ChartCard({
           </span>
         </div>
       )}
-      {chart.id === "cmp-axis-geometry" && !hideChromeTitle ? (
-        <div className="mb-1.5">
-          <AxisRoseHelp series={series} />
-        </div>
-      ) : chart.id === "cmp-force-bearing" && !hideChromeTitle ? (
+      {chart.id === "cmp-force-bearing" && !hideChromeTitle ? (
         <div className="mb-1.5">
           <ForceRoseHelp series={series} />
         </div>
@@ -1059,27 +1009,10 @@ export function ChartCard({
           </ResponsiveContainer>
         ) : isRadar ? (
           <ResponsiveContainer width="100%" height="100%">
-            {chart.id === "cmp-force-bearing" ||
-            chart.id === "cmp-axis-geometry" ? (
+            {chart.id === "cmp-force-bearing" ? (
               <RadarChart
                 data={Array.from(new Set(data.map((d) => d.name))).map(
                   (name) => {
-                    if (chart.id === "cmp-axis-geometry") {
-                      const from = data.find(
-                        (d) => d.name === name && d.group === "起点",
-                      );
-                      const to = data.find(
-                        (d) => d.name === name && d.group === "终点",
-                      );
-                      return {
-                        name,
-                        起点: Number(from?.value) || 0,
-                        终点: Number(to?.value) || 0,
-                        detail: [from?.detail, to?.detail]
-                          .filter(Boolean)
-                          .join("\n\n"),
-                      };
-                    }
                     const us = data.find(
                       (d) => d.name === name && d.side === "USN",
                     );
@@ -1113,41 +1046,20 @@ export function ChartCard({
                   tick={{ fontSize: 9, fill: "#5c584f" }}
                   allowDecimals={false}
                 />
-                {chart.id === "cmp-axis-geometry" ? (
-                  <>
-                    <Radar
-                      name="起点"
-                      dataKey="起点"
-                      stroke={AXIS_FROM}
-                      fill={`${AXIS_FROM}44`}
-                      strokeWidth={1.5}
-                    />
-                    <Radar
-                      name="终点"
-                      dataKey="终点"
-                      stroke={AXIS_TO}
-                      fill={`${AXIS_TO}44`}
-                      strokeWidth={1.5}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <Radar
-                      name="美方"
-                      dataKey="美方"
-                      stroke={USN}
-                      fill={`${USN}44`}
-                      strokeWidth={1.5}
-                    />
-                    <Radar
-                      name="日方"
-                      dataKey="日方"
-                      stroke={IJN}
-                      fill={`${IJN}44`}
-                      strokeWidth={1.5}
-                    />
-                  </>
-                )}
+                <Radar
+                  name="美方"
+                  dataKey="美方"
+                  stroke={USN}
+                  fill={`${USN}44`}
+                  strokeWidth={1.5}
+                />
+                <Radar
+                  name="日方"
+                  dataKey="日方"
+                  stroke={IJN}
+                  fill={`${IJN}44`}
+                  strokeWidth={1.5}
+                />
                 <Legend
                   wrapperStyle={{ fontSize: 10, color: "#5c584f" }}
                 />

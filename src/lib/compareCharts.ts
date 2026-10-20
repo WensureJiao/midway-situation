@@ -11,7 +11,7 @@ import {
   intentEvidenceItems,
   type CampaignBeat,
 } from "./vmmpCompare";
-import { selectChartSlotIds } from "./vmmpChartSelect";
+import { isResidentChartId, selectChartSlotIds } from "./vmmpChartSelect";
 import { expandBundledShipTarget } from "./splitShipTargets";
 
 const INTENT_BEATS: CampaignBeat[] = [
@@ -265,30 +265,6 @@ function topRoseSectors(
 function formatRoseTops(tops: { name: string; value: number }[]): string {
   if (!tops.length) return "无";
   return tops.map((t) => `${t.name}(${t.value})`).join("、");
-}
-
-/** 指向方位玫瑰：由起/终扇区分布生成看图结论 */
-export function concludeAxisRose(series: ChartSpec["series"]): string {
-  const from = topRoseSectors(series, (s) => s.group === "起点");
-  const to = topRoseSectors(series, (s) => s.group === "终点");
-  if (!from.length && !to.length) {
-    return "本片无轴线端点可定位，暂无指向扇区结论。";
-  }
-  const fromSet = new Set(from.map((t) => t.name));
-  const overlap = to.map((t) => t.name).filter((n) => fromSet.has(n));
-  let verdict: string;
-  if (!from.length || !to.length) {
-    verdict = to.length
-      ? "仅见终点落点，发起端不明确。"
-      : "仅见起点落点，指向端不明确。";
-  } else if (from[0].name === to[0].name) {
-    verdict = `起终主峰同在 ${from[0].name}，近距/贴身指向，跨扇区不明显。`;
-  } else if (overlap.length) {
-    verdict = `起终部分重叠（${overlap.join("、")}），既有近距成分也有扇区偏移。`;
-  } else {
-    verdict = `起终分离：从 ${from[0].name} 指向 ${to[0].name}，属跨扇区长程轴线。`;
-  }
-  return `结论：终点主在 ${formatRoseTops(to)}；起点主在 ${formatRoseTops(from)}。${verdict}`;
 }
 
 /** 兵力方位玫瑰：由美/日扇区分布生成看图结论 */
@@ -935,79 +911,6 @@ export function zoneFootprintScatterSeries(
       ];
 }
 
-/** 作战指向起/终点：相对中途岛八方位计数（玫瑰；看扇区，不铺散点） */
-export function axisGeometryRoseSeries(
-  pack: SlicePack,
-  spec: SituationViewSpec,
-): ChartSpec["series"] {
-  const anchor = findLandingAnchor(pack);
-  const counts: Record<
-    string,
-    { from: number; to: number; names: string[] }
-  > = Object.fromEntries(
-    BEARING_SECTORS.map((s) => [s, { from: 0, to: 0, names: [] as string[] }]),
-  );
-
-  for (const a of spec.map?.axes ?? []) {
-    const label = (a.label || a.id || "指向").slice(0, 20);
-    const sideTag =
-      a.side === "USN" ? "美" : a.side === "IJN" ? "日" : "?";
-    if (a.from) {
-      const [lat, lon] = a.from;
-      const { eastNm, northNm, rangeNm } = nmOffsetFrom(
-        lat,
-        lon,
-        anchor.lat,
-        anchor.lon,
-      );
-      if (rangeNm >= 0.5) {
-        const sec = bearingSector(bearingFromOffset(eastNm, northNm));
-        counts[sec].from += 1;
-        counts[sec].names.push(
-          `${sideTag}·${label}·起（约 ${rangeNm} nm）`,
-        );
-      }
-    }
-    if (a.to) {
-      const [lat, lon] = a.to;
-      const { eastNm, northNm, rangeNm } = nmOffsetFrom(
-        lat,
-        lon,
-        anchor.lat,
-        anchor.lon,
-      );
-      if (rangeNm >= 0.5) {
-        const sec = bearingSector(bearingFromOffset(eastNm, northNm));
-        counts[sec].to += 1;
-        counts[sec].names.push(
-          `${sideTag}·${label}·终（约 ${rangeNm} nm）`,
-        );
-      }
-    }
-  }
-
-  return BEARING_SECTORS.flatMap((sec) => {
-    const c = counts[sec];
-    const detail = c.names.length
-      ? c.names.map((n, i) => `${i + 1}. ${n}`).join("\n")
-      : "该方位暂无轴线端点";
-    return [
-      {
-        name: sec,
-        value: c.from,
-        group: "起点",
-        detail: `起点 · ${sec}\n${detail}`,
-      },
-      {
-        name: sec,
-        value: c.to,
-        group: "终点",
-        detail: `终点 · ${sec}\n${detail}`,
-      },
-    ];
-  });
-}
-
 /** 在空高度带：美/日分组柱（结构分布，不是数轴条数） */
 export function altBandsSeries(pack: SlicePack): ChartSpec["series"] {
   const bands = [
@@ -1241,20 +1144,114 @@ function intentSankeySeries(
 
 export type CompareChartOptions = {
   /**
-   * true=有范式：从扩展池按 M→T 选图；
-   * false=无范式：从扩展池按启发式另选一套（数量相同、问句不同）。
+   * true=有范式：从扩展池按 M→T + 本片适切度选图；
+   * false=无范式：启发式 + 适切度（张数更少，不与 B 凑成固定对偶）。
    */
   rich?: boolean;
   /** 有切片兵力坐标时，可生成「敌我×登陆海域」空间散点 */
   pack?: SlicePack;
 };
 
+/** 本片序列是否像占位空图 */
+function isPlaceholderSeries(series: ChartSpec["series"]): boolean {
+  if (!series.length) return true;
+  return series.every(
+    (s) =>
+      !s.name ||
+      /（无|暂无|无高亮|无取样|无活动）/.test(s.name) ||
+      (Number(s.value) === 0 && series.length <= 2),
+  );
+}
+
+/**
+ * 按本片序列估计扩展图适切度 0–100。
+ * 玫瑰/距离阶梯在有方位·高亮可读时抬高；剖面/证据散点需更「有料」才过线。
+ */
+export function extensionDataFitness(chart: ChartSpec): number {
+  const series = chart.series ?? [];
+  if (isPlaceholderSeries(series)) return 0;
+
+  const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
+  const id = chart.id ?? "";
+
+  if (id === "cmp-force-bearing") {
+    const us = series
+      .filter((s) => s.side === "USN")
+      .reduce((a, s) => a + (Number(s.value) || 0), 0);
+    const ij = series
+      .filter((s) => s.side === "IJN")
+      .reduce((a, s) => a + (Number(s.value) || 0), 0);
+    const total = us + ij;
+    if (total < 3) return clamp(total * 10);
+    const bySec = new Map<string, number>();
+    for (const s of series) {
+      bySec.set(s.name, (bySec.get(s.name) ?? 0) + (Number(s.value) || 0));
+    }
+    const peak = Math.max(...bySec.values(), 0);
+    const peaked = peak / Math.max(total, 1);
+    // 两边都有落点 + 主峰清晰 → 高分
+    const both = us > 0 && ij > 0 ? 22 : 0;
+    return clamp(38 + total * 2.2 + peaked * 28 + both);
+  }
+
+  if (id === "cmp-highlight-range" || id === "cmp-hunt-range") {
+    const rows = series.filter((s) => (Number(s.value) || 0) > 0);
+    if (rows.length < 1) return 0;
+    if (rows.length === 1) return clamp(42);
+    const vals = rows.map((s) => Number(s.value) || 0);
+    const span = Math.max(...vals) - Math.min(...vals);
+    return clamp(40 + rows.length * 8 + Math.min(span, 80) * 0.25);
+  }
+
+  if (id === "cmp-alt-bands") {
+    const nonzero = series.filter((s) => (Number(s.value) || 0) > 0);
+    const bands = new Set(nonzero.map((s) => s.name)).size;
+    const total = nonzero.reduce((a, s) => a + (Number(s.value) || 0), 0);
+    if (total < 2) return clamp(total * 12);
+    // 高度全挤在一带 → 适切偏低（T81 换弹窗常见）
+    if (bands <= 1) return clamp(28 + total);
+    return clamp(40 + bands * 12 + Math.min(total, 20));
+  }
+
+  if (id === "cmp-air-profile") {
+    const pts = series.filter(
+      (s) => s.name && !/（无|暂无）/.test(s.name) && (s.y ?? 0) > 0,
+    );
+    if (pts.length < 4) return clamp(pts.length * 8);
+    // 有点云但默认不当主证据：满分压低，除非点很多且高度拉开
+    const ys = pts.map((s) => Number(s.y) || 0);
+    const ySpan = Math.max(...ys) - Math.min(...ys);
+    return clamp(22 + pts.length * 1.8 + Math.min(ySpan, 8) * 4);
+  }
+
+  if (id === "cmp-evidence-focus") {
+    const pts = series.filter(
+      (s) => s.name && !/（无|暂无）/.test(s.name),
+    );
+    if (pts.length < 2) return clamp(pts.length * 15);
+    // 与常驻散点同构，适切中等封顶，避免无脑入选
+    return clamp(30 + Math.min(pts.length, 8) * 5);
+  }
+
+  // 其它扩展：有有效点就给基础分
+  const n = series.filter((s) => (Number(s.value) || 0) > 0 || s.x != null)
+    .length;
+  return clamp(n * 12);
+}
+
 function applyVmmpChartSelection(
   charts: ChartSpec[],
   taskFocus: TaskFocus,
   rich: boolean,
 ): ChartSpec[] {
-  const { ids, whyById } = selectChartSlotIds(taskFocus, rich);
+  const fitnessById = new Map<string, number>();
+  for (const c of charts) {
+    if (!c.id || isResidentChartId(taskFocus, c.id)) continue;
+    fitnessById.set(c.id, extensionDataFitness(c));
+  }
+  const { ids, whyById } = selectChartSlotIds(taskFocus, rich, {
+    fitnessById,
+  });
   return charts
     .filter((c) => c.id && ids.has(c.id))
     .map((c) => ({
@@ -1263,25 +1260,23 @@ function applyVmmpChartSelection(
     }));
 }
 
-/**
- * 单切片任务认知图槽：先生成候选图，再按 VMMP M/T（有范式）或基线（无范式）筛选。
- */
-export function buildTaskCompareCharts(
+/** 生成任务候选图（尚未按 A/B 筛选） */
+function buildTaskChartCandidates(
   spec: SituationViewSpec,
   taskFocus: TaskFocus,
-  packPhase?: string,
   options?: CompareChartOptions,
 ): ChartSpec[] {
-  const rich = options?.rich !== false;
   const spatialCharts = buildSpatialRelationCharts(options?.pack, spec);
 
   if (taskFocus === "intent") {
     const evidence = evidenceCompositionSeries(spec);
     const landing = spatialCharts.filter((c) => c.id === "cmp-force-landing");
+    const bearing = spatialCharts.filter((c) => c.id === "cmp-force-bearing");
     const alt = spatialCharts.filter((c) => c.id === "cmp-alt-bands");
     const pack = options?.pack;
-    const candidates: ChartSpec[] = [
+    return [
       ...landing,
+      ...bearing,
       ...alt,
       {
         id: "cmp-intent-evidence",
@@ -1298,14 +1293,6 @@ export function buildTaskCompareCharts(
         series: pack ? evidenceFocusScatterSeries(pack, spec) : [],
       },
       {
-        id: "cmp-axis-geometry",
-        type: "radar",
-        title: "问：轴线起终点落在哪些方位扇区？",
-        description:
-          "起点=发起扇区，终点=指向扇区；与兵力玫瑰对照声明是否合拍",
-        series: pack ? axisGeometryRoseSeries(pack, spec) : [],
-      },
-      {
         id: "cmp-highlight-range",
         type: "hbar",
         title: "问：高亮实体距中途岛各多少海里？",
@@ -1313,7 +1300,6 @@ export function buildTaskCompareCharts(
         series: pack ? highlightRangeSeries(pack, spec) : [],
       },
     ];
-    return applyVmmpChartSelection(candidates, "intent", rich);
   }
 
   const ratings = (spec.threat_ratings ?? [])
@@ -1326,7 +1312,7 @@ export function buildTaskCompareCharts(
     value: ratings.filter((r) => normalizeThreatLevel(r.level) === lv).length,
     detail: lv,
   }));
-  const candidates: ChartSpec[] = [
+  return [
     ...spatialCharts,
     {
       id: "cmp-threat-rank",
@@ -1343,7 +1329,35 @@ export function buildTaskCompareCharts(
       series: levelCounts,
     },
   ];
-  return applyVmmpChartSelection(candidates, "threat", rich);
+}
+
+/** 本片各扩展槽适切度（供选图对照表） */
+export function buildExtensionFitnessMap(
+  spec: SituationViewSpec,
+  taskFocus: TaskFocus,
+  options?: CompareChartOptions,
+): Map<string, number> {
+  const fitnessById = new Map<string, number>();
+  for (const c of buildTaskChartCandidates(spec, taskFocus, options)) {
+    if (!c.id || isResidentChartId(taskFocus, c.id)) continue;
+    fitnessById.set(c.id, extensionDataFitness(c));
+  }
+  return fitnessById;
+}
+
+/**
+ * 单切片任务认知图槽：先生成候选图，再按 VMMP M/T（有范式）或基线（无范式）
+ * + 本片适切度筛选；扩展张数可变，不凑满。
+ */
+export function buildTaskCompareCharts(
+  spec: SituationViewSpec,
+  taskFocus: TaskFocus,
+  _packPhase?: string,
+  options?: CompareChartOptions,
+): ChartSpec[] {
+  const rich = options?.rich !== false;
+  const candidates = buildTaskChartCandidates(spec, taskFocus, options);
+  return applyVmmpChartSelection(candidates, taskFocus, rich);
 }
 
 /**
@@ -1397,7 +1411,6 @@ export function pickStudySlotCharts(
     byId("cmp-hunt-range"),
     byId("cmp-alt-bands"),
     byId("cmp-evidence-focus"),
-    byId("cmp-axis-geometry"),
     byId("cmp-highlight-range"),
   ].filter((c): c is ChartSpec => Boolean(c));
 

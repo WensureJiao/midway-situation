@@ -10,26 +10,37 @@ import type { TaskFocus } from "@/lib/types";
 type Props = {
   taskFocus: TaskFocus;
   activeSide?: "A" | "B" | null;
+  /** 本片扩展适切度；有则表内勾选为真实入选，张数随切片变 */
+  fitnessById?: ReadonlyMap<string, number> | Record<string, number>;
 };
 
 /**
  * 选图对照：只列扩展池（常驻 A/B 相同，不展示）。
+ * 入选随本片适切度变化，不保证双方各凑满 3 张。
  */
-export function ChartSelectionLegend({ taskFocus, activeSide }: Props) {
-  const rows = slotSelectionMatrix(taskFocus).filter(
+export function ChartSelectionLegend({
+  taskFocus,
+  activeSide,
+  fitnessById,
+}: Props) {
+  const opts = fitnessById ? { fitnessById } : undefined;
+  const rows = slotSelectionMatrix(taskFocus, opts).filter(
     (r) => r.layer === "扩展池",
   );
-  const aNames = extensionPickIds(taskFocus, false)
-    .map((id) => rows.find((r) => r.slot.id === id)?.slot.shortLabel ?? id)
-    .join("、");
-  const bNames = extensionPickIds(taskFocus, true)
-    .map((id) => rows.find((r) => r.slot.id === id)?.slot.shortLabel ?? id)
-    .join("、");
+  const aIds = extensionPickIds(taskFocus, false, opts);
+  const bIds = extensionPickIds(taskFocus, true, opts);
+  const labelOf = (id: string) =>
+    rows.find((r) => r.slot.id === id)?.slot.shortLabel ?? id;
+  const aNames = aIds.map(labelOf).join("、");
+  const bNames = bIds.map(labelOf).join("、");
 
   return (
     <div className="border-t border-[var(--line)] px-3 py-3">
       <div className="mb-2">
         <h3 className="text-sm font-semibold text-[var(--ink)]">选图对照</h3>
+        <p className="mt-0.5 text-[10px] leading-snug text-[var(--muted)]">
+          扩展张数按本片数据适切度决定（A≤2、B≤3，可不凑满）；跨切片名单应不同，不是固定对偶。
+        </p>
       </div>
 
       <div className="mb-2 grid gap-2 sm:grid-cols-2">
@@ -41,11 +52,12 @@ export function ChartSelectionLegend({ taskFocus, activeSide }: Props) {
           }`}
         >
           <div className="text-[10px] font-semibold text-[var(--ink)]">
-            A · 无 VMMP → 选了{" "}
-            {extensionPickIds(taskFocus, false).length} 张
+            A · 无 VMMP → 本片 {aIds.length} 张
           </div>
           <p className="mt-0.5 text-[10px] leading-snug text-[var(--muted)]">
-            {aNames || "（未选扩展）"}
+            {fitnessById
+              ? aNames || "（未选扩展）"
+              : "生成后按适切度入选"}
           </p>
         </div>
         <div
@@ -56,11 +68,12 @@ export function ChartSelectionLegend({ taskFocus, activeSide }: Props) {
           }`}
         >
           <div className="text-[10px] font-semibold text-[var(--ink)]">
-            B · 有 VMMP → 选了{" "}
-            {extensionPickIds(taskFocus, true).length} 张
+            B · 有 VMMP → 本片 {bIds.length} 张
           </div>
           <p className="mt-0.5 text-[10px] leading-snug text-[var(--muted)]">
-            {bNames || "（未选扩展）"}
+            {fitnessById
+              ? bNames || "（未选扩展）"
+              : "生成后按 M + 适切度入选"}
           </p>
         </div>
       </div>
@@ -96,9 +109,7 @@ export function ChartSelectionLegend({ taskFocus, activeSide }: Props) {
           <tbody>
             {rows.map(({ slot, aOn, bOn, note }) => {
               const diverge = aOn !== bOn;
-              const isRose =
-                slot.id === "cmp-force-bearing" ||
-                slot.id === "cmp-axis-geometry";
+              const isRose = slot.id === "cmp-force-bearing";
               return (
                 <tr
                   key={slot.id}

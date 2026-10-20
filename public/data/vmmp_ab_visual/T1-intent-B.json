@@ -1,9 +1,9 @@
 {
   "generated_by": "llm",
   "time_slice": "T1",
-  "title": "南云集结·美方压进：初始态势意图研判",
+  "title": "南云集结·美方前出：初始态势研判",
   "phase_label": "初始态势：兵力展开与南云机动部队集结",
-  "narrative": "美方TF16与TF17正以15节航速向西南偏西方向压进，逐步收拢编队；南云机动部队四艘航母呈松散集群停泊于东经179.7°附近，整体航向112.5°，明确指向中途岛。双方均未放飞侦察机，但日方利根、筑摩等侦察巡洋舰已就位，构成潜在发现链起点。当前阶段本质是‘静默对峙’，主动权归属取决于谁先完成有效搜索并定位对方主力。",
+  "narrative": "美方TF16与TF17正以15节航速向西北偏西方向前出，尚未释放侦察机，处于搜索准备阶段；日方南云机动部队四航母呈松散集群停泊于中途岛西北约230海里处，整体航向112.5°，明确指向中途岛；所有舰载机均在甲板/机库待命，无空中单位，战役尚未进入接触阶段，但日方水侦配置与航向已构成首轮发现链启动前提。",
   "map": {
     "center": [
       29.4,
@@ -15,15 +15,13 @@
       "IJN Hiryu",
       "IJN Kaga",
       "IJN Soryu",
-      "IJN Tone",
-      "IJN Chikuma",
       "CVA-6 Enterprise",
       "CVA-7 Hornet",
       "CVA-5 Yorktown"
     ],
     "axes": [
       {
-        "id": "ijn-thrust",
+        "id": "ijn-movement",
         "from": [
           29.15,
           -179.76
@@ -36,7 +34,7 @@
         "side": "IJN"
       },
       {
-        "id": "usn-advance",
+        "id": "usn-approach",
         "from": [
           30.01,
           -177.25
@@ -56,31 +54,31 @@
           29.16,
           -179.75
         ],
-        "radius_nm": 42,
+        "radius_nm": 16,
         "level": "高",
         "label": "南云航母集群",
         "side": "IJN"
       },
       {
-        "id": "recon-belt",
+        "id": "ijn-recon-belt",
         "center": [
-          29.16,
-          -179.79
+          29.18,
+          -179.82
         ],
-        "radius_nm": 28,
+        "radius_nm": 12,
         "level": "紧急",
-        "label": "水侦接触带（利根/筑摩）",
+        "label": "利根/筑摩水侦带",
         "side": "IJN"
       },
       {
-        "id": "usn-convergence-zone",
+        "id": "usn-tf16-convergence",
         "center": [
-          29.9,
-          -177.23
+          30.01,
+          -177.25
         ],
-        "radius_nm": 36,
+        "radius_nm": 14,
         "level": "中",
-        "label": "TF16/TF17汇合前导区",
+        "label": "TF16前出轴心",
         "side": "USN"
       }
     ]
@@ -117,7 +115,6 @@
       "type": "scatter",
       "title": "敌我位置与登陆海域关系",
       "description": "原点=中途岛；横轴东向海里，纵轴北向海里；红美蓝日",
-      "why_type": "常驻 · M：Spatial+Locate → Position ⇒ scatter",
       "series": [
         {
           "name": "中途岛",
@@ -308,14 +305,135 @@
           "group": "日方",
           "detail": "日方 · 驱逐舰\n相对中途岛：东 -133.5 nm / 北 59.1 nm\n距离约 146 nm · 方位 294°"
         }
-      ]
+      ],
+      "why_type": "常驻 · M：Spatial+Locate → Position ⇒ scatter"
+    },
+    {
+      "id": "cmp-force-bearing",
+      "type": "radar",
+      "title": "问：相对岛，敌我方位扇区如何分布？（方位玫瑰）",
+      "description": "美/日舰艇相对中途岛八方位计数；突起=兵力所在扇区",
+      "series": [
+        {
+          "name": "N",
+          "value": 10,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · N\n1. 美·CVA-5 Yorktown\n2. 美·CVA-6 Enterprise\n3. 美·CVA-7 Hornet\n4. 美·Portland\n5. 美·Astoria\n6. 美·Atlanta\n7. 美·Norrthampton\n8. 美·New Orleans\n9. 美·Minneapolis\n10. 美·Pensacola"
+        },
+        {
+          "name": "N",
+          "value": 0,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · N\n1. 美·CVA-5 Yorktown\n2. 美·CVA-6 Enterprise\n3. 美·CVA-7 Hornet\n4. 美·Portland\n5. 美·Astoria\n6. 美·Atlanta\n7. 美·Norrthampton\n8. 美·New Orleans\n9. 美·Minneapolis\n10. 美·Pensacola"
+        },
+        {
+          "name": "NE",
+          "value": 0,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · NE\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "NE",
+          "value": 0,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · NE\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "E",
+          "value": 0,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · E\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "E",
+          "value": 0,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · E\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "SE",
+          "value": 0,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · SE\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "SE",
+          "value": 0,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · SE\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "S",
+          "value": 0,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · S\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "S",
+          "value": 0,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · S\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "SW",
+          "value": 0,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · SW\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "SW",
+          "value": 0,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · SW\n该方位暂无取样舰艇"
+        },
+        {
+          "name": "W",
+          "value": 0,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · W\n1. 日·Soryu"
+        },
+        {
+          "name": "W",
+          "value": 1,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · W\n1. 日·Soryu"
+        },
+        {
+          "name": "NW",
+          "value": 0,
+          "side": "USN",
+          "group": "美方",
+          "detail": "美方 · NW\n1. 日·Akagi\n2. 日·Hiryu\n3. 日·Kaga\n4. 日·Kirishima\n5. 日·Haruna\n6. 日·Nagara\n7. 日·Tone\n8. 日·Chikuma\n9. 日·Kazagumo"
+        },
+        {
+          "name": "NW",
+          "value": 9,
+          "side": "IJN",
+          "group": "日方",
+          "detail": "日方 · NW\n1. 日·Akagi\n2. 日·Hiryu\n3. 日·Kaga\n4. 日·Kirishima\n5. 日·Haruna\n6. 日·Nagara\n7. 日·Tone\n8. 日·Chikuma\n9. 日·Kazagumo"
+        }
+      ],
+      "why_type": "VMMP · M：Spatial+Locate → Position ⇒ radar · 适切100"
     },
     {
       "id": "cmp-intent-evidence",
       "type": "pie",
       "title": "证据构成",
       "description": "Direction / Entity / Zone 占比",
-      "why_type": "常驻 · M：Associative+Relate → Connection ⇒ pie",
       "series": [
         {
           "name": "Direction",
@@ -332,31 +450,59 @@
           "value": 1,
           "detail": "1. 南云航母集群（高）"
         }
-      ]
+      ],
+      "why_type": "常驻 · M：Associative+Relate → Connection ⇒ pie"
     },
     {
-      "id": "cmp-intent-evidence-radar",
-      "type": "radar",
-      "title": "证据维度轮廓",
-      "description": "Direction · Entity · Zone 相对强弱",
-      "why_type": "M：Comparative+Compare → Alignment ⇒ radar",
+      "id": "cmp-highlight-range",
+      "type": "hbar",
+      "title": "问：高亮实体距中途岛各多少海里？",
+      "description": "条长=真实距离",
       "series": [
         {
-          "name": "Direction",
-          "value": 2,
-          "detail": "1. 南云→中途岛\n2. TF16→南云集群"
+          "name": "Soryu",
+          "value": 145.2,
+          "side": "IJN",
+          "detail": "IJN Soryu 距中途岛约 145.2 nm"
         },
         {
-          "name": "Entity",
-          "value": 4,
-          "detail": "1. IJN Akagi\n2. IJN Hiryu\n3. IJN Kaga\n4. IJN Soryu"
+          "name": "Akagi",
+          "value": 137.8,
+          "side": "IJN",
+          "detail": "IJN Akagi 距中途岛约 137.8 nm"
         },
         {
-          "name": "Zone",
-          "value": 1,
-          "detail": "1. 南云航母集群（高）"
+          "name": "Hiryu",
+          "value": 137.3,
+          "side": "IJN",
+          "detail": "IJN Hiryu 距中途岛约 137.3 nm"
+        },
+        {
+          "name": "Kaga",
+          "value": 137.3,
+          "side": "IJN",
+          "detail": "IJN Kaga 距中途岛约 137.3 nm"
+        },
+        {
+          "name": "Enterprise",
+          "value": 108.5,
+          "side": "USN",
+          "detail": "CVA-6 Enterprise 距中途岛约 108.5 nm"
+        },
+        {
+          "name": "Hornet",
+          "value": 105.9,
+          "side": "USN",
+          "detail": "CVA-7 Hornet 距中途岛约 105.9 nm"
+        },
+        {
+          "name": "Yorktown",
+          "value": 93,
+          "side": "USN",
+          "detail": "CVA-5 Yorktown 距中途岛约 93 nm"
         }
-      ]
+      ],
+      "why_type": "VMMP · M：Associative+Relate → Proximity ⇒ hbar · 适切100"
     }
   ],
   "intent_findings": [],

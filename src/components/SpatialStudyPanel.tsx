@@ -7,6 +7,7 @@ import { ChartSelectionLegend } from "@/components/ChartSelectionLegend";
 import { SkeletonDiffBar } from "@/components/SkeletonDiffBar";
 import { VmmpReasoningTrace } from "@/components/VmmpReasoningTrace";
 import {
+  buildExtensionFitnessMap,
   buildTaskCompareCharts,
   pickStudySlotCharts,
 } from "@/lib/compareCharts";
@@ -560,6 +561,13 @@ export function SpatialStudyPanel({
         pack,
       }),
     [spec, taskFocus, pack, richCharts],
+  );
+  const extensionFitness = useMemo(
+    () =>
+      buildExtensionFitnessMap(spec, taskFocus, {
+        pack,
+      }),
+    [spec, taskFocus, pack],
   );
   const slots = useMemo(
     () => pickStudySlotCharts(taskCharts, taskFocus),
@@ -1190,7 +1198,11 @@ export function SpatialStudyPanel({
       </div>
 
       {reasonSide ? (
-        <ChartSelectionLegend taskFocus={taskFocus} activeSide={reasonSide} />
+        <ChartSelectionLegend
+          taskFocus={taskFocus}
+          activeSide={reasonSide}
+          fitnessById={extensionFitness}
+        />
       ) : null}
 
       {extensionCharts.length > 0 ? (
