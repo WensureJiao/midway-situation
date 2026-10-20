@@ -1,13 +1,13 @@
 {
   "generated_by": "llm",
   "time_slice": "T193",
-  "title": "终局威胁评估：残存日方力量风险扫描",
+  "title": "终局威胁扫描：残存日机与伤舰风险",
   "phase_label": "终局终结",
-  "narrative": "美方已完全掌握制空权与战役主动，日方四艘航母全部丧失机动能力，三艘（赤城、苍龙、加贺）漂泊于北纬29.1°附近，舰体尚存但无航速；8架零式仍在空域活动，其中1架贴舰低空飞行（207 m），构成突发近距威胁；飞龙号未被观测到，位置与状态未知，属中至高不确定性风险；美方受损舰艇（Benham/New Orleans/Ellet）仍伴随主力，不影响守岛结果。",
+  "narrative": "美方完成守岛任务，日方战略威胁已解除；当前唯一作战相关威胁是8架在空零式（含1架贴舰低空207m），以及三艘漂泊损管中的航母残骸（Akagi/Soryu/Kaga）；飞龙未观测到，构成中至高不确定性风险；美方受损舰艇（Benham/New Orleans/Ellet）虽带伤但仍在编队，不构成战役级威胁。",
   "map": {
     "center": [
       29.2,
-      -178.2
+      -178
     ],
     "zoom": 6,
     "highlight_names": [
@@ -15,11 +15,11 @@
       "IJN Soryu",
       "IJN Kaga",
       "Soryu Suganami Zero #7",
-      "Akagi Itaya Zero  #7"
+      "Akagi Itaya Zero #7"
     ],
     "axes": [
       {
-        "id": "a1",
+        "id": "ijn-threat-vector",
         "from": [
           29.11,
           -177.62
@@ -28,11 +28,11 @@
           28.21,
           -177.38
         ],
-        "label": "南云残部→中途岛",
+        "label": "南云残存力量→中途岛",
         "side": "IJN"
       },
       {
-        "id": "a2",
+        "id": "usn-response-vector",
         "from": [
           29.62,
           -179.18
@@ -47,36 +47,36 @@
     ],
     "threat_zones": [
       {
-        "id": "ijn-cv-cluster",
+        "id": "ijn-cv-drift-cluster",
         "center": [
           29.13,
           -177.61
         ],
-        "radius_nm": 22,
-        "level": "高",
-        "label": "南云航母集群（赤城/苍龙/加贺）",
+        "radius_nm": 14,
+        "level": "中",
+        "label": "南云航母漂泊集群",
         "side": "IJN"
       },
       {
-        "id": "low-alt-zero-patch",
+        "id": "low-alt-zero-zone",
         "center": [
           29.11,
           -177.62
         ],
         "radius_nm": 8,
         "level": "紧急",
-        "label": "贴舰零式（Soryu #7）",
+        "label": "贴舰零式活动区（<300m）",
         "side": "IJN"
       },
       {
-        "id": "recon-gap-uncertainty",
+        "id": "recon-air-corridor",
         "center": [
-          29.14,
-          -177.57
+          28.9,
+          -178.5
         ],
-        "radius_nm": 35,
+        "radius_nm": 16,
         "level": "中",
-        "label": "飞龙号潜在活动区",
+        "label": "水侦覆盖走廊（Tone/Chikuma方向）",
         "side": "IJN"
       }
     ]
@@ -309,7 +309,7 @@
     {
       "id": "cmp-force-bearing",
       "type": "radar",
-      "title": "相对中途岛方位分布",
+      "title": "问：相对中途岛，敌我方位是否对齐进击/猎杀？",
       "description": "八方位兵力计数；美/日双轮廓对照集中方向",
       "why_type": "M：Spatial+Locate → Position ⇒ radar",
       "series": [
@@ -434,24 +434,24 @@
       "description": "条长=等级分（1–4）；悬停看证据",
       "series": [
         {
-          "name": "贴舰低空零式（Soryu #7）",
+          "name": "残存零式（8架在空，含1架207m贴舰）",
           "value": 4,
-          "detail": "紧急 — 高度仅207米，位于苍龙舰正上方，具备即刻投弹或撞击能力，且CAP尚未接敌。"
-        },
-        {
-          "name": "南云三艘伤航母（赤城/苍龙/加贺）",
-          "value": 3,
-          "detail": "高 — 舰体完整、位置明确、仍具浮力，可能被拖带或临时修复；虽无航速，但构成持续侦察与残余火力平台。"
+          "detail": "紧急 — 低空零式具备突防能力，且位置紧邻Akagi，对TF16前出CAP构成即时接触风险。"
         },
         {
           "name": "飞龙号未知状态",
-          "value": 2,
-          "detail": "中 — 无几何数据支持其存在或位置，但历史记录表明其曾脱离主队；当前无法排除其隐蔽接近或发动突袭的可能性。"
+          "value": 3,
+          "detail": "高 — 无几何观测，既未确认沉没亦未发现踪迹，其潜在再战能力或情报价值构成高不确定性威胁。"
         },
         {
-          "name": "残存7架在空零式（除贴舰机外）",
+          "name": "南云三艘伤航母残骸（Akagi/Soryu/Kaga）",
           "value": 2,
-          "detail": "中 — 分布于28.6°–29.1°N、177.7°–179.4°W，多处于万米高空，威胁等级低于贴舰机，但仍可执行侦察或骚扰任务。"
+          "detail": "中 — 全部停航漂泊，无航速、无放飞能力，但存在未爆弹药与火灾复燃风险，需持续监视。"
+        },
+        {
+          "name": "USS Benham/USS New Orleans/USS Ellet损伤",
+          "value": 1,
+          "detail": "低 — 三舰均在TF16编队内航行，功能未丧失，不影响舰队防空与指挥链完整性。"
         }
       ],
       "why_type": "常驻 · M：Ordering+Rank → Ordering ⇒ hbar"
@@ -474,16 +474,121 @@
         },
         {
           "name": "中",
-          "value": 2,
+          "value": 1,
           "detail": "中"
         },
         {
           "name": "低",
-          "value": 0,
+          "value": 1,
           "detail": "低"
         }
       ],
       "why_type": "常驻 · M：Comparative+Compare → Alignment ⇒ bar"
+    },
+    {
+      "id": "cmp-threat-heat",
+      "type": "heatmap",
+      "title": "问：筛排后谁落在哪一档？",
+      "description": "目标×紧急/高/中/低；有色格=该目标所在档",
+      "why_type": "M：Hierarchical+Assess → Hierarchy ⇒ heatmap",
+      "series": [
+        {
+          "name": "紧急",
+          "group": "残存零式（8架在空，含1架207m贴舰）",
+          "value": 4,
+          "detail": "低空零式具备突防能力，且位置紧邻Akagi，对TF16前出CAP构成即时接触风险。"
+        },
+        {
+          "name": "高",
+          "group": "残存零式（8架在空，含1架207m贴舰）",
+          "value": 0,
+          "detail": ""
+        },
+        {
+          "name": "中",
+          "group": "残存零式（8架在空，含1架207m贴舰）",
+          "value": 0,
+          "detail": ""
+        },
+        {
+          "name": "低",
+          "group": "残存零式（8架在空，含1架207m贴舰）",
+          "value": 0,
+          "detail": ""
+        },
+        {
+          "name": "紧急",
+          "group": "南云三艘伤航母残骸（Akagi/Soryu/Kaga）",
+          "value": 0,
+          "detail": ""
+        },
+        {
+          "name": "高",
+          "group": "南云三艘伤航母残骸（Akagi/Soryu/Kaga）",
+          "value": 0,
+          "detail": ""
+        },
+        {
+          "name": "中",
+          "group": "南云三艘伤航母残骸（Akagi/Soryu/Kaga）",
+          "value": 2,
+          "detail": "全部停航漂泊，无航速、无放飞能力，但存在未爆弹药与火灾复燃风险，需持续监视。"
+        },
+        {
+          "name": "低",
+          "group": "南云三艘伤航母残骸（Akagi/Soryu/Kaga）",
+          "value": 0,
+          "detail": ""
+        },
+        {
+          "name": "紧急",
+          "group": "飞龙号未知状态",
+          "value": 0,
+          "detail": ""
+        },
+        {
+          "name": "高",
+          "group": "飞龙号未知状态",
+          "value": 3,
+          "detail": "无几何观测，既未确认沉没亦未发现踪迹，其潜在再战能力或情报价值构成高不确定性威胁。"
+        },
+        {
+          "name": "中",
+          "group": "飞龙号未知状态",
+          "value": 0,
+          "detail": ""
+        },
+        {
+          "name": "低",
+          "group": "飞龙号未知状态",
+          "value": 0,
+          "detail": ""
+        },
+        {
+          "name": "紧急",
+          "group": "USS Benham/USS New Orleans/USS Ellet损伤",
+          "value": 0,
+          "detail": ""
+        },
+        {
+          "name": "高",
+          "group": "USS Benham/USS New Orleans/USS Ellet损伤",
+          "value": 0,
+          "detail": ""
+        },
+        {
+          "name": "中",
+          "group": "USS Benham/USS New Orleans/USS Ellet损伤",
+          "value": 0,
+          "detail": ""
+        },
+        {
+          "name": "低",
+          "group": "USS Benham/USS New Orleans/USS Ellet损伤",
+          "value": 1,
+          "detail": "三舰均在TF16编队内航行，功能未丧失，不影响舰队防空与指挥链完整性。"
+        }
+      ]
     }
   ],
   "intent_findings": [],
@@ -492,27 +597,27 @@
   "threat_ratings": [
     {
       "perspective": "红方看蓝方",
-      "target": "贴舰低空零式（Soryu #7）",
+      "target": "残存零式（8架在空，含1架207m贴舰）",
       "level": "紧急",
-      "evidence": "高度仅207米，位于苍龙舰正上方，具备即刻投弹或撞击能力，且CAP尚未接敌。"
+      "evidence": "低空零式具备突防能力，且位置紧邻Akagi，对TF16前出CAP构成即时接触风险。"
     },
     {
       "perspective": "红方看蓝方",
-      "target": "南云三艘伤航母（赤城/苍龙/加贺）",
-      "level": "高",
-      "evidence": "舰体完整、位置明确、仍具浮力，可能被拖带或临时修复；虽无航速，但构成持续侦察与残余火力平台。"
+      "target": "南云三艘伤航母残骸（Akagi/Soryu/Kaga）",
+      "level": "中",
+      "evidence": "全部停航漂泊，无航速、无放飞能力，但存在未爆弹药与火灾复燃风险，需持续监视。"
     },
     {
       "perspective": "红方看蓝方",
       "target": "飞龙号未知状态",
-      "level": "中",
-      "evidence": "无几何数据支持其存在或位置，但历史记录表明其曾脱离主队；当前无法排除其隐蔽接近或发动突袭的可能性。"
+      "level": "高",
+      "evidence": "无几何观测，既未确认沉没亦未发现踪迹，其潜在再战能力或情报价值构成高不确定性威胁。"
     },
     {
       "perspective": "红方看蓝方",
-      "target": "残存7架在空零式（除贴舰机外）",
-      "level": "中",
-      "evidence": "分布于28.6°–29.1°N、177.7°–179.4°W，多处于万米高空，威胁等级低于贴舰机，但仍可执行侦察或骚扰任务。"
+      "target": "USS Benham/USS New Orleans/USS Ellet损伤",
+      "level": "低",
+      "evidence": "三舰均在TF16编队内航行，功能未丧失，不影响舰队防空与指挥链完整性。"
     }
   ]
 }

@@ -1,11 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChartCard } from "@/components/SituationCharts";
 import { SpatialStudyPanel } from "@/components/SpatialStudyPanel";
-import { buildTaskCompareCharts } from "@/lib/compareCharts";
 import type {
   GenerateResponse,
   SituationViewSpec,
@@ -225,20 +223,6 @@ export function VmmpCompareWorkbench() {
   const activeIntentReason = abSide === "A" ? reasonIntentA : reasonIntentB;
   const rich = abSide === "B";
 
-  /** B 扩展：威胁看方位雷达；意图看证据维度雷达（证据饼已在意图底栏） */
-  const extensionChart = useMemo(() => {
-    if (!pack || !activeSpec || !rich) return undefined;
-    const charts = buildTaskCompareCharts(
-      activeSpec,
-      taskFocus,
-      pack.phase_label,
-      { rich: true, pack },
-    );
-    return taskFocus === "intent"
-      ? charts.find((c) => c.id === "cmp-intent-evidence-radar")
-      : charts.find((c) => c.id === "cmp-force-bearing");
-  }, [pack, activeSpec, rich, taskFocus]);
-
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--panel)]/90 backdrop-blur">
@@ -370,24 +354,6 @@ export function VmmpCompareWorkbench() {
               richCharts={rich}
               showSkeletonDiff
             />
-
-            {extensionChart ? (
-              <section className="rounded-lg bg-[var(--panel)] p-3 ring-1 ring-[var(--line)]">
-                <div className="mb-2 px-1">
-                  <h3 className="text-sm font-semibold text-[var(--ink)]">
-                    范式扩展图
-                  </h3>
-                  <p className="mt-0.5 text-[10px] text-[var(--muted)]">
-                    {taskFocus === "intent"
-                      ? "仅有 VMMP 时出现：证据维度轮廓，对照底栏证据构成阅读"
-                      : "仅有 VMMP 时出现：相对中途岛方位雷达，对照底栏分布阅读"}
-                  </p>
-                </div>
-                <div className="max-w-md">
-                  <ChartCard chart={extensionChart} compact showWhyType />
-                </div>
-              </section>
-            ) : null}
           </>
         )}
       </main>

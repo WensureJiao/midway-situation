@@ -1,13 +1,13 @@
 {
   "generated_by": "llm",
   "time_slice": "T193",
-  "title": "终局：残存威胁与方向确认",
+  "title": "终局：残存威胁与战果巩固",
   "phase_label": "终局终结",
-  "narrative": "美方确认日方主力航母集群（赤城、苍龙、加贺）已丧失机动能力，全部停航漂泊于北纬29.1°、西经177.6°附近海域；8架零式仍在空域活动，其中1架紧贴赤城低空盘旋（207 m），构成局部紧急接触风险；所有在空美机均以TF16为中心实施CAP巡逻，未发现日方有效再组织攻击迹象；飞龙舰体仍未观测到，其存在性与位置仍属高不确定性节点。",
+  "narrative": "美方已完全掌握制空权与战役主动，日方三艘伤航母（赤城、苍龙、加贺）停泊于29.1°N附近海域，无航速、无放飞能力；8架零式在空，其中1架贴舰低空飞行（207 m），构成唯一现存空中接触风险。所有美航母均保持航行状态，野猫CAP持续覆盖伤舰空域，意图研判聚焦于‘残存零式是否为佯动掩护’及‘飞龙是否隐匿未被观测’——但当前几何证据不支持任何有效突击方向。",
   "map": {
     "center": [
       29.2,
-      -177.8
+      -178.2
     ],
     "zoom": 6,
     "highlight_names": [
@@ -15,24 +15,24 @@
       "IJN Soryu",
       "IJN Kaga",
       "Soryu Suganami Zero #7",
-      "Akagi Itaya Zero  #7"
+      "Akagi Itaya Zero #7"
     ],
     "axes": [
       {
-        "id": "ijn-directional-trace",
+        "id": "ijn-directional-continuity",
         "from": [
-          29.13,
-          -177.61
+          29.11,
+          -177.62
         ],
         "to": [
           28.21,
           -177.38
         ],
-        "label": "南云残部→中途岛（佯动惯性）",
+        "label": "南云残部→中途岛（惯性指向）",
         "side": "IJN"
       },
       {
-        "id": "usn-compression-trace",
+        "id": "usn-pressure-alignment",
         "from": [
           29.62,
           -179.18
@@ -41,42 +41,42 @@
           29.13,
           -177.61
         ],
-        "label": "TF16→南云损管群（压制跟进）",
+        "label": "TF16→南云损管群",
         "side": "USN"
       }
     ],
     "threat_zones": [
       {
-        "id": "ijn-cv-drift-cluster",
+        "id": "ijn-cv-cluster",
         "center": [
           29.13,
           -177.61
         ],
-        "radius_nm": 22,
+        "radius_nm": 14,
         "level": "高",
-        "label": "南云航母漂泊群",
+        "label": "南云航母集群（赤城/苍龙/加贺）",
         "side": "IJN"
       },
       {
-        "id": "low-alt-zero-hazard",
+        "id": "low-alt-zero-patch",
         "center": [
           29.11,
           -177.62
         ],
         "radius_nm": 8,
         "level": "紧急",
-        "label": "赤城近距零式（<300 m）",
+        "label": "贴舰零式活动区（Soryu #7）",
         "side": "IJN"
       },
       {
-        "id": "recon-gap-uncertainty",
+        "id": "recon-gap-zone",
         "center": [
-          29,
-          -178.5
+          29.14,
+          -177.7
         ],
-        "radius_nm": 35,
+        "radius_nm": 12,
         "level": "中",
-        "label": "水侦盲区（飞龙可能潜伏带）",
+        "label": "水侦盲区边缘（ Tone/Chikuma 观测间隙）",
         "side": "IJN"
       }
     ]
@@ -316,7 +316,7 @@
         {
           "name": "Direction",
           "value": 2,
-          "detail": "1. 南云残部→中途岛（佯动惯性）\n2. TF16→南云损管群（压制跟进）"
+          "detail": "1. 南云残部→中途岛（惯性指向）\n2. TF16→南云损管群"
         },
         {
           "name": "Entity",
@@ -326,21 +326,21 @@
         {
           "name": "Zone",
           "value": 1,
-          "detail": "1. 南云航母漂泊群（高）"
+          "detail": "1. 南云航母集群（赤城/苍龙/加贺）（高）"
         }
       ]
     },
     {
       "id": "cmp-intent-evidence-radar",
       "type": "radar",
-      "title": "证据维度轮廓",
-      "description": "Direction · Entity · Zone 相对强弱",
+      "title": "问：Direction / Entity / Zone 是否齐套？",
+      "description": "三维证据相对强弱；对照底栏饼图与地图轴",
       "why_type": "M：Comparative+Compare → Alignment ⇒ radar",
       "series": [
         {
           "name": "Direction",
           "value": 2,
-          "detail": "1. 南云残部→中途岛（佯动惯性）\n2. TF16→南云损管群（压制跟进）"
+          "detail": "1. 南云残部→中途岛（惯性指向）\n2. TF16→南云损管群"
         },
         {
           "name": "Entity",
@@ -350,7 +350,28 @@
         {
           "name": "Zone",
           "value": 1,
-          "detail": "1. 南云航母漂泊群（高）"
+          "detail": "1. 南云航母集群（赤城/苍龙/加贺）（高）"
+        }
+      ]
+    },
+    {
+      "id": "cmp-intent-axes",
+      "type": "hbar",
+      "title": "问：美/日各画了哪些作战指向？",
+      "description": "每条轴一行；红=美方、蓝=日方；悬停看起终点",
+      "why_type": "M：Associative+Relate → Connection ⇒ hbar",
+      "series": [
+        {
+          "name": "南云残部→中途岛（惯性指向）",
+          "value": 1,
+          "side": "IJN",
+          "detail": "南云残部→中途岛（惯性指向）\n日方\n29.11°N 177.62°W → 28.21°N 177.38°W"
+        },
+        {
+          "name": "TF16→南云损管群",
+          "value": 1,
+          "side": "USN",
+          "detail": "TF16→南云损管群\n美方\n29.62°N 179.18°W → 29.13°N 177.61°W"
         }
       ]
     }

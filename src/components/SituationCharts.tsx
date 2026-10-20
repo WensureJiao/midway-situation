@@ -37,6 +37,12 @@ import {
 } from "recharts";
 import { SankeyFlow } from "@/components/SankeyFlow";
 import { chartTypeLabel } from "@/lib/chartTypes";
+import {
+  HUNT_RANGE_BANDS,
+  concludeAxisRose,
+  concludeForceRose,
+  huntRangeBand,
+} from "@/lib/compareCharts";
 
 const INTENT_BEATS: CampaignBeat[] = [
   "集结",
@@ -48,6 +54,87 @@ const INTENT_BEATS: CampaignBeat[] = [
 
 const USN = "#c45c4a";
 const IJN = "#3b82a8";
+const AXIS_FROM = "#64748b";
+const AXIS_TO = "#ca8a04";
+
+/** 指向方位玫瑰：读法 + 看图结论 */
+function AxisRoseHelp({
+  compact,
+  series,
+}: {
+  compact?: boolean;
+  series: ChartSpec["series"];
+}) {
+  const conclusion = concludeAxisRose(series);
+  return (
+    <div
+      className={`flex flex-col gap-0.5 leading-snug text-[var(--muted)] ${
+        compact ? "text-[9px]" : "text-[10px]"
+      }`}
+    >
+      <div className="flex flex-wrap gap-2.5">
+        <span className="inline-flex items-center gap-1">
+          <span
+            className="inline-block h-2 w-2 rounded-full"
+            style={{ background: AXIS_FROM }}
+          />
+          <span className="font-medium text-[var(--ink)]">起点</span>
+          <span>· 轴线根，动作从哪一扇区发起</span>
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span
+            className="inline-block h-2 w-2 rounded-full"
+            style={{ background: AXIS_TO }}
+          />
+          <span className="font-medium text-[var(--ink)]">终点</span>
+          <span>· 箭头尖，意图指向哪一扇区</span>
+        </span>
+      </div>
+      <p>
+        读法：终点集中≈同向压迫；起终拉开≈长程跨扇区。与兵力玫瑰对照，看「声明指向」是否合拍。
+      </p>
+      <p className="font-medium text-[var(--ink)]">{conclusion}</p>
+    </div>
+  );
+}
+
+/** 兵力方位玫瑰：读法 + 看图结论 */
+function ForceRoseHelp({
+  compact,
+  series,
+}: {
+  compact?: boolean;
+  series: ChartSpec["series"];
+}) {
+  const conclusion = concludeForceRose(series);
+  return (
+    <div
+      className={`flex flex-col gap-0.5 leading-snug text-[var(--muted)] ${
+        compact ? "text-[9px]" : "text-[10px]"
+      }`}
+    >
+      <div className="flex flex-wrap gap-2.5">
+        <span className="inline-flex items-center gap-1">
+          <span
+            className="inline-block h-2 w-2 rounded-full"
+            style={{ background: USN }}
+          />
+          <span className="font-medium text-[var(--ink)]">美方</span>
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span
+            className="inline-block h-2 w-2 rounded-full"
+            style={{ background: IJN }}
+          />
+          <span className="font-medium text-[var(--ink)]">日方</span>
+        </span>
+        <span>· 相对中途岛八方位舰艇计数</span>
+      </div>
+      <p>读法：轮廓突起=该侧兵力所在扇区；两边同向鼓起=对峙/接触扇区。</p>
+      <p className="font-medium text-[var(--ink)]">{conclusion}</p>
+    </div>
+  );
+}
 
 /** 威胁等级分 → 色（与 zoneLevel 一致） */
 const LEVEL_SCORE_COLORS: Record<number, string> = {
@@ -139,6 +226,10 @@ function seriesColor(
   // 类目名优先：分布柱的 value 是计数，不能当等级分
   const byName = threatLevelNameColor(name);
   if (byName) return byName;
+
+  if (chart.id === "cmp-hunt-range" && typeof value === "number") {
+    return huntRangeBand(value).color;
+  }
 
   if (
     isThreatLevelScoreChart(chart) &&
@@ -243,12 +334,34 @@ export function ChartCard({
     series.some((s) => Boolean(s.detail));
   const type = chart.type;
   const isHBar = type === "hbar";
+  const isGroupedBar = type === "grouped_bar";
   const isPie = type === "pie";
   const isScatter = type === "scatter";
   const isRadar = type === "radar";
   const isHeat = type === "heatmap";
   const isSankey = type === "sankey";
   const isLineLike = type === "line" || type === "multi_line" || type === "area";
+  const groupedKeys = isGroupedBar
+    ? Array.from(
+        new Set(
+          data
+            .map((s) => s.group ?? s.side)
+            .filter((k): k is string => Boolean(k)),
+        ),
+      )
+    : [];
+  const groupedData =
+    isGroupedBar && groupedKeys.length >= 2
+      ? Array.from(new Set(data.map((s) => s.name))).map((name) => {
+          const row: Record<string, string | number> = { name };
+          for (const k of groupedKeys) {
+            row[k] =
+              data.find((s) => s.name === name && (s.group ?? s.side) === k)
+                ?.value ?? 0;
+          }
+          return row;
+        })
+      : null;
   const chartHeight = isHBar
     ? Math.max(compact ? 140 : 220, 28 + data.length * (compact ? 22 : 28))
     : isPie || isRadar || chart.id === "cmp-force-bearing"
@@ -264,9 +377,13 @@ export function ChartCard({
           ? compact
             ? 160
             : 200
-          : compact
-            ? 132
-            : 200;
+          : isGroupedBar
+            ? compact
+              ? 160
+              : 200
+            : compact
+              ? 132
+              : 200;
   const stroke = "#5b8c5a";
   const scatterData = data.map((s, i) => ({
     ...s,
@@ -345,7 +462,10 @@ export function ChartCard({
       ) : (
         <div className="mb-1.5 flex min-w-0 items-center justify-between gap-2">
           <div className="min-w-0">
-            {chart.id === "cmp-force-landing" ? (
+            {chart.id === "cmp-force-landing" ||
+            chart.id === "cmp-air-profile" ||
+            chart.id === "cmp-evidence-focus" ||
+            chart.id === "cmp-zone-footprint" ? (
               <div className="flex h-4 flex-wrap gap-2.5 text-[10px] text-[var(--muted)]">
                 <span className="inline-flex items-center gap-1">
                   <span
@@ -365,6 +485,40 @@ export function ChartCard({
                   <span className="inline-block h-2 w-2 rounded-full bg-[#ca8a04]" />
                   中途岛
                 </span>
+                {chart.id === "cmp-evidence-focus" ? (
+                  <span className="text-[var(--muted)]">· 仅高亮/圈心</span>
+                ) : null}
+                {chart.id === "cmp-air-profile" ? (
+                  <span className="text-[var(--muted)]">· 纵轴=高度 km</span>
+                ) : null}
+                {chart.id === "cmp-zone-footprint" ? (
+                  <span className="text-[var(--muted)]">· 点大≈半径</span>
+                ) : null}
+              </div>
+            ) : chart.id === "cmp-axis-geometry" ? (
+              <AxisRoseHelp compact series={series} />
+            ) : chart.id === "cmp-force-bearing" ? (
+              <ForceRoseHelp compact series={series} />
+            ) : chart.id === "cmp-hunt-range" ? (
+              <div className="flex flex-col gap-0.5 text-[9px] leading-snug text-[var(--muted)]">
+                {HUNT_RANGE_BANDS.map((b) => (
+                  <span
+                    key={b.id}
+                    className="inline-flex items-start gap-1.5"
+                  >
+                    <span
+                      className="mt-0.5 inline-block h-2 w-2.5 shrink-0 rounded-sm"
+                      style={{ background: b.color }}
+                    />
+                    <span>
+                      <span className="font-medium text-[var(--ink)]">
+                        {b.shortLabel} {b.rangeLabel}
+                      </span>
+                      {" · "}
+                      {b.meaning}
+                    </span>
+                  </span>
+                ))}
               </div>
             ) : showLevelLegend ? (
               <div className="flex h-4 flex-wrap gap-2 text-[10px] text-[var(--muted)]">
@@ -390,7 +544,33 @@ export function ChartCard({
           </span>
         </div>
       )}
-      {showLevelLegend && !hideChromeTitle ? (
+      {chart.id === "cmp-axis-geometry" && !hideChromeTitle ? (
+        <div className="mb-1.5">
+          <AxisRoseHelp series={series} />
+        </div>
+      ) : chart.id === "cmp-force-bearing" && !hideChromeTitle ? (
+        <div className="mb-1.5">
+          <ForceRoseHelp series={series} />
+        </div>
+      ) : chart.id === "cmp-hunt-range" && !hideChromeTitle ? (
+        <div className="mb-1.5 flex flex-col gap-0.5 text-[9px] leading-snug text-[var(--muted)]">
+          {HUNT_RANGE_BANDS.map((b) => (
+            <span key={b.id} className="inline-flex items-start gap-1.5">
+              <span
+                className="mt-0.5 inline-block h-2 w-2.5 shrink-0 rounded-sm"
+                style={{ background: b.color }}
+              />
+              <span>
+                <span className="font-medium text-[var(--ink)]">
+                  {b.shortLabel} {b.rangeLabel}
+                </span>
+                {" · "}
+                {b.meaning}
+              </span>
+            </span>
+          ))}
+        </div>
+      ) : showLevelLegend && !hideChromeTitle ? (
         <div className="mb-1.5 flex h-4 flex-wrap gap-2 text-[10px] text-[var(--muted)]">
           {LEVEL_SCORE_LEGEND.map((L) => (
             <span key={L.score} className="inline-flex items-center gap-1">
@@ -651,7 +831,14 @@ export function ChartCard({
                 top: 8,
                 right: compact ? 6 : 10,
                 bottom:
-                  chart.id === "cmp-force-landing" ? (compact ? 14 : 18) : 8,
+                  chart.id === "cmp-force-landing" ||
+                  chart.id === "cmp-air-profile" ||
+                  chart.id === "cmp-evidence-focus" ||
+                  chart.id === "cmp-zone-footprint"
+                    ? compact
+                      ? 14
+                      : 18
+                    : 8,
                 left: compact ? 0 : 2,
               }}
             >
@@ -659,11 +846,21 @@ export function ChartCard({
               <XAxis
                 type="number"
                 dataKey="x"
-                name={chart.id === "cmp-force-landing" ? "东向 nm" : "X"}
+                name={
+                  chart.id === "cmp-force-landing" ||
+                  chart.id === "cmp-air-profile" ||
+                  chart.id === "cmp-evidence-focus" ||
+                  chart.id === "cmp-zone-footprint"
+                    ? "东向 nm"
+                    : "X"
+                }
                 tick={{ fontSize: 9, fill: "#5c584f" }}
                 allowDecimals
                 label={
-                  chart.id === "cmp-force-landing"
+                  chart.id === "cmp-force-landing" ||
+                  chart.id === "cmp-air-profile" ||
+                  chart.id === "cmp-evidence-focus" ||
+                  chart.id === "cmp-zone-footprint"
                     ? {
                         value: "东 → (nm)",
                         position: "insideBottom",
@@ -676,29 +873,66 @@ export function ChartCard({
               <YAxis
                 type="number"
                 dataKey="y"
-                name={chart.id === "cmp-force-landing" ? "北向 nm" : "Y"}
+                name={
+                  chart.id === "cmp-air-profile"
+                    ? "高度 km"
+                    : chart.id === "cmp-force-landing" ||
+                        chart.id === "cmp-evidence-focus" ||
+                        chart.id === "cmp-zone-footprint"
+                      ? "北向 nm"
+                      : "Y"
+                }
                 tick={{ fontSize: 9, fill: "#5c584f" }}
-                width={chart.id === "cmp-force-landing" ? (compact ? 34 : 42) : 36}
+                width={
+                  chart.id === "cmp-force-landing" ||
+                  chart.id === "cmp-air-profile" ||
+                  chart.id === "cmp-evidence-focus" ||
+                  chart.id === "cmp-zone-footprint"
+                    ? compact
+                      ? 34
+                      : 42
+                    : 36
+                }
                 allowDecimals
                 label={
-                  chart.id === "cmp-force-landing" && !compact
+                  !compact &&
+                  (chart.id === "cmp-force-landing" ||
+                    chart.id === "cmp-evidence-focus" ||
+                    chart.id === "cmp-zone-footprint")
                     ? {
                         value: "北 →",
                         angle: -90,
                         position: "insideLeft",
                         style: { fontSize: 9, fill: "#5c584f" },
                       }
-                    : undefined
+                    : !compact && chart.id === "cmp-air-profile"
+                      ? {
+                          value: "高度 km",
+                          angle: -90,
+                          position: "insideLeft",
+                          style: { fontSize: 9, fill: "#5c584f" },
+                        }
+                      : undefined
                 }
               />
               <ZAxis
                 type="number"
-                dataKey="z"
+                dataKey={
+                  chart.id === "cmp-zone-footprint" ? "value" : "z"
+                }
                 range={
-                  chart.id === "cmp-force-landing" ? [10, 22] : [40, 120]
+                  chart.id === "cmp-zone-footprint"
+                    ? [16, 48]
+                    : chart.id === "cmp-force-landing" ||
+                        chart.id === "cmp-air-profile" ||
+                        chart.id === "cmp-evidence-focus"
+                      ? [12, 36]
+                      : [40, 120]
                 }
               />
-              {chart.id === "cmp-force-landing" ? (
+              {chart.id === "cmp-force-landing" ||
+              chart.id === "cmp-air-profile" ||
+              chart.id === "cmp-evidence-focus" ? (
                 <>
                   <ReferenceLine x={0} stroke="#ca8a04" strokeDasharray="4 4" />
                   <ReferenceLine y={0} stroke="#ca8a04" strokeDasharray="4 4" />
@@ -720,7 +954,9 @@ export function ChartCard({
                         {row.name}
                         {chart.id === "cmp-force-landing"
                           ? ` · 东 ${row.x} / 北 ${row.y} nm`
-                          : `（${row.x}, ${row.y}）`}
+                          : chart.id === "cmp-air-profile"
+                            ? ` · 东 ${row.x} nm / 高 ${row.y} km`
+                            : `（${row.x}, ${row.y}）`}
                       </div>
                       {row.detail ? (
                         <div className="mt-1 whitespace-pre-wrap text-[var(--muted)]">
@@ -732,17 +968,88 @@ export function ChartCard({
                 }}
               />
               <Scatter
-                data={scatterData.map((s) => ({
-                  ...s,
-                  z:
-                    chart.id === "cmp-force-landing"
-                      ? s.side === "both" || s.name === "中途岛"
-                        ? 2.2
-                        : 1
-                      : 3,
-                }))}
+                data={scatterData.map((s) => {
+                  const isIslandAnchor =
+                    s.side === "both" ||
+                    s.group === "登陆海域" ||
+                    s.name === "中途岛" ||
+                    /登陆海域|Midway|中途岛/i.test(String(s.name));
+                  return {
+                    ...s,
+                    z: isIslandAnchor
+                      ? chart.id === "cmp-air-profile"
+                        ? 5
+                        : 3.2
+                      : chart.id === "cmp-force-landing" ||
+                          chart.id === "cmp-air-profile" ||
+                          chart.id === "cmp-evidence-focus"
+                        ? 1
+                        : 3,
+                  };
+                })}
                 fill={USN}
-                shape="circle"
+                shape={(props) => {
+                  const {
+                    cx = 0,
+                    cy = 0,
+                    fill,
+                    payload,
+                  } = props as {
+                    cx?: number;
+                    cy?: number;
+                    fill?: string;
+                    payload?: {
+                      side?: string;
+                      group?: string;
+                      name?: string;
+                      z?: number;
+                    };
+                  };
+                  const isIslandAnchor =
+                    payload?.side === "both" ||
+                    payload?.group === "登陆海域" ||
+                    payload?.name === "中途岛" ||
+                    /登陆海域|Midway|中途岛/i.test(
+                      String(payload?.name ?? ""),
+                    );
+                  if (isIslandAnchor) {
+                    const r = chart.id === "cmp-air-profile" ? 8 : 6;
+                    return (
+                      <g>
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={r + 2}
+                          fill="none"
+                          stroke="#ca8a04"
+                          strokeWidth={1.5}
+                          strokeOpacity={0.55}
+                        />
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={r}
+                          fill="#ca8a04"
+                          stroke="#fff"
+                          strokeWidth={1.5}
+                        />
+                        <circle cx={cx} cy={cy} r={2} fill="#fff" />
+                      </g>
+                    );
+                  }
+                  const r = Math.max(3, Math.sqrt(Number(payload?.z ?? 1) * 18));
+                  return (
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={r}
+                      fill={fill ?? USN}
+                      stroke="#fff"
+                      strokeWidth={0.8}
+                      strokeOpacity={0.7}
+                    />
+                  );
+                }}
               >
                 {scatterData.map((s, i) => (
                   <Cell key={`${s.name}-${i}`} fill={s.fill} />
@@ -752,10 +1059,27 @@ export function ChartCard({
           </ResponsiveContainer>
         ) : isRadar ? (
           <ResponsiveContainer width="100%" height="100%">
-            {chart.id === "cmp-force-bearing" ? (
+            {chart.id === "cmp-force-bearing" ||
+            chart.id === "cmp-axis-geometry" ? (
               <RadarChart
                 data={Array.from(new Set(data.map((d) => d.name))).map(
                   (name) => {
+                    if (chart.id === "cmp-axis-geometry") {
+                      const from = data.find(
+                        (d) => d.name === name && d.group === "起点",
+                      );
+                      const to = data.find(
+                        (d) => d.name === name && d.group === "终点",
+                      );
+                      return {
+                        name,
+                        起点: Number(from?.value) || 0,
+                        终点: Number(to?.value) || 0,
+                        detail: [from?.detail, to?.detail]
+                          .filter(Boolean)
+                          .join("\n\n"),
+                      };
+                    }
                     const us = data.find(
                       (d) => d.name === name && d.side === "USN",
                     );
@@ -789,20 +1113,41 @@ export function ChartCard({
                   tick={{ fontSize: 9, fill: "#5c584f" }}
                   allowDecimals={false}
                 />
-                <Radar
-                  name="美方"
-                  dataKey="美方"
-                  stroke={USN}
-                  fill={`${USN}44`}
-                  strokeWidth={1.5}
-                />
-                <Radar
-                  name="日方"
-                  dataKey="日方"
-                  stroke={IJN}
-                  fill={`${IJN}44`}
-                  strokeWidth={1.5}
-                />
+                {chart.id === "cmp-axis-geometry" ? (
+                  <>
+                    <Radar
+                      name="起点"
+                      dataKey="起点"
+                      stroke={AXIS_FROM}
+                      fill={`${AXIS_FROM}44`}
+                      strokeWidth={1.5}
+                    />
+                    <Radar
+                      name="终点"
+                      dataKey="终点"
+                      stroke={AXIS_TO}
+                      fill={`${AXIS_TO}44`}
+                      strokeWidth={1.5}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Radar
+                      name="美方"
+                      dataKey="美方"
+                      stroke={USN}
+                      fill={`${USN}44`}
+                      strokeWidth={1.5}
+                    />
+                    <Radar
+                      name="日方"
+                      dataKey="日方"
+                      stroke={IJN}
+                      fill={`${IJN}44`}
+                      strokeWidth={1.5}
+                    />
+                  </>
+                )}
                 <Legend
                   wrapperStyle={{ fontSize: 10, color: "#5c584f" }}
                 />
@@ -883,6 +1228,44 @@ export function ChartCard({
           </div>
         ) : isSankey ? (
           <SankeyFlow links={data} compact={compact} />
+        ) : isGroupedBar && groupedData ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={groupedData}
+              margin={{ top: 12, right: 8, left: 0, bottom: 28 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#d6d3ce" />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 10, fill: "#5c584f" }}
+                interval={0}
+              />
+              <YAxis
+                allowDecimals={false}
+                tick={{ fontSize: 10, fill: "#5c584f" }}
+                width={28}
+              />
+              <Tooltip />
+              <Legend
+                wrapperStyle={{ fontSize: 10 }}
+                iconSize={8}
+              />
+              {groupedKeys.map((k) => (
+                <Bar
+                  key={k}
+                  dataKey={k}
+                  fill={
+                    k === "日方" || k === "IJN"
+                      ? IJN
+                      : k === "美方" || k === "USN"
+                        ? USN
+                        : stroke
+                  }
+                  radius={[3, 3, 0, 0]}
+                />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
@@ -893,7 +1276,11 @@ export function ChartCard({
                   ? {
                       top: 8,
                       right: compact ? 28 : 24,
-                      left: 4,
+                      left:
+                        chart.id === "cmp-hunt-range" ||
+                        chart.id === "cmp-highlight-range"
+                          ? 8
+                          : 4,
                       bottom: 8,
                     }
                   : { top: 16, right: 8, left: 0, bottom: 28 }
@@ -906,13 +1293,53 @@ export function ChartCard({
                     type="number"
                     allowDecimals={false}
                     tick={{ fontSize: 10, fill: "#5c584f" }}
+                    unit={chart.id === "cmp-hunt-range" ? " nm" : undefined}
                   />
                   <YAxis
                     type="category"
                     dataKey="name"
-                    width={compact ? 72 : 88}
+                    width={
+                      chart.id === "cmp-hunt-range" ||
+                      chart.id === "cmp-highlight-range" ||
+                      chart.id === "cmp-threat-rank"
+                        ? compact
+                          ? 108
+                          : 128
+                        : compact
+                          ? 72
+                          : 88
+                    }
                     tick={{ fontSize: compact ? 9 : 10, fill: "#5c584f" }}
+                    interval={0}
                   />
+                  {chart.id === "cmp-hunt-range" ? (
+                    <>
+                      <ReferenceLine
+                        x={50}
+                        stroke="#c45c4a"
+                        strokeDasharray="4 3"
+                        strokeOpacity={0.55}
+                        label={{
+                          value: "贴身|可及",
+                          position: "insideTopLeft",
+                          fontSize: 9,
+                          fill: "#c45c4a",
+                        }}
+                      />
+                      <ReferenceLine
+                        x={120}
+                        stroke="#64748b"
+                        strokeDasharray="4 3"
+                        strokeOpacity={0.55}
+                        label={{
+                          value: "可及|疏远",
+                          position: "insideTopLeft",
+                          fontSize: 9,
+                          fill: "#64748b",
+                        }}
+                      />
+                    </>
+                  ) : null}
                 </>
               ) : (
                 <>
@@ -959,11 +1386,23 @@ export function ChartCard({
               <Bar
                 dataKey="value"
                 radius={isHBar ? [0, 3, 3, 0] : [3, 3, 0, 0]}
-                label={{
-                  position: isHBar ? "right" : "top",
-                  fontSize: 11,
-                  fill: "#3d3a34",
-                }}
+                label={
+                  chart.id === "cmp-hunt-range"
+                    ? {
+                        position: "right",
+                        fontSize: 10,
+                        fill: "#3d3a34",
+                        formatter: (v: number) => {
+                          const band = huntRangeBand(Number(v) || 0);
+                          return `${Math.round(Number(v) || 0)}·${band.shortLabel}`;
+                        },
+                      }
+                    : {
+                        position: isHBar ? "right" : "top",
+                        fontSize: 11,
+                        fill: "#3d3a34",
+                      }
+                }
               >
                 {data.map((s, i) => (
                   <Cell key={`${s.name}-${i}`} fill={s.fill} />

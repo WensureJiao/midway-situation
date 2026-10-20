@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ChartCard } from "@/components/SituationCharts";
+import { ChartSelectionLegend } from "@/components/ChartSelectionLegend";
 import { SkeletonDiffBar } from "@/components/SkeletonDiffBar";
 import { VmmpReasoningTrace } from "@/components/VmmpReasoningTrace";
 import {
@@ -10,6 +11,7 @@ import {
   pickStudySlotCharts,
 } from "@/lib/compareCharts";
 import { chartTypeLabel } from "@/lib/chartTypes";
+import { isResidentChartId } from "@/lib/vmmpChartSelect";
 import {
   CAMPAIGN_BEAT_CODE,
   inferCampaignBeat,
@@ -568,6 +570,15 @@ export function SpatialStudyPanel({
     const types = [...new Set(taskCharts.map((c) => c.type))];
     return types.map((t) => chartTypeLabel(t));
   }, [taskCharts]);
+
+  /** 本侧从扩展池自由选出的图（张数不固定） */
+  const extensionCharts = useMemo(
+    () =>
+      taskCharts.filter(
+        (c) => c.id && !isResidentChartId(taskFocus, c.id),
+      ),
+    [taskCharts, taskFocus],
+  );
 
   const phaseBeat = useMemo(
     () => inferCampaignBeat(pack.phase_label ?? "", spec),
@@ -1179,6 +1190,47 @@ export function SpatialStudyPanel({
       </div>
 
       {reasonSide ? (
+        <ChartSelectionLegend taskFocus={taskFocus} activeSide={reasonSide} />
+      ) : null}
+
+      {extensionCharts.length > 0 ? (
+        <div className="border-t border-[var(--line)] px-3 py-3">
+          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-semibold text-[var(--ink)]">
+                {reasonSide === "B" ? "B" : reasonSide === "A" ? "A" : "本侧"} ·
+                所选扩展图
+              </h3>
+              <p className="mt-0.5 text-[10px] leading-snug text-[var(--muted)]">
+                本侧自由选中的扩展图（张数不固定）；切 A/B
+                对比谁的选图更贴任务问句
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {extensionCharts.map((c) => (
+                <span
+                  key={c.id}
+                  className="rounded bg-[var(--accent)]/15 px-1.5 py-0.5 text-[10px] text-[var(--ink)] ring-1 ring-[var(--accent)]/40"
+                >
+                  {chartTypeLabel(c.type)}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {extensionCharts.map((c) => (
+              <div
+                key={c.id}
+                className="min-w-0 rounded-md bg-[var(--panel-2)]/40 p-2 ring-1 ring-[var(--line)]"
+              >
+                <ChartCard chart={c} compact showWhyType />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {reasonSide ? (
         <div className="border-t border-[var(--line)] px-3 py-2.5">
           <VmmpReasoningTrace
             reasoningThreat={threatReason}
@@ -1189,7 +1241,7 @@ export function SpatialStudyPanel({
           />
           {richCharts ? (
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] text-[var(--muted)]">扩展图种：</span>
+              <span className="text-[10px] text-[var(--muted)]">本侧图种：</span>
               {chartTypeSummary.length ? (
                 chartTypeSummary.map((t) => (
                   <span

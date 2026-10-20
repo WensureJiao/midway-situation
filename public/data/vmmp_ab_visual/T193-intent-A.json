@@ -1,28 +1,25 @@
 {
   "generated_by": "llm",
   "time_slice": "T193",
-  "title": "终局：残存威胁与战果固化",
+  "title": "终局终结：残存威胁监控",
   "phase_label": "终局终结",
-  "narrative": "美方三航母编队（Enterprise、Hornet、Yorktown）正以低速向西南偏西方向缓进，持续压缩南云损管集群活动空间；日方三艘伤航母（Akagi、Kaga、Soryu）全部停航漂泊于29.1°N/177.6°W附近，构成静态高价值目标群；8架零式仍在空域游弋，其中1架紧贴Akagi低空盘旋，显示残存指挥链未完全中断；飞龙未见几何信号，其存在性仍为不确定项。",
+  "narrative": "日方三艘伤航母（赤城、苍龙、加贺）静止漂泊于北纬29.1°、西经177.6°海域，无航速、无放飞能力，构成战役级威胁终结标志；8架零式仍在空域活动，其中1架贴舰低空飞行（207m），显示残存机动与侦察意图；美方TF16双航母正以1.8–2.0节向南云集群缓慢压近，野猫CAP持续覆盖其上空，形成单向压制态势。",
   "map": {
     "center": [
       29.2,
-      -177.8
+      -178
     ],
     "zoom": 6,
     "highlight_names": [
       "IJN Akagi",
-      "IJN Kaga",
       "IJN Soryu",
-      "CVA-6 Enterprise",
-      "CVA-7 Hornet",
-      "CVA-5 Yorktown",
+      "IJN Kaga",
       "Soryu Suganami Zero #7",
       "Akagi Itaya Zero  #7"
     ],
     "axes": [
       {
-        "id": "a1",
+        "id": "ijn-to-midway",
         "from": [
           29.13,
           -177.61
@@ -31,11 +28,11 @@
           28.21,
           -177.38
         ],
-        "label": "南云→中途岛（残余指向）",
+        "label": "南云→中途岛",
         "side": "IJN"
       },
       {
-        "id": "a2",
+        "id": "usn-to-nagumo",
         "from": [
           29.62,
           -179.18
@@ -55,31 +52,31 @@
           29.13,
           -177.61
         ],
-        "radius_nm": 22,
+        "radius_nm": 14,
         "level": "高",
-        "label": "南云航母集群（静止）",
+        "label": "南云航母集群",
         "side": "IJN"
       },
       {
-        "id": "low-alt-zero-patrol",
+        "id": "low-alt-zero-patch",
         "center": [
           29.11,
           -177.62
         ],
         "radius_nm": 8,
         "level": "紧急",
-        "label": "零式低空警戒圈",
+        "label": "低空零式接触点",
         "side": "IJN"
       },
       {
-        "id": "recon-gap-zone",
+        "id": "recon-gap",
         "center": [
-          29.06,
-          -178.21
+          29.14,
+          -178.25
         ],
-        "radius_nm": 35,
+        "radius_nm": 12,
         "level": "中",
-        "label": "水侦覆盖空白带（飞龙可能区）",
+        "label": "水侦活动走廊",
         "side": "IJN"
       }
     ]
@@ -319,17 +316,17 @@
         {
           "name": "Direction",
           "value": 2,
-          "detail": "1. 南云→中途岛（残余指向）\n2. TF16→南云集群"
+          "detail": "1. 南云→中途岛\n2. TF16→南云集群"
         },
         {
           "name": "Entity",
           "value": 4,
-          "detail": "1. IJN Akagi\n2. IJN Kaga\n3. IJN Soryu\n4. CVA-6 Enterprise"
+          "detail": "1. IJN Akagi\n2. IJN Soryu\n3. IJN Kaga\n4. Soryu Suganami Zero #7"
         },
         {
           "name": "Zone",
           "value": 1,
-          "detail": "1. 南云航母集群（静止）（高）"
+          "detail": "1. 南云航母集群（高）"
         }
       ]
     }
