@@ -39,10 +39,10 @@ const ZONE_LEVELS: ZoneLevelVisual[] = [
   {
     key: "中",
     label: "中",
-    // 黄绿：介于橙「高」与草绿「低」之间
-    color: "#65a30d",
-    fill: "#bef264",
-    fillOpacity: 0.13,
+    // 浅橙：红橙谱上比「高」再淡一档
+    color: "#f59e0b",
+    fill: "#fcd34d",
+    fillOpacity: 0.12,
     weight: 1.7,
     dashArray: "10 7",
     legendBorderStyle: "dashed",
@@ -50,10 +50,10 @@ const ZONE_LEVELS: ZoneLevelVisual[] = [
   {
     key: "低",
     label: "低",
-    // 草绿：比「中」更深、更偏绿
-    color: "#15803d",
-    fill: "#86efac",
-    fillOpacity: 0.08,
+    // 杏橙：同谱最淡，仍一眼属威胁色系
+    color: "#d4a574",
+    fill: "#f5e0c8",
+    fillOpacity: 0.1,
     weight: 1.4,
     dashArray: "14 9",
     legendBorderStyle: "dashed",

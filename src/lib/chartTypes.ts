@@ -61,11 +61,6 @@ export const CHART_TYPE_CATALOG: readonly CatalogEntry[] = [
     label: "热力图",
     use: "矩阵命中（Hierarchy）",
   },
-  {
-    type: "sankey",
-    label: "桑基图",
-    use: "证据→等级等流向（Connection）",
-  },
 ] as const;
 
 export type CatalogChartType = (typeof CHART_TYPE_CATALOG)[number]["type"];

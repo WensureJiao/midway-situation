@@ -36,11 +36,11 @@ export function MapAnnotationLegend({ spec }: { spec: SituationViewSpec }) {
           </span>
           <span className="inline-flex items-center gap-1">
             <span className="inline-block h-2 w-2 rounded-full bg-[#e07a6a] ring-1 ring-white" />
-            在空（美）
+            飞机（美）
           </span>
           <span className="inline-flex items-center gap-1">
             <span className="inline-block h-2 w-2 rounded-full bg-[#6eb0d0] ring-1 ring-white" />
-            在空（日）
+            飞机（日）
           </span>
           <span className="inline-flex items-center gap-1">
             <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#c4a35a] ring-1 ring-white" />

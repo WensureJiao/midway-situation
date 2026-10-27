@@ -552,11 +552,11 @@ function MapIconLegend({ showEntityTag = false }: { showEntityTag?: boolean }) {
         </span>
         <span className="inline-flex items-center gap-0.5">
           <LegendGlyph kind="aircraft" color={usAir} px={11} />
-          在空（美）
+          飞机（美）
         </span>
         <span className="inline-flex items-center gap-0.5">
           <LegendGlyph kind="aircraft" color={ijAir} px={11} />
-          在空（日）
+          飞机（日）
         </span>
         <span className="inline-flex items-center gap-0.5">
           <LegendGlyph kind="airfield" color={fac} px={11} />

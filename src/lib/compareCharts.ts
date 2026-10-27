@@ -1,5 +1,6 @@
 import type {
   ChartSpec,
+  ChartType,
   CompactUnit,
   SituationViewSpec,
   SlicePack,
@@ -11,7 +12,7 @@ import {
   intentEvidenceItems,
   type CampaignBeat,
 } from "./vmmpCompare";
-import { isResidentChartId, selectChartSlotIds } from "./vmmpChartSelect";
+import { selectChartSlotIds } from "./vmmpChartSelect";
 import { expandBundledShipTarget } from "./splitShipTargets";
 
 const INTENT_BEATS: CampaignBeat[] = [
@@ -51,16 +52,76 @@ export function buildPhaseBeatChart(
   };
 }
 
-/** 主栏 / 扩展：作战指向明细（每条轴一行，颜色分美日） */
-export function buildAxesCountChart(spec: SituationViewSpec): ChartSpec {
+/** 作战指向：每条轴的方位° × 长度 nm（从图上虚线量出来，不是数条数） */
+export function axisVectorScatterSeries(
+  spec: SituationViewSpec,
+): ChartSpec["series"] {
+  const axes = spec.map?.axes ?? [];
+  const rows: ChartSpec["series"] = [];
+  for (const a of axes) {
+    if (!a.from || !a.to) continue;
+    const { eastNm, northNm, rangeNm } = nmOffsetFrom(
+      a.to[0],
+      a.to[1],
+      a.from[0],
+      a.from[1],
+    );
+    if (rangeNm < 1) continue;
+    const bearing = Math.round(bearingFromOffset(eastNm, northNm));
+    const label = (a.label || a.id).trim();
+    rows.push({
+      name: label.length > 20 ? `${label.slice(0, 18)}…` : label,
+      value: rangeNm,
+      x: bearing,
+      y: rangeNm,
+      side: a.side === "IJN" ? "IJN" : "USN",
+      detail: `${label}\n${a.side === "USN" ? "美方" : "日方"}作战指向\n方位 ${bearing}° · 长 ${rangeNm} nm\n${fmtLatLon(a.from)} → ${fmtLatLon(a.to)}`,
+    });
+  }
+  return rows.length
+    ? rows
+    : [
+        {
+          name: "（无作战指向）",
+          value: 0,
+          x: 0,
+          y: 0,
+          detail: "本侧未画出轴线",
+        },
+      ];
+}
+
+export function buildAxisVectorChart(spec: SituationViewSpec): ChartSpec {
   return {
     id: "cmp-intent-axes",
-    type: "hbar",
-    title: "问：美/日各画了哪些作战指向？",
-    description: "每条轴一行；红=美方、蓝=日方；悬停看起终点",
-    why_type: "M：Associative+Relate → Connection ⇒ hbar",
-    series: intentAxisDetailSeries(spec.map?.axes),
+    type: "scatter",
+    title: "图上作战指向朝哪、各多长？",
+    description: "横轴方位°，纵轴长度 nm；红美蓝日 — 对照地图虚线轴",
+    series: axisVectorScatterSeries(spec),
   };
+}
+
+/** 关注圈半径：每圈多大多急，地图上不好比大小 */
+export function zoneRadiusBarSeries(
+  spec: SituationViewSpec,
+): ChartSpec["series"] {
+  const zones = spec.map?.threat_zones ?? [];
+  if (!zones.length) {
+    return [{ name: "（无活动区）", value: 0, detail: "未画关注圈" }];
+  }
+  return [...zones]
+    .map((z) => {
+      const lv = String(z.level || "");
+      const label = (z.label || z.id).trim();
+      const short = label.length > 16 ? `${label.slice(0, 14)}…` : label;
+      return {
+        name: short,
+        value: Math.round((z.radius_nm ?? 0) * 10) / 10,
+        group: lv,
+        detail: `${label}\n等级 ${lv || "未标"} · 半径 ${z.radius_nm ?? "?"} nm`,
+      };
+    })
+    .sort((a, b) => b.value - a.value);
 }
 
 export { CHART_TYPE_CATALOG, chartTypeLabel } from "./chartTypes";
@@ -267,6 +328,56 @@ function formatRoseTops(tops: { name: string; value: number }[]): string {
   return tops.map((t) => `${t.name}(${t.value})`).join("、");
 }
 
+/** 作战指向雷达/散点：由各轴长度生成看图结论 */
+export function concludeIntentAxes(
+  series: ChartSpec["series"],
+  asRadar = false,
+): string {
+  const rows = [...(series ?? [])]
+    .filter(
+      (s) =>
+        s.name &&
+        !/（无/.test(s.name) &&
+        (Number(s.value) || Number(s.y) || 0) > 0,
+    )
+    .map((s) => ({
+      name: s.name,
+      nm: Math.round(Number(s.value) || Number(s.y) || 0),
+      bearing: Math.round(Number(s.x) || 0),
+      side: s.side === "IJN" ? "IJN" : "USN",
+    }))
+    .sort((a, b) => b.nm - a.nm);
+  if (!rows.length) {
+    return asRadar
+      ? "本侧未画作战指向，图上无瓣。"
+      : "本侧未画作战指向，图上无点。";
+  }
+  const us = rows.filter((r) => r.side === "USN");
+  const ij = rows.filter((r) => r.side === "IJN");
+  const fmt = (r: (typeof rows)[number]) =>
+    `「${r.name}」${r.nm} nm（${r.bearing}°）`;
+  const bits: string[] = [];
+  if (ij[0]) bits.push(`日方主轴 ${fmt(ij[0])}`);
+  if (us[0]) bits.push(`美方主轴 ${fmt(us[0])}`);
+  const mark = asRadar ? "瓣" : "点";
+  let verdict: string;
+  if (ij[0] && us[0]) {
+    verdict =
+      ij[0].nm >= us[0].nm
+        ? `日方指向更长，主作战方向先看蓝${mark}。`
+        : `美方指向更长，主作战方向先看红${mark}。`;
+  } else if (ij[0]) {
+    verdict = asRadar
+      ? "只有日方轴：看蓝瓣落在哪一格、有多长。"
+      : "只有日方轴：看蓝点落在哪一方位、有多高。";
+  } else {
+    verdict = asRadar
+      ? "只有美方轴：看红瓣落在哪一格、有多长。"
+      : "只有美方轴：看红点落在哪一方位、有多高。";
+  }
+  return `结论：${bits.join("；")}。${verdict}`;
+}
+
 /** 兵力方位玫瑰：由美/日扇区分布生成看图结论 */
 export function concludeForceRose(series: ChartSpec["series"]): string {
   const us = topRoseSectors(series, (s) => s.side === "USN");
@@ -369,19 +480,57 @@ export function forceLandingScatterSeries(
   return points;
 }
 
-/** 距中途岛海里：近→远条形（优先展示更贴近登陆海域的单位） */
+/** 距中途岛海里：近→远条形，条长就是海里 */
 export function forceRangeBarSeries(pack: SlicePack): ChartSpec["series"] {
   const { anchor, points } = forceGeoPoints(pack);
-  return [...points]
+  const ranked = [...points]
     .filter((g) => g.rangeNm > 0.5)
+    .sort((a, b) => a.rangeNm - b.rangeNm);
+  const us = ranked.filter((g) => g.side === "USN").slice(0, 8);
+  const ij = ranked.filter((g) => g.side === "IJN").slice(0, 8);
+  return [...us, ...ij]
     .sort((a, b) => a.rangeNm - b.rangeNm)
-    .slice(0, 12)
     .map((g) => ({
-      name: displayUnitName(g.unit.name, 20),
-      value: g.rangeNm,
+      name: displayUnitName(g.unit.name, 18),
+      value: Math.round(g.rangeNm),
       side: g.side,
-      detail: `${g.side === "USN" ? "美方" : "日方"} · ${g.unit.name}\n距${anchor.label}约 ${g.rangeNm} nm · 方位 ${Math.round(g.bearingDeg)}°`,
+      detail: `${g.side === "USN" ? "美方" : "日方"} · ${g.unit.name}\n距${anchor.label} ${Math.round(g.rangeNm)} nm · 方位 ${Math.round(g.bearingDeg)}°`,
     }));
+}
+
+/** 美/日 × 距岛档（贴身/可及/疏远）热力：看兵力远近结构，不堆条形 */
+export function forceRangeHeatSeries(pack: SlicePack): ChartSpec["series"] {
+  const { points } = forceGeoPoints(pack);
+  const bag = new Map<string, { n: number; names: string[] }>();
+  for (const side of ["美方", "日方"] as const) {
+    for (const b of HUNT_RANGE_BANDS) {
+      bag.set(`${side}|${b.shortLabel}`, { n: 0, names: [] });
+    }
+  }
+  for (const g of points) {
+    if (g.rangeNm <= 0.5) continue;
+    const side = g.side === "IJN" ? "日方" : "美方";
+    const band = huntRangeBand(g.rangeNm);
+    const key = `${side}|${band.shortLabel}`;
+    const cell = bag.get(key)!;
+    cell.n += 1;
+    if (cell.names.length < 4) {
+      cell.names.push(displayUnitName(g.unit.name, 14));
+    }
+  }
+  return [...bag.entries()].map(([key, cell]) => {
+    const [group, name] = key.split("|");
+    const band = HUNT_RANGE_BANDS.find((b) => b.shortLabel === name)!;
+    return {
+      name,
+      group,
+      value: cell.n,
+      side: group === "日方" ? ("IJN" as const) : ("USN" as const),
+      detail: cell.n
+        ? `${group}·${name}（${band.rangeLabel}）${cell.n} 艘\n${cell.names.join("、")}${cell.n > cell.names.length ? "…" : ""}\n${band.meaning}`
+        : `${group}·${name}：无取样`,
+    };
+  });
 }
 
 /** 相对中途岛的八方位兵力计数（美/日分列，供双序列雷达） */
@@ -423,6 +572,42 @@ export function forceBearingRoseSeries(pack: SlicePack): ChartSpec["series"] {
       },
     ];
   });
+}
+
+/** 作战指向 → 与方位分布相同的八方位玫瑰行（半径=海里） */
+export function intentAxesRoseRadarData(
+  series: ChartSpec["series"],
+): { name: string; 美方: number; 日方: number; detail: string }[] {
+  const bag = Object.fromEntries(
+    BEARING_SECTORS.map((s) => [
+      s,
+      { USN: 0, IJN: 0, notes: [] as string[] },
+    ]),
+  ) as Record<
+    (typeof BEARING_SECTORS)[number],
+    { USN: number; IJN: number; notes: string[] }
+  >;
+
+  for (const s of series ?? []) {
+    if (!s.name || /（无/.test(s.name)) continue;
+    const nm = Number(s.value) || Number(s.y) || 0;
+    if (nm <= 0) continue;
+    const sec = bearingSector(Number(s.x) || 0);
+    const side = s.side === "IJN" ? "IJN" : "USN";
+    if (nm > bag[sec][side]) bag[sec][side] = nm;
+    bag[sec].notes.push(
+      `${side === "IJN" ? "日" : "美"}·${s.name} ${Math.round(nm)} nm · ${Math.round(Number(s.x) || 0)}°`,
+    );
+  }
+
+  return BEARING_SECTORS.map((sec) => ({
+    name: sec,
+    美方: bag[sec].USN,
+    日方: bag[sec].IJN,
+    detail: bag[sec].notes.length
+      ? bag[sec].notes.join("\n")
+      : "该方位无作战指向",
+  }));
 }
 
 /** 在空剖面：东向 nm × 高度 km（与分布散点同系几何，多一维高度） */
@@ -765,7 +950,7 @@ export function huntRangeSeries(
   }
 
   return rows
-    .sort((a, b) => b.value - a.value)
+    .sort((a, b) => a.value - b.value)
     .slice(0, 8)
     .map(withHuntRangeBand);
 }
@@ -957,7 +1142,7 @@ export function altBandsSeries(pack: SlicePack): ChartSpec["series"] {
   return out;
 }
 
-/** 高亮实体距中途岛（海里条） */
+/** 高亮实体距中途岛：方位° × 距离 nm 散点（替代条形堆叠） */
 export function highlightRangeSeries(
   pack: SlicePack,
   spec: SituationViewSpec,
@@ -984,22 +1169,92 @@ export function highlightRangeSeries(
   for (const u of all) {
     if (u.unit_type !== "Ship" && u.unit_type !== "Facility") continue;
     if (!highlights.length || !matchHighlight(u)) continue;
-    const { rangeNm } = nmOffsetFrom(
+    const { eastNm, northNm, rangeNm } = nmOffsetFrom(
       u.latitude,
       u.longitude,
       anchor.lat,
       anchor.lon,
     );
+    const bearing = Math.round(bearingFromOffset(eastNm, northNm));
+    const band = huntRangeBand(rangeNm);
     rows.push({
       name: displayUnitName(u.name, 22),
       value: rangeNm,
+      x: bearing,
+      y: rangeNm,
       side: u.side === "IJN" ? "IJN" : "USN",
-      detail: `${u.name} 距中途岛约 ${rangeNm} nm`,
+      group: band.shortLabel,
+      detail: `${u.name}\n方位 ${bearing}° · 距岛 ${rangeNm} nm\n【${band.shortLabel} ${band.rangeLabel}】${band.meaning}`,
     });
   }
   return rows.length
-    ? rows.sort((a, b) => b.value - a.value).slice(0, 8)
-    : [{ name: "（无高亮）", value: 0, detail: "无高亮实体可测距" }];
+    ? rows.sort((a, b) => (b.y ?? 0) - (a.y ?? 0)).slice(0, 10)
+    : [
+        {
+          name: "（无高亮）",
+          value: 0,
+          x: 0,
+          y: 0,
+          detail: "无高亮实体可测距",
+        },
+      ];
+}
+
+/** 关联距离 → 贴身/可及/疏远 构成饼 */
+export function huntRangeBandPieSeries(
+  pack: SlicePack,
+  spec?: SituationViewSpec,
+): ChartSpec["series"] {
+  const rows = huntRangeSeries(pack, spec).filter(
+    (r) => (Number(r.value) || 0) > 0 && r.name && !/（无/.test(r.name),
+  );
+  return HUNT_RANGE_BANDS.map((b) => {
+    const hit = rows.filter((r) => huntRangeBand(r.value).id === b.id);
+    return {
+      name: b.shortLabel,
+      value: hit.length,
+      group: b.rangeLabel,
+      detail: hit.length
+        ? `【${b.shortLabel} ${b.rangeLabel}】${b.meaning}\n${hit
+            .map((r, i) => `${i + 1}. ${r.name}（${r.value} nm）`)
+            .join("\n")}`
+        : `【${b.shortLabel}】暂无关联落入此档`,
+    };
+  });
+}
+
+/** 威胁：充分度 × 等级 散点（看证据是否撑得住定级） */
+export function threatEvidenceScatterSeries(
+  ratings: SituationViewSpec["threat_ratings"],
+): ChartSpec["series"] {
+  const levelY = (level: string) => {
+    const lv = normalizeThreatLevel(level);
+    if (lv === "紧急") return 4;
+    if (lv === "高") return 3;
+    if (lv === "中") return 2;
+    return 1;
+  };
+  const rows = [...(ratings ?? [])]
+    .filter((r) => Boolean(r.target))
+    .map((r) => {
+      const score = evidenceStrengthScore(r.evidence);
+      const y = levelY(r.level);
+      return {
+        name: r.target,
+        value: score,
+        x: score,
+        y,
+        group: normalizeThreatLevel(r.level),
+        detail: r.evidence?.trim()
+          ? `充分度 ${score}/4 · 等级 ${normalizeThreatLevel(r.level)}\n${r.evidence.trim()}`
+          : `充分度 0/4 · 等级 ${normalizeThreatLevel(r.level)} — 暂无证据`,
+      };
+    })
+    .sort((a, b) => b.y - a.y || b.x - a.x)
+    .slice(0, 12);
+  return rows.length
+    ? rows
+    : [{ name: "（无条目）", value: 0, x: 0, y: 0, detail: "暂无威胁条目" }];
 }
 
 function buildSpatialRelationCharts(
@@ -1024,32 +1279,56 @@ function buildSpatialRelationCharts(
     {
       id: "cmp-force-bearing",
       type: "radar",
-      title: "问：相对岛，敌我方位扇区如何分布？（方位玫瑰）",
+      title: "相对岛，敌我方位扇区如何分布？",
       description: "美/日舰艇相对中途岛八方位计数；突起=兵力所在扇区",
       series: bearing,
     },
     {
       id: "cmp-air-profile",
       type: "scatter",
-      title: "问：在空飞机相对岛的东向×高度？",
+      title: "在空飞机相对岛的东向×高度？",
       description: "横轴东向 nm，纵轴高度 km",
       series: air,
     },
     {
       id: "cmp-hunt-range",
       type: "hbar",
-      title: "问：本片关键间隔各多少海里？",
-      description:
-        "高亮优先；条色=贴身/可及/疏远，说明远近研判含义",
+      title: "高亮之间/对岛间隔有多远？",
+      description: "条长=海里；越短越近。悬停看具体关联",
       series: huntRangeSeries(pack, spec),
     },
     {
       id: "cmp-alt-bands",
-      type: "grouped_bar",
-      title: "问：美/日在空兵力落在哪些高度带？",
-      description: "分组柱：各高度带架次（结构分布）",
+      type: "multi_line",
+      title: "美/日在空兵力落在哪些高度带？",
+      description: "折线：各高度带架次走势（美/日对照）",
       series: altBandsSeries(pack),
     },
+    {
+      id: "cmp-force-range",
+      type: "hbar",
+      title: "各舰距中途岛多远？",
+      description: "条长=海里；越短越近。红美蓝日",
+      series: forceRangeBarSeries(pack),
+    },
+    ...(spec
+      ? [
+          {
+            id: "cmp-zone-footprint" as const,
+            type: "scatter" as const,
+            title: "关注圈圆心相对岛落在哪？",
+            description: "原点=中途岛；点大≈圈半径 nm",
+            series: zoneFootprintScatterSeries(pack, spec),
+          },
+          {
+            id: "cmp-zone-radius" as const,
+            type: "hbar" as const,
+            title: "各关注圈半径差多少海里？",
+            description: "条长=半径 nm；对照地图圈的大小与等级",
+            series: zoneRadiusBarSeries(spec),
+          },
+        ]
+      : []),
   ];
 }
 
@@ -1089,67 +1368,16 @@ function normalizeThreatLevel(level: string): "紧急" | "高" | "中" | "低" {
   return "低";
 }
 
-/** 桑基：充分度档 → 威胁等级 */
-function threatSankeySeries(
-  ratings: SituationViewSpec["threat_ratings"],
-): ChartSpec["series"] {
-  const bag = new Map<string, number>();
-  for (const r of ratings ?? []) {
-    if (!r.target) continue;
-    const src = `充分度${evidenceStrengthScore(r.evidence)}`;
-    const tgt = normalizeThreatLevel(r.level);
-    const key = `${src}→${tgt}`;
-    bag.set(key, (bag.get(key) ?? 0) + 1);
-  }
-  if (!bag.size) {
-    return [{ name: "充分度0", group: "低", value: 0, detail: "暂无流向" }];
-  }
-  return [...bag.entries()].map(([key, value]) => {
-    const [name, group] = key.split("→");
-    return {
-      name,
-      group,
-      value,
-      detail: `${name} → ${group}：${value} 条目标`,
-    };
-  });
-}
-
-/** 桑基：证据类型 → 权重档 */
-function intentSankeySeries(
-  items: { kind: string; text: string }[],
-): ChartSpec["series"] {
-  const weightLabel = (kind: string) =>
-    kind === "方向" ? "高权重" : kind === "关键实体" ? "中权重" : "低权重";
-  const bag = new Map<string, number>();
-  for (const i of items) {
-    const src = i.kind;
-    const tgt = weightLabel(i.kind);
-    const key = `${src}→${tgt}`;
-    bag.set(key, (bag.get(key) ?? 0) + 1);
-  }
-  if (!bag.size) {
-    return [{ name: "方向", group: "高权重", value: 0, detail: "暂无流向" }];
-  }
-  return [...bag.entries()].map(([key, value]) => {
-    const [name, group] = key.split("→");
-    return {
-      name,
-      group,
-      value,
-      detail: `${name} → ${group}：${value} 条`,
-    };
-  });
-}
-
 export type CompareChartOptions = {
   /**
    * true=有范式：从扩展池按 M→T + 本片适切度选图；
-   * false=无范式：启发式 + 适切度（张数更少，不与 B 凑成固定对偶）。
+   * false=无范式：仅适切度入选（不读 M；不与 B 凑成固定对偶）。
    */
   rich?: boolean;
   /** 有切片兵力坐标时，可生成「敌我×登陆海域」空间散点 */
   pack?: SlicePack;
+  /** 切片阶段文案，供节拍面积图推断当前拍 */
+  packPhase?: string;
 };
 
 /** 本片序列是否像占位空图 */
@@ -1174,6 +1402,26 @@ export function extensionDataFitness(chart: ChartSpec): number {
   const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
   const id = chart.id ?? "";
 
+  if (id === "cmp-force-landing") {
+    const pts = series.filter(
+      (s) => s.name && !/中途岛|登陆海域|（无/.test(s.name),
+    );
+    if (pts.length < 2) return 0;
+    return clamp(48 + Math.min(pts.length, 16) * 3);
+  }
+
+  if (id === "cmp-threat-rank") {
+    const rows = series.filter((s) => (Number(s.value) || 0) > 0);
+    if (rows.length < 1) return 0;
+    return clamp(46 + rows.length * 8);
+  }
+
+  if (id === "cmp-threat-level-bar") {
+    const nz = series.filter((s) => (Number(s.value) || 0) > 0);
+    if (nz.length < 1) return 0;
+    return clamp(36 + nz.length * 12);
+  }
+
   if (id === "cmp-force-bearing") {
     const us = series
       .filter((s) => s.side === "USN")
@@ -1194,13 +1442,43 @@ export function extensionDataFitness(chart: ChartSpec): number {
     return clamp(38 + total * 2.2 + peaked * 28 + both);
   }
 
-  if (id === "cmp-highlight-range" || id === "cmp-hunt-range") {
+  if (
+    id === "cmp-highlight-range" ||
+    id === "cmp-hunt-range" ||
+    id === "cmp-force-range"
+  ) {
     const rows = series.filter((s) => (Number(s.value) || 0) > 0);
     if (rows.length < 1) return 0;
     if (rows.length === 1) return clamp(42);
     const vals = rows.map((s) => Number(s.value) || 0);
     const span = Math.max(...vals) - Math.min(...vals);
     return clamp(40 + rows.length * 8 + Math.min(span, 80) * 0.25);
+  }
+
+  if (id === "cmp-zone-footprint") {
+    const pts = series.filter(
+      (s) => s.name && !/（无|暂无|登陆）/.test(s.name) && s.x != null,
+    );
+    if (pts.length < 1) return 0;
+    return clamp(36 + Math.min(pts.length, 6) * 10);
+  }
+
+  if (id === "cmp-intent-axes") {
+    const rows = series.filter(
+      (s) => s.name && !/（无/.test(s.name) && (Number(s.value) || 0) > 0,
+    );
+    if (rows.length < 1) return 0;
+    return clamp(38 + rows.length * 12);
+  }
+
+  if (id === "cmp-zone-radius") {
+    const rows = series.filter(
+      (s) => s.name && !/（无/.test(s.name) && (Number(s.value) || 0) > 0,
+    );
+    if (rows.length < 1) return 0;
+    const vals = rows.map((s) => Number(s.value) || 0);
+    const span = Math.max(...vals) - Math.min(...vals);
+    return clamp(36 + rows.length * 12 + Math.min(span, 40));
   }
 
   if (id === "cmp-alt-bands") {
@@ -1239,6 +1517,49 @@ export function extensionDataFitness(chart: ChartSpec): number {
   return clamp(n * 12);
 }
 
+function chartAsType(chart: ChartSpec, type: ChartType): ChartSpec {
+  if (chart.type === type) return chart;
+  if (chart.id === "cmp-hunt-range" && (type === "bar" || type === "hbar")) {
+    return {
+      ...chart,
+      type,
+      description:
+        type === "hbar"
+          ? "贴身/可及/疏远条数（横条）"
+          : "贴身/可及/疏远条数（柱）",
+    };
+  }
+  if (chart.id === "cmp-alt-bands" && type === "grouped_bar") {
+    return {
+      ...chart,
+      type,
+      description: "各高度带架次（美/日分组柱）",
+    };
+  }
+  if (chart.id === "cmp-intent-axes" && type === "radar") {
+    return {
+      ...chart,
+      type,
+      description: "美/日作战指向落入八方位；突起=指向所在扇区，半径=海里",
+    };
+  }
+  if (chart.id === "cmp-threat-level-bar" && type === "pie") {
+    return {
+      ...chart,
+      type,
+      description: "紧急/高/中/低构成占比",
+    };
+  }
+  if (chart.id === "cmp-force-bearing" && type === "bar") {
+    return {
+      ...chart,
+      type,
+      description: "美/日八方位计数（柱）",
+    };
+  }
+  return { ...chart, type };
+}
+
 function applyVmmpChartSelection(
   charts: ChartSpec[],
   taskFocus: TaskFocus,
@@ -1246,74 +1567,44 @@ function applyVmmpChartSelection(
 ): ChartSpec[] {
   const fitnessById = new Map<string, number>();
   for (const c of charts) {
-    if (!c.id || isResidentChartId(taskFocus, c.id)) continue;
+    if (!c.id) continue;
     fitnessById.set(c.id, extensionDataFitness(c));
   }
-  const { ids, whyById } = selectChartSlotIds(taskFocus, rich, {
+  const { ids, whyById, typeByFamily } = selectChartSlotIds(taskFocus, rich, {
     fitnessById,
   });
-  return charts
-    .filter((c) => c.id && ids.has(c.id))
-    .map((c) => ({
-      ...c,
-      why_type: whyById.get(c.id) || c.why_type,
-    }));
+  const byId = new Map(charts.filter((c) => c.id).map((c) => [c.id as string, c]));
+  return [...ids]
+    .map((id) => byId.get(id))
+    .filter((c): c is ChartSpec => Boolean(c))
+    .map((c) => {
+      const type = typeByFamily.get(c.id!) ?? c.type;
+      return {
+        ...chartAsType(c, type),
+        why_type: whyById.get(c.id!) || c.why_type,
+      };
+    });
 }
 
-/** 生成任务候选图（尚未按 A/B 筛选） */
+/** 生成共用预选图槽候选；意图/威胁同一套，入选再按 A/B 规则筛 */
 function buildTaskChartCandidates(
   spec: SituationViewSpec,
-  taskFocus: TaskFocus,
+  _taskFocus: TaskFocus,
   options?: CompareChartOptions,
 ): ChartSpec[] {
-  const spatialCharts = buildSpatialRelationCharts(options?.pack, spec);
-
-  if (taskFocus === "intent") {
-    const evidence = evidenceCompositionSeries(spec);
-    const landing = spatialCharts.filter((c) => c.id === "cmp-force-landing");
-    const bearing = spatialCharts.filter((c) => c.id === "cmp-force-bearing");
-    const alt = spatialCharts.filter((c) => c.id === "cmp-alt-bands");
-    const pack = options?.pack;
-    return [
-      ...landing,
-      ...bearing,
-      ...alt,
-      {
-        id: "cmp-intent-evidence",
-        type: "pie",
-        title: "证据构成",
-        description: "Direction / Entity / Zone 占比",
-        series: evidence,
-      },
-      {
-        id: "cmp-evidence-focus",
-        type: "scatter",
-        title: "问：高亮实体/圈心相对岛在哪？",
-        description: "只画高亮与活动区圆心",
-        series: pack ? evidenceFocusScatterSeries(pack, spec) : [],
-      },
-      {
-        id: "cmp-highlight-range",
-        type: "hbar",
-        title: "问：高亮实体距中途岛各多少海里？",
-        description: "条长=真实距离",
-        series: pack ? highlightRangeSeries(pack, spec) : [],
-      },
-    ];
-  }
+  const pack = options?.pack;
+  const spatialCharts = buildSpatialRelationCharts(pack, spec);
+  const byId = (id: string) => spatialCharts.filter((c) => c.id === id);
 
   const ratings = (spec.threat_ratings ?? [])
     .filter((r) => perspectiveBucket(r.perspective ?? "") === "红方看蓝方")
     .flatMap((r) =>
       expandBundledShipTarget(r.target).map((target) => ({ ...r, target })),
     );
-  const levelCounts = (["紧急", "高", "中", "低"] as const).map((lv) => ({
-    name: lv,
-    value: ratings.filter((r) => normalizeThreatLevel(r.level) === lv).length,
-    detail: lv,
-  }));
+
   return [
-    ...spatialCharts,
+    ...byId("cmp-force-landing"),
+    buildAxisVectorChart(spec),
     {
       id: "cmp-threat-rank",
       type: "hbar",
@@ -1321,13 +1612,20 @@ function buildTaskChartCandidates(
       description: "条长=等级分（1–4）；悬停看证据",
       series: threatRankSeries(ratings),
     },
+    ...byId("cmp-zone-footprint"),
+    ...byId("cmp-zone-radius"),
+    ...byId("cmp-force-range"),
+    ...byId("cmp-force-bearing"),
     {
-      id: "cmp-threat-level-bar",
-      type: "bar",
-      title: "威胁等级分布",
-      description: "紧急/高/中/低条数",
-      series: levelCounts,
+      id: "cmp-highlight-range" as const,
+      type: "scatter" as const,
+      title: "高亮实体相对岛的方位×距离？",
+      description: "横轴方位°，纵轴距岛 nm",
+      series: pack ? highlightRangeSeries(pack, spec) : [],
     },
+    ...byId("cmp-alt-bands"),
+    ...byId("cmp-air-profile"),
+    ...byId("cmp-hunt-range"),
   ];
 }
 
@@ -1339,7 +1637,7 @@ export function buildExtensionFitnessMap(
 ): Map<string, number> {
   const fitnessById = new Map<string, number>();
   for (const c of buildTaskChartCandidates(spec, taskFocus, options)) {
-    if (!c.id || isResidentChartId(taskFocus, c.id)) continue;
+    if (!c.id) continue;
     fitnessById.set(c.id, extensionDataFitness(c));
   }
   return fitnessById;
@@ -1347,78 +1645,33 @@ export function buildExtensionFitnessMap(
 
 /**
  * 单切片任务认知图槽：先生成候选图，再按 VMMP M/T（有范式）或基线（无范式）
- * + 本片适切度筛选；扩展张数可变，不凑满。
+ * + 本片适切度筛选；按任务优先级入选（至多 5 张），其余合格降为备选。
  */
+export function buildAllTaskCompareCharts(
+  spec: SituationViewSpec,
+  taskFocus: TaskFocus,
+  packPhase?: string,
+  options?: CompareChartOptions,
+): ChartSpec[] {
+  return buildTaskChartCandidates(spec, taskFocus, {
+    ...options,
+    packPhase: options?.packPhase ?? packPhase,
+  });
+}
+
 export function buildTaskCompareCharts(
   spec: SituationViewSpec,
   taskFocus: TaskFocus,
-  _packPhase?: string,
+  packPhase?: string,
   options?: CompareChartOptions,
 ): ChartSpec[] {
   const rich = options?.rich !== false;
-  const candidates = buildTaskChartCandidates(spec, taskFocus, options);
+  const candidates = buildAllTaskCompareCharts(
+    spec,
+    taskFocus,
+    packPhase,
+    options,
+  );
   return applyVmmpChartSelection(candidates, taskFocus, rich);
-}
-
-/**
- * 空间研判界面底部三槽：分布 → 排序；其余进补充区。
- * 对齐「先看空间分布，再看优先级排序，证据栏单独用文字」的设计路径。
- */
-export function pickStudySlotCharts(
-  charts: ChartSpec[],
-  taskFocus: TaskFocus,
-): {
-  distribution?: ChartSpec;
-  ranking?: ChartSpec;
-  /** 距岛距离 + 方位玫瑰，与散点并列试看 */
-  spatialExtras: ChartSpec[];
-  extras: ChartSpec[];
-} {
-  const byId = (id: string) => charts.find((c) => c.id === id);
-  const used = new Set<string>();
-
-  let distribution: ChartSpec | undefined;
-  let ranking: ChartSpec | undefined;
-
-  if (taskFocus === "threat") {
-    distribution =
-      byId("cmp-force-landing") ||
-      charts.find((c) => c.type === "scatter" || c.type === "bar");
-    ranking =
-      byId("cmp-threat-rank") ||
-      charts.find(
-        (c) => c.type === "hbar" && c.id !== distribution?.id,
-      );
-  } else {
-    distribution =
-      byId("cmp-force-landing") ||
-      byId("cmp-intent-phase") ||
-      charts.find((c) => c.type === "scatter" || c.type === "bar");
-    ranking =
-      byId("cmp-intent-rank") ||
-      byId("cmp-intent-evidence") ||
-      charts.find(
-        (c) =>
-          (c.type === "hbar" || c.type === "pie") &&
-          c.id !== distribution?.id,
-      ) ||
-      charts.find((c) => c.id !== distribution?.id);
-  }
-
-  const spatialExtras = [
-    byId("cmp-force-bearing"),
-    byId("cmp-air-profile"),
-    byId("cmp-hunt-range"),
-    byId("cmp-alt-bands"),
-    byId("cmp-evidence-focus"),
-    byId("cmp-highlight-range"),
-  ].filter((c): c is ChartSpec => Boolean(c));
-
-  if (distribution?.id) used.add(distribution.id);
-  if (ranking?.id) used.add(ranking.id);
-  for (const c of spatialExtras) used.add(c.id);
-
-  const extras = charts.filter((c) => c.id && !used.has(c.id));
-  return { distribution, ranking, spatialExtras, extras };
 }
 

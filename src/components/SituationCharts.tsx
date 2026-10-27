@@ -31,6 +31,7 @@ import {
   Scatter,
   ScatterChart,
   Tooltip,
+  LabelList,
   XAxis,
   YAxis,
   ZAxis,
@@ -40,7 +41,9 @@ import { chartTypeLabel } from "@/lib/chartTypes";
 import {
   HUNT_RANGE_BANDS,
   concludeForceRose,
+  concludeIntentAxes,
   huntRangeBand,
+  intentAxesRoseRadarData,
 } from "@/lib/compareCharts";
 
 const INTENT_BEATS: CampaignBeat[] = [
@@ -87,6 +90,71 @@ function ForceRoseHelp({
         <span>· 相对中途岛八方位舰艇计数</span>
       </div>
       <p>读法：轮廓突起=该侧兵力所在扇区；两边同向鼓起=对峙/接触扇区。</p>
+      <p className="font-medium text-[var(--ink)]">{conclusion}</p>
+    </div>
+  );
+}
+
+/** 作战指向：读法 + 各轴海里 + 看图结论 */
+function AxisAimHelp({
+  compact,
+  series,
+  asRadar,
+}: {
+  compact?: boolean;
+  series: ChartSpec["series"];
+  asRadar?: boolean;
+}) {
+  const conclusion = concludeIntentAxes(series, asRadar);
+  const rows = [...(series ?? [])].filter(
+    (s) =>
+      s.name &&
+      !/（无/.test(s.name) &&
+      (Number(s.value) || Number(s.y) || 0) > 0,
+  );
+  return (
+    <div
+      className={`flex flex-col gap-0.5 leading-snug text-[var(--muted)] ${
+        compact ? "text-[9px]" : "text-[10px]"
+      }`}
+    >
+      <div className="flex flex-wrap gap-2.5">
+        <span className="inline-flex items-center gap-1">
+          <span
+            className="inline-block h-2 w-2 rounded-full"
+            style={{ background: USN }}
+          />
+          <span className="font-medium text-[var(--ink)]">美方轴</span>
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span
+            className="inline-block h-2 w-2 rounded-full"
+            style={{ background: IJN }}
+          />
+          <span className="font-medium text-[var(--ink)]">日方轴</span>
+        </span>
+        <span>· 对照地图虚线</span>
+      </div>
+      {rows.length ? (
+        <div className="flex flex-wrap gap-x-2.5 gap-y-0.5">
+          {rows.map((s, i) => (
+            <span key={`${s.name}-${i}`} className="inline-flex items-center gap-1">
+              <span
+                className="inline-block h-1.5 w-1.5 rounded-full"
+                style={{ background: s.side === "IJN" ? IJN : USN }}
+              />
+              <span className="text-[var(--ink)]">{s.name}</span>
+              {Math.round(Number(s.value) || Number(s.y) || 0)} nm
+              {s.x != null ? ` · ${Math.round(Number(s.x))}°` : ""}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <p>
+        {asRadar
+          ? "读法：轮廓突起=该侧作战指向所在扇区；瓣越长=轴越远（nm）。"
+          : "读法：横轴=方位°，纵轴=轴长 nm；点越靠上这条指向越长。"}
+      </p>
       <p className="font-medium text-[var(--ink)]">{conclusion}</p>
     </div>
   );
@@ -172,19 +240,50 @@ function isSideAggregateName(name: string): boolean {
   );
 }
 
+/** 仅落点类图把「中途岛」画成金锚；轴名里带「中途岛」不算岛 */
+function isIslandAnchorPoint(
+  chartId: string | undefined,
+  s: { side?: string; group?: string; name?: string },
+): boolean {
+  if (
+    chartId !== "cmp-force-landing" &&
+    chartId !== "cmp-air-profile" &&
+    chartId !== "cmp-evidence-focus" &&
+    chartId !== "cmp-zone-footprint"
+  ) {
+    return false;
+  }
+  return (
+    s.side === "both" ||
+    s.group === "登陆海域" ||
+    s.name === "中途岛" ||
+    /登陆海域|^Midway$/i.test(String(s.name ?? ""))
+  );
+}
+
 function seriesColor(
   chart: ChartSpec,
   name: string,
   side: string | undefined,
   index: number,
   value?: number,
+  group?: string,
 ): string {
   // 类目名优先：分布柱的 value 是计数，不能当等级分
   const byName = threatLevelNameColor(name);
   if (byName) return byName;
 
-  if (chart.id === "cmp-hunt-range" && typeof value === "number") {
-    return huntRangeBand(value).color;
+  if (chart.id === "cmp-zone-radius") {
+    const byLv = threatLevelNameColor(String(group ?? ""));
+    if (byLv) return byLv;
+  }
+
+  if (chart.id === "cmp-hunt-range") {
+    const byLabel = HUNT_RANGE_BANDS.find((b) => b.shortLabel === name);
+    if (byLabel) return byLabel.color;
+    if (typeof value === "number" && value > 8) {
+      return huntRangeBand(value).color;
+    }
   }
 
   if (
@@ -208,11 +307,12 @@ function seriesColor(
   }
   if (name.includes("未就绪")) return "#9ca3af";
   if (
-    side === "both" ||
-    name === "中途岛" ||
-    /登陆海域|Midway/i.test(name)
+    chart.id !== "cmp-intent-axes" &&
+    (side === "both" ||
+      name === "中途岛" ||
+      /登陆海域|Midway/i.test(name))
   ) {
-    // 金黄，与美方红、日方蓝明显区分
+    // 金黄，与美方红、日方蓝明显区分；作战指向轴名可含「中途岛」，仍按敌我着色
     return "#ca8a04";
   }
   if (side === "USN" || name === "USN" || /^美/.test(name) || /红方|红看/.test(name))
@@ -260,6 +360,7 @@ export function ChartCard({
   compact = false,
   hideChromeTitle = false,
   showWhyType = false,
+  fill = false,
 }: {
   chart: ChartSpec;
   /** 嵌入研判排版时用更矮的图 */
@@ -268,11 +369,13 @@ export function ChartCard({
   hideChromeTitle?: boolean;
   /** compact 时仍显示选图理由（范式选图对照） */
   showWhyType?: boolean;
+  /** 绘图区随父级拉高，用于左右对照同高 */
+  fill?: boolean;
 }) {
   const series = chart.series ?? [];
   const data = series.map((s, i) => ({
     ...s,
-    fill: seriesColor(chart, s.name, s.side, i, s.value),
+    fill: seriesColor(chart, s.name, s.side, i, s.value, s.group),
   }));
   const showLevelLegend =
     isThreatLevelScoreChart(chart) || isThreatLevelDistributionChart(chart);
@@ -398,7 +501,7 @@ export function ChartCard({
                 compact ? "text-xs" : "text-sm"
               }`}
             >
-              {chart.title}
+              {chart.title.replace(/^问：/, "")}
             </h3>
             {!compact && chart.description ? (
               <p className="mt-0.5 text-[10px] leading-snug text-[var(--muted)]">
@@ -453,6 +556,12 @@ export function ChartCard({
               </div>
             ) : chart.id === "cmp-force-bearing" ? (
               <ForceRoseHelp compact series={series} />
+            ) : chart.id === "cmp-intent-axes" ? (
+              <AxisAimHelp
+                compact
+                series={series}
+                asRadar={type === "radar"}
+              />
             ) : chart.id === "cmp-hunt-range" ? (
               <div className="flex flex-col gap-0.5 text-[9px] leading-snug text-[var(--muted)]">
                 {HUNT_RANGE_BANDS.map((b) => (
@@ -501,6 +610,10 @@ export function ChartCard({
       {chart.id === "cmp-force-bearing" && !hideChromeTitle ? (
         <div className="mb-1.5">
           <ForceRoseHelp series={series} />
+        </div>
+      ) : chart.id === "cmp-intent-axes" && !hideChromeTitle ? (
+        <div className="mb-1.5">
+          <AxisAimHelp series={series} asRadar={type === "radar"} />
         </div>
       ) : chart.id === "cmp-hunt-range" && !hideChromeTitle ? (
         <div className="mb-1.5 flex flex-col gap-0.5 text-[9px] leading-snug text-[var(--muted)]">
@@ -568,8 +681,8 @@ export function ChartCard({
           isPie && !(compact && hideChromeTitle)
             ? "overflow-visible"
             : "overflow-hidden"
-        } ${compact ? "p-1.5" : "p-2"}`}
-        style={{ height: chartHeight }}
+        } ${compact ? "p-1.5" : "p-2"} ${fill ? "flex-1" : ""}`}
+        style={fill ? { minHeight: chartHeight } : { height: chartHeight }}
       >
         {isPie ? (
           <ResponsiveContainer width="100%" height="100%">
@@ -778,7 +891,7 @@ export function ChartCard({
           <ResponsiveContainer width="100%" height="100%">
             <ScatterChart
               margin={{
-                top: 8,
+                top: chart.id === "cmp-intent-axes" ? 16 : 8,
                 right: compact ? 6 : 10,
                 bottom:
                   chart.id === "cmp-force-landing" ||
@@ -797,40 +910,74 @@ export function ChartCard({
                 type="number"
                 dataKey="x"
                 name={
-                  chart.id === "cmp-force-landing" ||
-                  chart.id === "cmp-air-profile" ||
-                  chart.id === "cmp-evidence-focus" ||
-                  chart.id === "cmp-zone-footprint"
-                    ? "东向 nm"
-                    : "X"
+                  chart.id === "cmp-highlight-range" ||
+                  chart.id === "cmp-intent-axes"
+                    ? "方位 °"
+                    : chart.id === "cmp-threat-evidence"
+                      ? "充分度"
+                      : chart.id === "cmp-force-landing" ||
+                          chart.id === "cmp-air-profile" ||
+                          chart.id === "cmp-evidence-focus" ||
+                          chart.id === "cmp-zone-footprint"
+                        ? "东向 nm"
+                        : "X"
                 }
                 tick={{ fontSize: 9, fill: "#5c584f" }}
                 allowDecimals
+                domain={
+                  chart.id === "cmp-highlight-range" ||
+                  chart.id === "cmp-intent-axes"
+                    ? ([0, 360] as [number, number])
+                    : chart.id === "cmp-threat-evidence"
+                      ? ([0, 4] as [number, number])
+                      : undefined
+                }
                 label={
-                  chart.id === "cmp-force-landing" ||
-                  chart.id === "cmp-air-profile" ||
-                  chart.id === "cmp-evidence-focus" ||
-                  chart.id === "cmp-zone-footprint"
+                  chart.id === "cmp-highlight-range" ||
+                  chart.id === "cmp-intent-axes"
                     ? {
-                        value: "东 → (nm)",
+                        value: "方位 °",
                         position: "insideBottom",
                         offset: -4,
                         style: { fontSize: 9, fill: "#5c584f" },
                       }
-                    : undefined
+                    : chart.id === "cmp-threat-evidence"
+                      ? {
+                          value: "充分度 →",
+                          position: "insideBottom",
+                          offset: -4,
+                          style: { fontSize: 9, fill: "#5c584f" },
+                        }
+                      : chart.id === "cmp-force-landing" ||
+                          chart.id === "cmp-air-profile" ||
+                          chart.id === "cmp-evidence-focus" ||
+                          chart.id === "cmp-zone-footprint"
+                        ? {
+                            value: "东 → (nm)",
+                            position: "insideBottom",
+                            offset: -4,
+                            style: { fontSize: 9, fill: "#5c584f" },
+                          }
+                        : undefined
                 }
               />
               <YAxis
                 type="number"
                 dataKey="y"
                 name={
-                  chart.id === "cmp-air-profile"
-                    ? "高度 km"
-                    : chart.id === "cmp-force-landing" ||
-                        chart.id === "cmp-evidence-focus" ||
-                        chart.id === "cmp-zone-footprint"
-                      ? "北向 nm"
-                      : "Y"
+                  chart.id === "cmp-highlight-range"
+                    ? "距岛 nm"
+                    : chart.id === "cmp-intent-axes"
+                      ? "长度 nm"
+                    : chart.id === "cmp-threat-evidence"
+                      ? "等级"
+                      : chart.id === "cmp-air-profile"
+                        ? "高度 km"
+                        : chart.id === "cmp-force-landing" ||
+                            chart.id === "cmp-evidence-focus" ||
+                            chart.id === "cmp-zone-footprint"
+                          ? "北向 nm"
+                          : "Y"
                 }
                 tick={{ fontSize: 9, fill: "#5c584f" }}
                 width={
@@ -844,25 +991,64 @@ export function ChartCard({
                     : 36
                 }
                 allowDecimals
+                domain={
+                  chart.id === "cmp-threat-evidence"
+                    ? ([0.5, 4.5] as [number, number])
+                    : undefined
+                }
+                ticks={
+                  chart.id === "cmp-threat-evidence"
+                    ? [1, 2, 3, 4]
+                    : undefined
+                }
+                tickFormatter={
+                  chart.id === "cmp-threat-evidence"
+                    ? (v: number) =>
+                        ({ 1: "低", 2: "中", 3: "高", 4: "紧急" }[
+                          Math.round(v)
+                        ] ?? String(v))
+                    : undefined
+                }
                 label={
-                  !compact &&
-                  (chart.id === "cmp-force-landing" ||
-                    chart.id === "cmp-evidence-focus" ||
-                    chart.id === "cmp-zone-footprint")
+                  !compact && chart.id === "cmp-highlight-range"
                     ? {
-                        value: "北 →",
+                        value: "距岛 nm",
                         angle: -90,
                         position: "insideLeft",
                         style: { fontSize: 9, fill: "#5c584f" },
                       }
-                    : !compact && chart.id === "cmp-air-profile"
+                    : !compact && chart.id === "cmp-intent-axes"
                       ? {
-                          value: "高度 km",
+                          value: "长度 nm",
                           angle: -90,
                           position: "insideLeft",
                           style: { fontSize: 9, fill: "#5c584f" },
                         }
-                      : undefined
+                    : !compact && chart.id === "cmp-threat-evidence"
+                      ? {
+                          value: "等级",
+                          angle: -90,
+                          position: "insideLeft",
+                          style: { fontSize: 9, fill: "#5c584f" },
+                        }
+                      : !compact &&
+                          (chart.id === "cmp-force-landing" ||
+                            chart.id === "cmp-evidence-focus" ||
+                            chart.id === "cmp-zone-footprint")
+                        ? {
+                            value: "北 →",
+                            angle: -90,
+                            position: "insideLeft",
+                            style: { fontSize: 9, fill: "#5c584f" },
+                          }
+                        : !compact && chart.id === "cmp-air-profile"
+                          ? {
+                              value: "高度 km",
+                              angle: -90,
+                              position: "insideLeft",
+                              style: { fontSize: 9, fill: "#5c584f" },
+                            }
+                          : undefined
                 }
               />
               <ZAxis
@@ -906,7 +1092,13 @@ export function ChartCard({
                           ? ` · 东 ${row.x} / 北 ${row.y} nm`
                           : chart.id === "cmp-air-profile"
                             ? ` · 东 ${row.x} nm / 高 ${row.y} km`
-                            : `（${row.x}, ${row.y}）`}
+                            : chart.id === "cmp-highlight-range"
+                              ? ` · 方位 ${row.x}° / 距岛 ${row.y} nm`
+                              : chart.id === "cmp-intent-axes"
+                                ? ` · 方位 ${row.x}° / 长 ${row.y} nm`
+                              : chart.id === "cmp-threat-evidence"
+                                ? ` · 充分度 ${row.x}/4 · 等级 ${row.y}`
+                                : `（${row.x}, ${row.y}）`}
                       </div>
                       {row.detail ? (
                         <div className="mt-1 whitespace-pre-wrap text-[var(--muted)]">
@@ -919,11 +1111,7 @@ export function ChartCard({
               />
               <Scatter
                 data={scatterData.map((s) => {
-                  const isIslandAnchor =
-                    s.side === "both" ||
-                    s.group === "登陆海域" ||
-                    s.name === "中途岛" ||
-                    /登陆海域|Midway|中途岛/i.test(String(s.name));
+                  const isIslandAnchor = isIslandAnchorPoint(chart.id, s);
                   return {
                     ...s,
                     z: isIslandAnchor
@@ -955,13 +1143,10 @@ export function ChartCard({
                       z?: number;
                     };
                   };
-                  const isIslandAnchor =
-                    payload?.side === "both" ||
-                    payload?.group === "登陆海域" ||
-                    payload?.name === "中途岛" ||
-                    /登陆海域|Midway|中途岛/i.test(
-                      String(payload?.name ?? ""),
-                    );
+                  const isIslandAnchor = isIslandAnchorPoint(
+                    chart.id,
+                    payload ?? {},
+                  );
                   if (isIslandAnchor) {
                     const r = chart.id === "cmp-air-profile" ? 8 : 6;
                     return (
@@ -1004,31 +1189,44 @@ export function ChartCard({
                 {scatterData.map((s, i) => (
                   <Cell key={`${s.name}-${i}`} fill={s.fill} />
                 ))}
+                {chart.id === "cmp-intent-axes" ? (
+                  <LabelList
+                    dataKey="name"
+                    position="top"
+                    offset={8}
+                    style={{ fontSize: 9, fill: "#3d3a34" }}
+                  />
+                ) : null}
               </Scatter>
             </ScatterChart>
           </ResponsiveContainer>
         ) : isRadar ? (
           <ResponsiveContainer width="100%" height="100%">
-            {chart.id === "cmp-force-bearing" ? (
+            {chart.id === "cmp-force-bearing" ||
+            chart.id === "cmp-intent-axes" ? (
               <RadarChart
-                data={Array.from(new Set(data.map((d) => d.name))).map(
-                  (name) => {
-                    const us = data.find(
-                      (d) => d.name === name && d.side === "USN",
-                    );
-                    const ij = data.find(
-                      (d) => d.name === name && d.side === "IJN",
-                    );
-                    return {
-                      name,
-                      美方: Number(us?.value) || 0,
-                      日方: Number(ij?.value) || 0,
-                      detail: [us?.detail, ij?.detail]
-                        .filter(Boolean)
-                        .join("\n\n"),
-                    };
-                  },
-                )}
+                data={
+                  chart.id === "cmp-intent-axes"
+                    ? intentAxesRoseRadarData(series)
+                    : Array.from(new Set(data.map((d) => d.name))).map(
+                        (name) => {
+                          const us = data.find(
+                            (d) => d.name === name && d.side === "USN",
+                          );
+                          const ij = data.find(
+                            (d) => d.name === name && d.side === "IJN",
+                          );
+                          return {
+                            name,
+                            美方: Number(us?.value) || 0,
+                            日方: Number(ij?.value) || 0,
+                            detail: [us?.detail, ij?.detail]
+                              .filter(Boolean)
+                              .join("\n\n"),
+                          };
+                        },
+                      )
+                }
                 margin={{
                   top: compact ? 8 : 12,
                   right: compact ? 16 : 28,
@@ -1040,11 +1238,12 @@ export function ChartCard({
                 <PolarGrid stroke="#d6d3ce" />
                 <PolarAngleAxis
                   dataKey="name"
-                  tick={{ fontSize: 10, fill: "#5c584f" }}
+                  tick={{ fontSize: compact ? 9 : 10, fill: "#5c584f" }}
                 />
                 <PolarRadiusAxis
                   tick={{ fontSize: 9, fill: "#5c584f" }}
                   allowDecimals={false}
+                  unit={chart.id === "cmp-intent-axes" ? " nm" : undefined}
                 />
                 <Radar
                   name="美方"
@@ -1063,7 +1262,14 @@ export function ChartCard({
                 <Legend
                   wrapperStyle={{ fontSize: 10, color: "#5c584f" }}
                 />
-                <Tooltip />
+                <Tooltip
+                  formatter={(value, name) => [
+                    chart.id === "cmp-intent-axes"
+                      ? `${Math.round(Number(value) || 0)} nm`
+                      : value,
+                    name,
+                  ]}
+                />
               </RadarChart>
             ) : (
               <RadarChart
@@ -1187,10 +1393,19 @@ export function ChartCard({
                 isHBar
                   ? {
                       top: 8,
-                      right: compact ? 28 : 24,
+                      right:
+                        chart.id === "cmp-force-range" ||
+                        chart.id === "cmp-zone-radius"
+                          ? compact
+                            ? 52
+                            : 56
+                          : compact
+                            ? 28
+                            : 24,
                       left:
                         chart.id === "cmp-hunt-range" ||
-                        chart.id === "cmp-highlight-range"
+                        chart.id === "cmp-highlight-range" ||
+                        chart.id === "cmp-force-range"
                           ? 8
                           : 4,
                       bottom: 8,
@@ -1205,7 +1420,19 @@ export function ChartCard({
                     type="number"
                     allowDecimals={false}
                     tick={{ fontSize: 10, fill: "#5c584f" }}
-                    unit={chart.id === "cmp-hunt-range" ? " nm" : undefined}
+                    domain={
+                      chart.id === "cmp-force-range" ||
+                      chart.id === "cmp-zone-radius"
+                        ? [0, "auto"]
+                        : undefined
+                    }
+                    unit={
+                      chart.id === "cmp-hunt-range" ||
+                      chart.id === "cmp-force-range" ||
+                      chart.id === "cmp-zone-radius"
+                        ? " nm"
+                        : undefined
+                    }
                   />
                   <YAxis
                     type="category"
@@ -1213,7 +1440,8 @@ export function ChartCard({
                     width={
                       chart.id === "cmp-hunt-range" ||
                       chart.id === "cmp-highlight-range" ||
-                      chart.id === "cmp-threat-rank"
+                      chart.id === "cmp-threat-rank" ||
+                      chart.id === "cmp-force-range"
                         ? compact
                           ? 108
                           : 128
@@ -1224,7 +1452,8 @@ export function ChartCard({
                     tick={{ fontSize: compact ? 9 : 10, fill: "#5c584f" }}
                     interval={0}
                   />
-                  {chart.id === "cmp-hunt-range" ? (
+                  {chart.id === "cmp-hunt-range" ||
+                  chart.id === "cmp-force-range" ? (
                     <>
                       <ReferenceLine
                         x={50}
@@ -1232,7 +1461,7 @@ export function ChartCard({
                         strokeDasharray="4 3"
                         strokeOpacity={0.55}
                         label={{
-                          value: "贴身|可及",
+                          value: "50 nm",
                           position: "insideTopLeft",
                           fontSize: 9,
                           fill: "#c45c4a",
@@ -1244,7 +1473,7 @@ export function ChartCard({
                         strokeDasharray="4 3"
                         strokeOpacity={0.55}
                         label={{
-                          value: "可及|疏远",
+                          value: "120 nm",
                           position: "insideTopLeft",
                           fontSize: 9,
                           fill: "#64748b",
@@ -1309,11 +1538,20 @@ export function ChartCard({
                           return `${Math.round(Number(v) || 0)}·${band.shortLabel}`;
                         },
                       }
-                    : {
-                        position: isHBar ? "right" : "top",
-                        fontSize: 11,
-                        fill: "#3d3a34",
-                      }
+                    : chart.id === "cmp-force-range" ||
+                        chart.id === "cmp-zone-radius"
+                      ? {
+                          position: "right",
+                          fontSize: 10,
+                          fill: "#3d3a34",
+                          formatter: (v: number) =>
+                            `${Math.round(Number(v) || 0)} nm`,
+                        }
+                      : {
+                          position: isHBar ? "right" : "top",
+                          fontSize: 11,
+                          fill: "#3d3a34",
+                        }
                 }
               >
                 {data.map((s, i) => (

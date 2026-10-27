@@ -63,12 +63,12 @@ body {
   color: #c2410c; /* 对应「高」#ea580c 的深一档字色 */
 }
 .badge-mid {
-  background: #ecfccb;
-  color: #4d7c0f; /* 对应「中」#65a30d */
+  background: #fef3c7;
+  color: #b45309; /* 对应「中」#f59e0b */
 }
 .badge-low {
-  background: #dcfce7;
-  color: #166534; /* 对应「低」#15803d */
+  background: #f8efe4;
+  color: #a67c52; /* 对应「低」#d4a574 */
 }
 
 /* 作战指向箭头：去掉 Leaflet divIcon 默认白底边框 */

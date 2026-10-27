@@ -24,7 +24,7 @@ export const SITUATION_SYSTEM_PROMPT = `你是海军战役「通用作战态势�
 2. 关注圈按任务自绘，不要被默认骨架钉死：请在 map.threat_zones 输出本任务真正要盯的圈（可 1～6 条）。
    每条含 id、center[lat,lon]、radius_nm、level、label；可选 side:"USN"|"IJN"。
    center 必须靠近输入单位真实坐标（可取群心/关键舰/岸基），radius_nm 建议 10～30（紧贴兵力，勿画过大圈）；禁止远离兵力的空想圈。
-   level 只用：紧急 / 高 / 中 / 低。前端四档分色：紧急酒红、高亮橙、中黄绿、低深绿。全图紧急区宜 ≤2。
+   level 只用：紧急 / 高 / 中 / 低。前端四档分色：紧急酒红、高亮橙、中浅橙、低杏橙（同谱渐淡）。全图紧急区宜 ≤2。
    威胁任务：圈应对准筛出的日方威胁（少画或不画纯己方编队圈）；意图任务：圈应对准支撑假设的活动区/指向相关海域。
    本地骨架仅作参考与回退：若 threat_zones 为空或校验失败，服务端才用骨架 + zone_overrides。
    zone_overrides 可选（仅回退路径有用）：对骨架 id 做 level/label/hidden。优先写满 threat_zones，而不是交空数组。

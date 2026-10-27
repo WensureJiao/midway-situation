@@ -1,25 +1,21 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChartCard } from "@/components/SituationCharts";
 import { ChartSelectionLegend } from "@/components/ChartSelectionLegend";
-import { SkeletonDiffBar } from "@/components/SkeletonDiffBar";
 import { VmmpReasoningTrace } from "@/components/VmmpReasoningTrace";
 import {
   buildExtensionFitnessMap,
   buildTaskCompareCharts,
-  pickStudySlotCharts,
 } from "@/lib/compareCharts";
-import { chartTypeLabel } from "@/lib/chartTypes";
-import { isResidentChartId } from "@/lib/vmmpChartSelect";
+import { defaultCompareSlotId } from "@/lib/vmmpChartSelect";
 import {
-  CAMPAIGN_BEAT_CODE,
   inferCampaignBeat,
   intentEvidenceItems,
-  type CampaignBeat,
 } from "@/lib/vmmpCompare";
 import type {
+  ChartSpec,
   CompactUnit,
   MapAxis,
   SituationViewSpec,
@@ -31,15 +27,6 @@ import { drawnRadiusNm } from "@/lib/utils";
 import { expandBundledShipTarget } from "@/lib/splitShipTargets";
 import { levelColor } from "@/lib/zoneLevel";
 import { Check, Crosshair, MapPin } from "lucide-react";
-
-const PHASE_BEATS: CampaignBeat[] = [
-  "集结",
-  "搜索",
-  "危机",
-  "残局",
-  "终局",
-];
-
 
 function unitCentroid(units: CompactUnit[]): [number, number] | null {
   if (!units.length) return null;
@@ -266,18 +253,18 @@ function IntentPick({
     <button
       type="button"
       onClick={onPick}
-      className={`flex w-full items-start gap-2 rounded-md bg-[var(--panel)] px-2.5 py-1.5 text-left ring-1 ${
+      className={`flex w-full items-start gap-1.5 rounded bg-[var(--panel)] px-1.5 py-1 text-left ring-1 ${
         active ? "" : "ring-[var(--line)] hover:ring-[var(--accent)]"
       }`}
       style={active ? { boxShadow: `0 0 0 2px ${tone}` } : undefined}
     >
       <span className="min-w-0 flex-1">
-        <span className="flex items-center justify-between gap-2">
+        <span className="flex items-center justify-between gap-1.5">
           <span className="truncate text-xs font-medium text-[var(--ink)]">
             {item.title}
           </span>
           <span
-            className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+            className={`shrink-0 rounded px-1 py-px text-[10px] font-semibold ${
               /紧急|高|中|低/.test(item.level)
                 ? levelBadgeClass(item.level)
                 : "bg-[var(--panel-2)] text-[var(--muted)] ring-1 ring-[var(--line)]"
@@ -286,7 +273,7 @@ function IntentPick({
             {/紧急|高|中|低/.test(item.level) ? item.level : "指向"}
           </span>
         </span>
-        <span className="mt-0.5 block text-[10px] leading-snug text-[var(--muted)]">
+        <span className="mt-px block line-clamp-1 text-[10px] leading-snug text-[var(--muted)]">
           {item.subtitle}
         </span>
       </span>
@@ -294,21 +281,49 @@ function IntentPick({
   );
 }
 
+function SideChartCard({
+  chart,
+  fill = false,
+}: {
+  chart: ChartSpec;
+  fill?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-md p-2.5 ring-1 ring-[var(--line)] ${
+        fill ? "flex h-full min-h-0 flex-col" : ""
+      }`}
+    >
+      <ChartCard chart={chart} compact showWhyType fill={fill} />
+    </div>
+  );
+}
+
 function SlotHead({
   en,
   zh,
   title,
+  compact,
 }: {
   en: string;
   zh: string;
   title: string;
+  compact?: boolean;
 }) {
   return (
-    <div className="mb-2">
-      <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+    <div className={compact ? "mb-0.5" : "mb-2"}>
+      <div
+        className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]"
+      >
         {en} <span className="opacity-50">/</span> {zh}
       </div>
-      <h3 className="text-sm font-semibold text-[var(--ink)]">{title}</h3>
+      <h3
+        className={`font-semibold text-[var(--ink)] ${
+          compact ? "text-xs leading-tight" : "text-sm"
+        }`}
+      >
+        {title}
+      </h3>
     </div>
   );
 }
@@ -489,7 +504,6 @@ export function SpatialStudyPanel({
   reasoningIntent,
   richCharts = true,
   mapKey,
-  showSkeletonDiff = false,
 }: {
   pack: SlicePack;
   spec: SituationViewSpec;
@@ -502,8 +516,6 @@ export function SpatialStudyPanel({
   reasoningIntent?: string;
   richCharts?: boolean;
   mapKey?: string;
-  /** 对比页：展示相对本地骨架的圈/轴变更 */
-  showSkeletonDiff?: boolean;
 }) {
   const threatReason = reasoningThreat ?? reasoning;
   const intentReason = reasoningIntent;
@@ -519,10 +531,6 @@ export function SpatialStudyPanel({
     { at: [number, number]; label: string; unitName?: string }[]
   >([]);
   const [focusZone, setFocusZone] = useState<ThreatZone | null>(null);
-  /** 底栏按左侧图表自然高度对齐（取两图中较矮的一栏） */
-  const distColRef = useRef<HTMLDivElement>(null);
-  const rankColRef = useRef<HTMLDivElement>(null);
-  const [bottomRowH, setBottomRowH] = useState<number | null>(null);
 
   const priorities = useMemo(
     () => buildPriorityItems(spec, taskFocus),
@@ -554,13 +562,21 @@ export function SpatialStudyPanel({
       ? "#dc2626"
       : "#2563eb";
 
-  const taskCharts = useMemo(
+  const chartsA = useMemo(
     () =>
       buildTaskCompareCharts(spec, taskFocus, pack.phase_label, {
-        rich: richCharts,
+        rich: false,
         pack,
       }),
-    [spec, taskFocus, pack, richCharts],
+    [spec, taskFocus, pack],
+  );
+  const chartsB = useMemo(
+    () =>
+      buildTaskCompareCharts(spec, taskFocus, pack.phase_label, {
+        rich: true,
+        pack,
+      }),
+    [spec, taskFocus, pack],
   );
   const extensionFitness = useMemo(
     () =>
@@ -569,59 +585,23 @@ export function SpatialStudyPanel({
       }),
     [spec, taskFocus, pack],
   );
-  const slots = useMemo(
-    () => pickStudySlotCharts(taskCharts, taskFocus),
-    [taskCharts, taskFocus],
-  );
-
-  const chartTypeSummary = useMemo(() => {
-    const types = [...new Set(taskCharts.map((c) => c.type))];
-    return types.map((t) => chartTypeLabel(t));
-  }, [taskCharts]);
-
-  /** 本侧从扩展池自由选出的图（张数不固定） */
-  const extensionCharts = useMemo(
-    () =>
-      taskCharts.filter(
-        (c) => c.id && !isResidentChartId(taskFocus, c.id),
-      ),
-    [taskCharts, taskFocus],
-  );
-
-  const phaseBeat = useMemo(
-    () => inferCampaignBeat(pack.phase_label ?? "", spec),
-    [pack.phase_label, spec],
-  );
   const reasonSide: "A" | "B" | null =
     badge === "A" || badge === "B" ? badge : null;
-
-  useLayoutEffect(() => {
-    const a = distColRef.current;
-    const b = rankColRef.current;
-    if (!a || !b) {
-      setBottomRowH(null);
-      return;
-    }
-    const naturalH = (el: HTMLDivElement) => {
-      const prev = el.style.height;
-      el.style.height = "auto";
-      const h = Math.round(el.getBoundingClientRect().height);
-      el.style.height = prev;
-      return h;
-    };
-    const measure = () => {
-      const ha = naturalH(a);
-      const hb = naturalH(b);
-      if (ha <= 0 || hb <= 0) return;
-      const next = Math.min(ha, hb);
-      setBottomRowH((prev) => (prev === next ? prev : next));
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(a);
-    ro.observe(b);
-    return () => ro.disconnect();
-  }, [taskFocus, slots.distribution, slots.ranking, spec.time_slice]);
+  const viewSide: "A" | "B" = reasonSide ?? (richCharts ? "B" : "A");
+  const sideCharts = viewSide === "B" ? chartsB : chartsA;
+  const [pickedChartId, setPickedChartId] = useState<string | null>(null);
+  const [expandAll, setExpandAll] = useState(false);
+  useEffect(() => {
+    setExpandAll(false);
+    setPickedChartId(
+      defaultCompareSlotId(
+        taskFocus,
+        { fitnessById: extensionFitness },
+        viewSide,
+      ),
+    );
+  }, [spec.time_slice, taskFocus, extensionFitness, viewSide]);
+  const pickedChart = sideCharts.find((c) => c.id && c.id === pickedChartId);
 
   const locate = (
     query: string,
@@ -708,56 +688,41 @@ export function SpatialStudyPanel({
 
   return (
     <section className="flex min-w-0 max-w-full flex-col overflow-hidden rounded-lg bg-[var(--panel)] ring-1 ring-[var(--line)]">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--line)] px-3 py-2.5">
-        <div className="min-w-0">
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
-              {frameTitle.en} <span className="opacity-50">/</span>{" "}
-              {frameTitle.zh}
-            </div>
-            <h2 className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 font-display text-lg tracking-wide text-[var(--ink)]">
-              <span className="shrink-0">
-                {label || frameTitle.sub}
-                {badge ? (
-                  <span className="ml-2 rounded bg-[var(--panel-3)] px-2 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-normal text-[var(--muted)]">
-                    {badge}
-                  </span>
-                ) : null}
-              </span>
-              <span className="min-w-0 truncate font-sans text-xs font-normal tracking-normal text-[var(--muted)]">
-                {spec.time_slice}
-                {(pack.phase_label || spec.phase_label) && (
-                  <>
-                    <span className="mx-1">·</span>
-                    {pack.phase_label || spec.phase_label}
-                  </>
-                )}
-                {spec.phase_label &&
-                  pack.phase_label &&
-                  spec.phase_label !== pack.phase_label && (
-                    <>
-                      <span className="mx-1">·</span>
-                      {spec.phase_label}
-                    </>
-                  )}
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-[var(--line)] px-3 py-1">
+        <span className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+          {frameTitle.en} <span className="opacity-50">/</span> {frameTitle.zh}
+        </span>
+        <h2 className="min-w-0 truncate font-display text-sm tracking-wide text-[var(--ink)]">
+          {label || frameTitle.sub}
+          {badge ? (
+            <span className="ml-1.5 rounded bg-[var(--panel-3)] px-1.5 py-px align-middle font-sans text-[9px] font-semibold uppercase tracking-normal text-[var(--muted)]">
+              {badge}
+            </span>
+          ) : null}
+        </h2>
+        <span className="min-w-0 truncate font-sans text-[11px] font-normal text-[var(--muted)]">
+          {spec.time_slice}
+          {(pack.phase_label || spec.phase_label) && (
+            <>
+              <span className="mx-1">·</span>
+              {pack.phase_label || spec.phase_label}
+            </>
+          )}
+          {spec.phase_label &&
+            pack.phase_label &&
+            spec.phase_label !== pack.phase_label && (
+              <>
                 <span className="mx-1">·</span>
-                美方单视角
-              </span>
-            </h2>
-          </div>
-        </div>
+                {spec.phase_label}
+              </>
+            )}
+          <span className="mx-1">·</span>
+          美方单视角
+        </span>
       </div>
 
-      {showSkeletonDiff ? (
-        <SkeletonDiffBar
-          pack={pack}
-          spec={spec}
-          sideLabel={label || (badge ? `${badge}` : undefined)}
-        />
-      ) : null}
-
       {/* 上：地图 + 右侧 PRIORITY / CORE（与本地主界面同构） */}
-      <div className="grid border-b border-[var(--line)] lg:grid-cols-[minmax(0,1fr)_minmax(300px,38%)]">
+      <div className="grid border-b border-[var(--line)] lg:grid-cols-[minmax(0,1fr)_minmax(300px,42%)]">
         <div className="map-shell relative min-h-[380px] h-[min(62vh,680px)] overflow-hidden border-b border-[var(--line)] lg:border-b-0 lg:border-r">
           <SituationMap
             key={mapKey || `${spec.time_slice}-${taskFocus}`}
@@ -776,20 +741,25 @@ export function SpatialStudyPanel({
 
         <aside className="flex max-h-[min(62vh,680px)] flex-col divide-y divide-[var(--line)] bg-[var(--panel-2)]/35">
           <div
-            className={`flex min-h-0 flex-1 flex-col p-3 ${taskFocus === "intent" ? "order-2" : ""}`}
+            className={`flex min-h-0 flex-col ${
+              taskFocus === "intent"
+                ? "order-2 shrink-0 overflow-visible px-1.5 pb-2 pt-1.5"
+                : "flex-[1.1] overflow-hidden p-1.5"
+            }`}
           >
             {taskFocus === "intent" ? (
-              <div className="min-h-0 flex-1 space-y-3 overflow-auto">
+              <div>
                 <section>
                   <SlotHead
+                    compact
                     en="ENEMY AIM"
                     zh="日方指向"
                     title="我方看到的对方指向"
                   />
-                  <p className="mb-1.5 text-[10px] leading-snug text-[var(--muted)]">
+                  <p className="mb-0.5 text-[10px] leading-snug text-[var(--muted)]">
                     对方往哪打。这是美方的观察，不是我方主指向。
                   </p>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {priorities.filter((p) => p.axis?.side === "IJN").length ? (
                       priorities
                         .filter((p) => p.axis?.side === "IJN")
@@ -816,14 +786,12 @@ export function SpatialStudyPanel({
             ) : (
               <>
             <SlotHead
+              compact
               en="PRIORITY"
               zh="优先度"
               title="关键目标排序"
             />
-            <p className="mb-1.5 text-[10px] text-[var(--muted)]">
-              点击条目可在地图中高亮定位
-            </p>
-            <div className="min-h-0 flex-1 space-y-2 overflow-auto px-0.5 py-0.5">
+            <div className="min-h-0 flex-1 space-y-1 overflow-auto p-0.5">
               {priorities.length ? (
                 priorities.map((p) => {
                   const tone = /紧急|高|中|低/.test(p.level)
@@ -845,7 +813,7 @@ export function SpatialStudyPanel({
                           axis: p.axis,
                         })
                       }
-                      className={`flex w-full items-start gap-2 rounded-md bg-[var(--panel)] px-2.5 py-1.5 text-left ring-1 transition ${
+                      className={`flex w-full items-start gap-1.5 rounded bg-[var(--panel)] px-1.5 py-1 text-left ring-1 transition ${
                         active ? "" : "ring-[var(--line)] hover:ring-[var(--accent)]"
                       }`}
                       style={
@@ -855,23 +823,23 @@ export function SpatialStudyPanel({
                       }
                     >
                       <span
-                        className="mt-0.5 w-6 shrink-0 text-left text-[11px] font-semibold tabular-nums leading-none"
+                        className="mt-0.5 w-5 shrink-0 text-left text-[11px] font-semibold tabular-nums leading-none"
                         style={{ color: tone }}
                       >
                         {String(p.rank).padStart(2, "0")}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="flex items-center justify-between gap-2">
+                        <span className="flex items-center justify-between gap-1.5">
                           <span className="truncate text-xs font-medium text-[var(--ink)]">
                             {p.title}
                           </span>
                           <span
-                            className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${levelBadgeClass(p.level)}`}
+                            className={`shrink-0 rounded px-1 py-px text-[10px] font-semibold ${levelBadgeClass(p.level)}`}
                           >
                             {/紧急|高|中|低|指向|实体/.test(p.level) ? p.level : "关注"}
                           </span>
                         </span>
-                        <span className="mt-0.5 block line-clamp-2 text-[10px] leading-snug text-[var(--muted)]">
+                        <span className="mt-px block line-clamp-1 text-[10px] leading-snug text-[var(--muted)]">
                           {p.subtitle}
                         </span>
                       </span>
@@ -879,7 +847,7 @@ export function SpatialStudyPanel({
                   );
                 })
               ) : (
-                <p className="py-4 text-xs text-[var(--muted)]">
+                <p className="py-2 text-[10px] text-[var(--muted)]">
                   暂无美方视角威胁条目
                 </p>
               )}
@@ -888,39 +856,40 @@ export function SpatialStudyPanel({
             )}
           </div>
 
-          <div className={`shrink-0 p-3 ${taskFocus === "intent" ? "order-1" : ""}`}>
+          <div className={`shrink-0 p-1.5 ${taskFocus === "intent" ? "order-1" : ""}`}>
             <SlotHead
+              compact
               en={taskFocus === "intent" ? "CLAIM" : "CORE NODE"}
               zh={taskFocus === "intent" ? "意图结论" : "核心对象"}
               title={taskFocus === "intent" ? "主作战指向" : "当前核心判断"}
             />
             <div
-              className="rounded-md bg-[var(--panel)] px-3 py-2.5 ring-1 ring-[var(--line)]"
+              className="rounded bg-[var(--panel)] px-1.5 py-1.5 ring-1 ring-[var(--line)]"
               style={
                 focusKey === "core"
                   ? { boxShadow: `0 0 0 2px ${coreColor}` }
                   : undefined
               }
             >
-              <div className="flex items-start gap-2">
+              <div className="flex items-start gap-1.5">
                 <MapPin
-                  className="mt-0.5 h-4 w-4 shrink-0"
+                  className="mt-0.5 h-3 w-3 shrink-0"
                   style={{ color: coreColor }}
                 />
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold text-[var(--ink)]">
+                  <div className="text-xs font-semibold leading-tight text-[var(--ink)]">
                     {(core.locateQueries?.length ?? 0) > 1
                       ? `${core.locateQueries.length} 个${/紧急/.test(core.hint) ? "紧急" : "同级"}目标`
                       : core.title}
                   </div>
                   {(core.locateQueries?.length ?? 0) > 1 ? (
-                    <div className="mt-1.5 flex flex-wrap gap-1">
+                    <div className="mt-1 flex flex-wrap gap-0.5">
                       {core.locateQueries.map((name) => {
                         const placed = Boolean(resolveMapFocus(name, pack, spec));
                         return (
                           <span
                             key={name}
-                            className={`rounded px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-[var(--line)] ${
+                            className={`rounded px-1 py-px text-[10px] font-medium ring-1 ring-[var(--line)] ${
                               placed
                                 ? "bg-[var(--panel-2)] text-[var(--ink)]"
                                 : "bg-[var(--panel)] text-[var(--muted)] line-through"
@@ -934,10 +903,13 @@ export function SpatialStudyPanel({
                       })}
                     </div>
                   ) : null}
-                  <p className="mt-1 text-[11px] leading-relaxed text-[var(--muted)]">
+                  <p
+                    className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-[var(--muted)]"
+                    title={core.body}
+                  >
                     {core.body}
                   </p>
-                  <p className="mt-1 text-[10px] text-[var(--muted)]">
+                  <p className="mt-px line-clamp-1 text-[10px] text-[var(--muted)]">
                     {core.hint}
                   </p>
                 </div>
@@ -956,10 +928,10 @@ export function SpatialStudyPanel({
                         : undefined,
                   })
                 }
-                className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-medium text-white disabled:opacity-40"
+                className="mt-1 inline-flex w-full items-center justify-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-white disabled:opacity-40"
                 style={{ background: coreColor }}
               >
-                <Crosshair className="h-3.5 w-3.5" />
+                <Crosshair className="h-3 w-3" />
                 {taskFocus === "intent"
                   ? "定位这条指向"
                   : (core.locateQueries?.length ?? 0) > 1
@@ -972,304 +944,175 @@ export function SpatialStudyPanel({
               </button>
             </div>
           </div>
+
+          <div className="order-3 flex min-h-0 flex-1 flex-col overflow-hidden p-1.5">
+            <SlotHead
+              compact
+              en={taskFocus === "intent" ? "BASIS" : "EVIDENCE"}
+              zh={taskFocus === "intent" ? "依据" : "判断依据"}
+              title={taskFocus === "intent" ? "支撑这条意图的证据" : "为什么重要"}
+            />
+            <div className="min-h-0 flex-1 overflow-auto pr-0.5">
+              {taskFocus === "intent" ? (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] leading-snug text-[var(--muted)]">
+                    活动区和关键实体都是依据。点一下可在地图上定位。
+                  </p>
+                  <div>
+                    <div className="mb-0.5 text-[10px] font-semibold text-[var(--ink)]">
+                      活动区
+                    </div>
+                    <div className="space-y-1">
+                      {priorities.filter((p) => p.id.startsWith("z-")).length ? (
+                        priorities
+                          .filter((p) => p.id.startsWith("z-"))
+                          .map((p) => (
+                            <IntentPick
+                              key={p.id}
+                              item={p}
+                              active={focusKey === p.id}
+                              onPick={() =>
+                                locate(p.locateQuery, {
+                                  color: levelTone(p.level),
+                                  key: p.id,
+                                  zone: p.zone,
+                                })
+                              }
+                            />
+                          ))
+                      ) : (
+                        <p className="text-[11px] text-[var(--muted)]">
+                          暂无活动区
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="mb-0.5 text-[10px] font-semibold text-[var(--ink)]">
+                      关键实体
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {priorities.filter((p) => p.id.startsWith("hl-")).length ? (
+                        priorities
+                          .filter((p) => p.id.startsWith("hl-"))
+                          .map((p) => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() =>
+                                locate(p.locateQuery, {
+                                  color: "#334155",
+                                  key: p.id,
+                                })
+                              }
+                              className={`rounded bg-[var(--panel)] px-1.5 py-0.5 text-left text-[11px] ring-1 ${
+                                focusKey === p.id
+                                  ? "ring-[#334155]"
+                                  : "ring-[var(--line)] hover:ring-[#64748b]"
+                              }`}
+                            >
+                              <span className="mr-1 text-[10px] font-semibold text-[#64748b]">
+                                实体
+                              </span>
+                              <span className="font-medium text-[var(--ink)]">
+                                {p.title
+                                  .replace(/^IJN\s+/i, "")
+                                  .replace(/^USS\s+/i, "")}
+                              </span>
+                            </button>
+                          ))
+                      ) : (
+                        <p className="text-[11px] text-[var(--muted)]">
+                          暂无关键实体
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <ul className="space-y-1">
+                  {evidence.map((e, i) => (
+                    <li
+                      key={`${e.title}-${i}`}
+                      className="flex items-start gap-1.5 text-[11px] leading-snug"
+                    >
+                      <Check className="mt-0.5 h-3 w-3 shrink-0 text-[var(--accent)]" />
+                      <span className="min-w-0">
+                        <span className="font-medium text-[var(--ink)]">
+                          {e.title}
+                        </span>
+                        <span className="mt-px block line-clamp-2 break-words text-[10px] text-[var(--muted)]">
+                          {e.detail}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {threatReason?.trim() && !reasonSide ? (
+                <details className="mt-2 rounded-md bg-[var(--panel-2)] px-2 py-1.5 ring-1 ring-[var(--line)]">
+                  <summary className="cursor-pointer text-[10px] font-medium text-[var(--muted)]">
+                    展开完整推理路径
+                  </summary>
+                  <div className="mt-1 max-h-28 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-relaxed text-[var(--muted)]">
+                    {threatReason.trim()}
+                  </div>
+                </details>
+              ) : null}
+            </div>
+          </div>
         </aside>
       </div>
 
-      {/* 威胁：分布 → 排序 → 依据（无战役节拍）
-          意图：分布 → 证据构成 → 依据 → 战役节拍
-          整行高度取左侧两图中较矮一栏，依据/阶段超出可滚动 */}
-      <div
-        className={`grid items-start gap-0 border-b border-[var(--line)] sm:grid-cols-2 ${
-          taskFocus === "intent" ? "lg:grid-cols-4" : "lg:grid-cols-3"
-        }`}
-      >
-        <div
-          ref={distColRef}
-          className="flex min-h-0 min-w-0 flex-col border-b border-[var(--line)] p-3 sm:border-r lg:border-b-0"
-          style={bottomRowH ? { height: bottomRowH } : undefined}
-        >
-          <SlotHead
-            en="DISTRIBUTION"
-            zh="分布"
-            title="敌我位置与登陆海域关系"
-          />
-          <div className="min-h-0 min-w-0 flex-1 overflow-auto">
-            {slots.distribution ? (
-              <div className="min-w-0 max-w-full">
-                <ChartCard chart={slots.distribution} compact hideChromeTitle />
-              </div>
-            ) : (
-              <p className="text-xs text-[var(--muted)]">暂无分布图</p>
-            )}
-          </div>
-        </div>
-
-        <div
-          ref={rankColRef}
-          className="flex min-h-0 min-w-0 flex-col border-b border-[var(--line)] p-3 lg:border-b-0 lg:border-r"
-          style={bottomRowH ? { height: bottomRowH } : undefined}
-        >
-          <SlotHead
-            en={taskFocus === "intent" ? "EVIDENCE MIX" : "RANKING"}
-            zh={taskFocus === "intent" ? "构成" : "排序"}
-            title={
-              taskFocus === "intent"
-                ? "证据构成（方向 / 实体 / 活动区）"
-                : "威胁优先级排序"
-            }
-          />
-          <div className="min-h-0 min-w-0 flex-1 overflow-auto">
-            {slots.ranking ? (
-              <div className="min-w-0 max-w-full">
-                <ChartCard chart={slots.ranking} compact hideChromeTitle />
-              </div>
-            ) : (
-              <p className="text-xs text-[var(--muted)]">暂无排序图</p>
-            )}
-          </div>
-        </div>
-
-        <div
-          className="flex min-h-0 min-w-0 flex-col border-b border-[var(--line)] p-3 sm:border-r lg:border-b-0"
-          style={bottomRowH ? { height: bottomRowH } : undefined}
-        >
-          <SlotHead
-            en={taskFocus === "intent" ? "BASIS" : "EVIDENCE"}
-            zh={taskFocus === "intent" ? "依据" : "判断依据"}
-            title={taskFocus === "intent" ? "支撑这条意图的证据" : "为什么重要"}
-          />
-          {/* 左右留白，避免活动区按钮 ring / 选中描边被 overflow 裁切 */}
-          <div className="-mx-0.5 min-h-0 min-w-0 flex-1 overflow-auto px-1.5">
-            {taskFocus === "intent" ? (
-              <div className="space-y-3">
-                <p className="text-[10px] leading-snug text-[var(--muted)]">
-                  活动区和关键实体都是依据：说明上面的指向凭什么成立。点一下可在地图上定位。
-                </p>
-                <div>
-                  <div className="mb-1 text-[10px] font-semibold text-[var(--ink)]">
-                    活动区
-                  </div>
-                  <p className="mb-1.5 text-[10px] leading-snug text-[var(--muted)]">
-                    这一拍盯住的海域。紧急 / 高 / 中 / 低是圈有多急，不是给舰排名。
-                  </p>
-                  <div className="space-y-1.5">
-                    {priorities.filter((p) => p.id.startsWith("z-")).length ? (
-                      priorities
-                        .filter((p) => p.id.startsWith("z-"))
-                        .map((p) => (
-                          <IntentPick
-                            key={p.id}
-                            item={p}
-                            active={focusKey === p.id}
-                            onPick={() =>
-                              locate(p.locateQuery, {
-                                color: levelTone(p.level),
-                                key: p.id,
-                                zone: p.zone,
-                              })
-                            }
-                          />
-                        ))
-                    ) : (
-                      <p className="text-[11px] text-[var(--muted)]">
-                        暂无活动区
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <div className="mb-1 text-[10px] font-semibold text-[var(--ink)]">
-                    关键实体
-                  </div>
-                  <p className="mb-1.5 text-[10px] leading-snug text-[var(--muted)]">
-                    图上带「实体」名牌的单位。用来说明判断靠谁成立，不按谁更危险排序。
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {priorities.filter((p) => p.id.startsWith("hl-")).length ? (
-                      priorities
-                        .filter((p) => p.id.startsWith("hl-"))
-                        .map((p) => (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() =>
-                              locate(p.locateQuery, {
-                                color: "#334155",
-                                key: p.id,
-                              })
-                            }
-                            className={`rounded-md bg-[var(--panel)] px-2 py-1 text-left text-[11px] ring-1 ${
-                              focusKey === p.id
-                                ? "ring-[#334155]"
-                                : "ring-[var(--line)] hover:ring-[#64748b]"
-                            }`}
-                          >
-                            <span className="mr-1 text-[10px] font-semibold text-[#64748b]">
-                              实体
-                            </span>
-                            <span className="font-medium text-[var(--ink)]">
-                              {p.title
-                                .replace(/^IJN\s+/i, "")
-                                .replace(/^USS\s+/i, "")}
-                            </span>
-                          </button>
-                        ))
-                    ) : (
-                      <p className="text-[11px] text-[var(--muted)]">
-                        暂无关键实体
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <ul className="space-y-2">
-                {evidence.map((e, i) => (
-                  <li
-                    key={`${e.title}-${i}`}
-                    className="flex items-start gap-2 text-[11px] leading-snug"
-                  >
-                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--accent)]" />
-                    <span className="min-w-0">
-                      <span className="font-medium text-[var(--ink)]">
-                        {e.title}
-                      </span>
-                      <span className="mt-0.5 block break-words text-[var(--muted)]">
-                        {e.detail}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {threatReason?.trim() && !reasonSide ? (
-              <details className="mt-3 rounded-md bg-[var(--panel-2)] px-2 py-1.5 ring-1 ring-[var(--line)]">
-                <summary className="cursor-pointer text-[10px] font-medium text-[var(--muted)]">
-                  展开完整推理路径
-                </summary>
-                <div className="mt-1 max-h-28 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-relaxed text-[var(--muted)]">
-                  {threatReason.trim()}
-                </div>
-              </details>
-            ) : null}
-          </div>
-        </div>
-
-        {taskFocus === "intent" ? (
-          <div
-            className="flex min-h-0 min-w-0 flex-col p-3"
-            style={bottomRowH ? { height: bottomRowH } : undefined}
-          >
-            <SlotHead
-              en="PHASE"
-              zh="阶段"
-              title="战役节拍（集结→终局）"
+      <div className="border-t border-[var(--line)] px-3 py-2.5">
+        <div className="grid items-stretch gap-3 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <div className="flex min-w-0 flex-col">
+            <ChartSelectionLegend
+              compact
+              taskFocus={taskFocus}
+              activeSide={viewSide}
+              fitnessById={extensionFitness}
+              pickedId={expandAll ? null : pickedChartId}
+              onPick={(id) => {
+                setExpandAll(false);
+                setPickedChartId(id || null);
+              }}
+              expandAll={expandAll}
+              onToggleExpand={() => setExpandAll((v) => !v)}
             />
-            <div className="min-h-0 min-w-0 flex-1 overflow-auto">
-              <div className="mt-1 flex flex-wrap gap-1">
-                {PHASE_BEATS.map((b) => {
-                  const on = b === phaseBeat;
-                  return (
-                    <span
-                      key={b}
-                      className={`rounded px-1.5 py-0.5 text-[9px] font-medium tabular-nums ${
-                        on
-                          ? "bg-[var(--accent)] text-[var(--accent-fg)]"
-                          : "bg-[var(--panel-2)] text-[var(--muted)] ring-1 ring-[var(--line)]"
-                      }`}
-                    >
-                      {CAMPAIGN_BEAT_CODE[b]} {b}
-                    </span>
-                  );
-                })}
-              </div>
-              <p className="mt-1.5 text-[10px] leading-snug text-[var(--muted)]">
-                当前更接近「{phaseBeat}」
-                {(pack.phase_label || spec.phase_label) && (
-                  <> · {pack.phase_label || spec.phase_label}</>
+          </div>
+          <div className="flex min-w-0 flex-col">
+            {expandAll ? (
+              <div className="min-h-0 flex-1 space-y-3 overflow-auto">
+                {sideCharts.length ? (
+                  sideCharts.map((chart) => (
+                    <SideChartCard key={chart.id} chart={chart} />
+                  ))
+                ) : (
+                  <p className="text-[11px] text-[var(--muted)]">本侧暂无入选问句</p>
                 )}
+              </div>
+            ) : pickedChart ? (
+              <SideChartCard chart={pickedChart} fill />
+            ) : (
+              <p className="flex min-h-[10rem] items-center justify-center rounded-md px-3 text-center text-[11px] text-[var(--muted)] ring-1 ring-[var(--line)]">
+                点左侧问句，或「全部展开」
               </p>
-              <p className="mt-1 text-[10px] leading-snug text-[var(--muted)]">
-                节拍回答这一片处在集结、搜索、危机、残局还是终局。
-              </p>
-            </div>
+            )}
+          </div>
+        </div>
+        {reasonSide ? (
+          <div className="mt-3 border-t border-[var(--line)] pt-2.5">
+            <VmmpReasoningTrace
+              reasoningThreat={threatReason}
+              reasoningIntent={intentReason}
+              side={reasonSide}
+              observerLabel="美方"
+              lockedFocus={taskFocus}
+            />
           </div>
         ) : null}
       </div>
-
-      {reasonSide ? (
-        <ChartSelectionLegend
-          taskFocus={taskFocus}
-          activeSide={reasonSide}
-          fitnessById={extensionFitness}
-        />
-      ) : null}
-
-      {extensionCharts.length > 0 ? (
-        <div className="border-t border-[var(--line)] px-3 py-3">
-          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-            <div>
-              <h3 className="text-sm font-semibold text-[var(--ink)]">
-                {reasonSide === "B" ? "B" : reasonSide === "A" ? "A" : "本侧"} ·
-                所选扩展图
-              </h3>
-              <p className="mt-0.5 text-[10px] leading-snug text-[var(--muted)]">
-                本侧自由选中的扩展图（张数不固定）；切 A/B
-                对比谁的选图更贴任务问句
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {extensionCharts.map((c) => (
-                <span
-                  key={c.id}
-                  className="rounded bg-[var(--accent)]/15 px-1.5 py-0.5 text-[10px] text-[var(--ink)] ring-1 ring-[var(--accent)]/40"
-                >
-                  {chartTypeLabel(c.type)}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {extensionCharts.map((c) => (
-              <div
-                key={c.id}
-                className="min-w-0 rounded-md bg-[var(--panel-2)]/40 p-2 ring-1 ring-[var(--line)]"
-              >
-                <ChartCard chart={c} compact showWhyType />
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {reasonSide ? (
-        <div className="border-t border-[var(--line)] px-3 py-2.5">
-          <VmmpReasoningTrace
-            reasoningThreat={threatReason}
-            reasoningIntent={intentReason}
-            side={reasonSide}
-            observerLabel="美方"
-            lockedFocus={taskFocus}
-          />
-          {richCharts ? (
-            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] text-[var(--muted)]">本侧图种：</span>
-              {chartTypeSummary.length ? (
-                chartTypeSummary.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded bg-[var(--panel-2)] px-1.5 py-0.5 text-[10px] text-[var(--ink)] ring-1 ring-[var(--line)]"
-                  >
-                    {t}
-                  </span>
-                ))
-              ) : (
-                <span className="text-[10px] text-[var(--muted)]">暂无</span>
-              )}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
 
     </section>
   );

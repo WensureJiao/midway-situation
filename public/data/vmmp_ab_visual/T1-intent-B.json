@@ -1,9 +1,9 @@
 {
   "generated_by": "llm",
   "time_slice": "T1",
-  "title": "南云集结·美方前出：初始态势研判",
-  "phase_label": "初始态势：兵力展开与南云机动部队集结",
-  "narrative": "美方TF16与TF17正以15节航速向西北偏西方向前出，尚未释放侦察机，处于搜索准备阶段；日方南云机动部队四航母呈松散集群停泊于中途岛西北约230海里处，整体航向112.5°，明确指向中途岛；所有舰载机均在甲板/机库待命，无空中单位，战役尚未进入接触阶段，但日方水侦配置与航向已构成首轮发现链启动前提。",
+  "title": "南云集结·美特混压进",
+  "phase_label": "初始态势：兵力展开与机动部队集结",
+  "narrative": "美方两支特混舰队（TF16、TF17）正以15节航速向西北偏西方向航行，整体指向南云机动部队当前集结区；日方四艘航母呈松散集群停泊/低速航行于东经179.7°W附近，航向112.5°，明确指向中途岛主岛方位；双方均未放飞侦察机，战场处于‘静默接触前夜’阶段；我方尚未掌握敌精确位置，但其航向与集群几何已暴露主攻意图。",
   "map": {
     "center": [
       29.4,
@@ -21,7 +21,7 @@
     ],
     "axes": [
       {
-        "id": "ijn-movement",
+        "id": "ijn-midway-axis",
         "from": [
           29.15,
           -179.76
@@ -34,7 +34,7 @@
         "side": "IJN"
       },
       {
-        "id": "usn-approach",
+        "id": "usn-nagumo-axis",
         "from": [
           30.01,
           -177.25
@@ -60,25 +60,25 @@
         "side": "IJN"
       },
       {
-        "id": "ijn-recon-belt",
+        "id": "recon-belt",
         "center": [
           29.18,
           -179.82
         ],
         "radius_nm": 12,
         "level": "紧急",
-        "label": "利根/筑摩水侦带",
+        "label": "利根/筑摩水侦待发带",
         "side": "IJN"
       },
       {
-        "id": "usn-tf16-convergence",
+        "id": "tf16-approach-corridor",
         "center": [
-          30.01,
-          -177.25
+          29.99,
+          -177.24
         ],
         "radius_nm": 14,
         "level": "中",
-        "label": "TF16前出轴心",
+        "label": "TF16压进走廊",
         "side": "USN"
       }
     ]
@@ -111,207 +111,9 @@
   ],
   "charts": [
     {
-      "id": "cmp-force-landing",
-      "type": "scatter",
-      "title": "敌我位置与登陆海域关系",
-      "description": "原点=中途岛；横轴东向海里，纵轴北向海里；红美蓝日",
-      "series": [
-        {
-          "name": "中途岛",
-          "value": 0,
-          "x": 0,
-          "y": 0,
-          "side": "both",
-          "group": "登陆海域",
-          "detail": "登陆/目标海域锚点 · 中途岛\n(28.21°N, 177.38°W)"
-        },
-        {
-          "name": "CVA-5 Yorktown",
-          "value": 93,
-          "x": 25.4,
-          "y": 89.4,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · 航空母舰\n相对中途岛：东 25.4 nm / 北 89.4 nm\n距离约 93 nm · 方位 16°"
-        },
-        {
-          "name": "CVA-6 Enterprise",
-          "value": 108.5,
-          "x": 6.8,
-          "y": 108.3,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · 航空母舰\n相对中途岛：东 6.8 nm / 北 108.3 nm\n距离约 108.5 nm · 方位 4°"
-        },
-        {
-          "name": "CVA-7 Hornet",
-          "value": 105.9,
-          "x": 8.6,
-          "y": 105.6,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · 航空母舰\n相对中途岛：东 8.6 nm / 北 105.6 nm\n距离约 105.9 nm · 方位 5°"
-        },
-        {
-          "name": "IJN Akagi",
-          "value": 137.8,
-          "x": -125.6,
-          "y": 56.7,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · 航空母舰\n相对中途岛：东 -125.6 nm / 北 56.7 nm\n距离约 137.8 nm · 方位 294°"
-        },
-        {
-          "name": "IJN Hiryu",
-          "value": 137.3,
-          "x": -124.4,
-          "y": 58.1,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · 航空母舰\n相对中途岛：东 -124.4 nm / 北 58.1 nm\n距离约 137.3 nm · 方位 295°"
-        },
-        {
-          "name": "IJN Soryu",
-          "value": 145.2,
-          "x": -134.4,
-          "y": 55,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · 航空母舰\n相对中途岛：东 -134.4 nm / 北 55 nm\n距离约 145.2 nm · 方位 292°"
-        },
-        {
-          "name": "IJN Kaga",
-          "value": 137.3,
-          "x": -123.8,
-          "y": 59.5,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · 航空母舰\n相对中途岛：东 -123.8 nm / 北 59.5 nm\n距离约 137.3 nm · 方位 296°"
-        },
-        {
-          "name": "IJN Kirishima",
-          "value": 135.9,
-          "x": -123.1,
-          "y": 57.5,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · 战列舰\n相对中途岛：东 -123.1 nm / 北 57.5 nm\n距离约 135.9 nm · 方位 295°"
-        },
-        {
-          "name": "IJN Haruna",
-          "value": 145,
-          "x": -131.9,
-          "y": 60.4,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · 战列舰\n相对中途岛：东 -131.9 nm / 北 60.4 nm\n距离约 145 nm · 方位 295°"
-        },
-        {
-          "name": "USS Portland",
-          "value": 91.5,
-          "x": 23.7,
-          "y": 88.4,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · 重巡洋舰\n相对中途岛：东 23.7 nm / 北 88.4 nm\n距离约 91.5 nm · 方位 15°"
-        },
-        {
-          "name": "USS Astoria",
-          "value": 95.2,
-          "x": 26.7,
-          "y": 91.3,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · 重巡洋舰\n相对中途岛：东 26.7 nm / 北 91.3 nm\n距离约 95.2 nm · 方位 16°"
-        },
-        {
-          "name": "USS Atlanta",
-          "value": 104.3,
-          "x": 6.9,
-          "y": 104,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · 防空巡洋舰\n相对中途岛：东 6.9 nm / 北 104 nm\n距离约 104.3 nm · 方位 4°"
-        },
-        {
-          "name": "USS Norrthampton",
-          "value": 107.3,
-          "x": 4.8,
-          "y": 107.2,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · 重巡洋舰\n相对中途岛：东 4.8 nm / 北 107.2 nm\n距离约 107.3 nm · 方位 3°"
-        },
-        {
-          "name": "USS New Orleans",
-          "value": 104.3,
-          "x": 9.5,
-          "y": 103.9,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · 重巡洋舰\n相对中途岛：东 9.5 nm / 北 103.9 nm\n距离约 104.3 nm · 方位 5°"
-        },
-        {
-          "name": "USS Minneapolis",
-          "value": 110.1,
-          "x": 5.8,
-          "y": 109.9,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · 重巡洋舰\n相对中途岛：东 5.8 nm / 北 109.9 nm\n距离约 110.1 nm · 方位 3°"
-        },
-        {
-          "name": "USS Pensacola",
-          "value": 107.8,
-          "x": 10.8,
-          "y": 107.3,
-          "side": "USN",
-          "group": "美方",
-          "detail": "美方 · 重巡洋舰\n相对中途岛：东 10.8 nm / 北 107.3 nm\n距离约 107.8 nm · 方位 6°"
-        },
-        {
-          "name": "IJN Nagara",
-          "value": 138.9,
-          "x": -124.4,
-          "y": 61.8,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · 轻巡洋舰\n相对中途岛：东 -124.4 nm / 北 61.8 nm\n距离约 138.9 nm · 方位 296°"
-        },
-        {
-          "name": "IJN Tone",
-          "value": 141.6,
-          "x": -128.9,
-          "y": 58.5,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · 重巡洋舰-侦察巡洋舰\n相对中途岛：东 -128.9 nm / 北 58.5 nm\n距离约 141.6 nm · 方位 294°"
-        },
-        {
-          "name": "IJN Chikuma",
-          "value": 142.3,
-          "x": -130.9,
-          "y": 55.8,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · 重巡洋舰-侦察巡洋舰\n相对中途岛：东 -130.9 nm / 北 55.8 nm\n距离约 142.3 nm · 方位 293°"
-        },
-        {
-          "name": "IJN Kazagumo",
-          "value": 146,
-          "x": -133.5,
-          "y": 59.1,
-          "side": "IJN",
-          "group": "日方",
-          "detail": "日方 · 驱逐舰\n相对中途岛：东 -133.5 nm / 北 59.1 nm\n距离约 146 nm · 方位 294°"
-        }
-      ],
-      "why_type": "常驻 · M：Spatial+Locate → Position ⇒ scatter"
-    },
-    {
       "id": "cmp-force-bearing",
       "type": "radar",
-      "title": "问：相对岛，敌我方位扇区如何分布？（方位玫瑰）",
+      "title": "相对岛，敌我方位扇区如何分布？（方位玫瑰）",
       "description": "美/日舰艇相对中途岛八方位计数；突起=兵力所在扇区",
       "series": [
         {
@@ -427,82 +229,32 @@
           "detail": "日方 · NW\n1. 日·Akagi\n2. 日·Hiryu\n3. 日·Kaga\n4. 日·Kirishima\n5. 日·Haruna\n6. 日·Nagara\n7. 日·Tone\n8. 日·Chikuma\n9. 日·Kazagumo"
         }
       ],
-      "why_type": "VMMP · M：Spatial+Locate → Position ⇒ radar · 适切100"
+      "why_type": "优先#1 · VMMP · M：Comparative+Compare → Alignment ⇒ radar（A 不会此图种） · 适切100"
     },
     {
-      "id": "cmp-intent-evidence",
-      "type": "pie",
-      "title": "证据构成",
-      "description": "Direction / Entity / Zone 占比",
+      "id": "cmp-intent-axes",
+      "type": "radar",
+      "title": "图上作战指向朝哪、各多长？",
+      "description": "各作战指向长度轮廓（雷达）；对照地图虚线轴",
       "series": [
         {
-          "name": "Direction",
-          "value": 2,
-          "detail": "1. 南云→中途岛\n2. TF16→南云集群"
+          "name": "南云→中途岛",
+          "value": 136.9,
+          "x": 114,
+          "y": 136.9,
+          "side": "IJN",
+          "detail": "南云→中途岛\n日方作战指向\n方位 114° · 长 136.9 nm\n29.15°N 179.76°W → 28.21°N 177.38°W"
         },
         {
-          "name": "Entity",
-          "value": 4,
-          "detail": "1. IJN Akagi\n2. IJN Hiryu\n3. IJN Kaga\n4. IJN Soryu"
-        },
-        {
-          "name": "Zone",
-          "value": 1,
-          "detail": "1. 南云航母集群（高）"
+          "name": "TF16→南云集群",
+          "value": 140.2,
+          "x": 248,
+          "y": 140.2,
+          "side": "USN",
+          "detail": "TF16→南云集群\n美方作战指向\n方位 248° · 长 140.2 nm\n30.01°N 177.25°W → 29.15°N 179.76°W"
         }
       ],
-      "why_type": "常驻 · M：Associative+Relate → Connection ⇒ pie"
-    },
-    {
-      "id": "cmp-highlight-range",
-      "type": "hbar",
-      "title": "问：高亮实体距中途岛各多少海里？",
-      "description": "条长=真实距离",
-      "series": [
-        {
-          "name": "Soryu",
-          "value": 145.2,
-          "side": "IJN",
-          "detail": "IJN Soryu 距中途岛约 145.2 nm"
-        },
-        {
-          "name": "Akagi",
-          "value": 137.8,
-          "side": "IJN",
-          "detail": "IJN Akagi 距中途岛约 137.8 nm"
-        },
-        {
-          "name": "Hiryu",
-          "value": 137.3,
-          "side": "IJN",
-          "detail": "IJN Hiryu 距中途岛约 137.3 nm"
-        },
-        {
-          "name": "Kaga",
-          "value": 137.3,
-          "side": "IJN",
-          "detail": "IJN Kaga 距中途岛约 137.3 nm"
-        },
-        {
-          "name": "Enterprise",
-          "value": 108.5,
-          "side": "USN",
-          "detail": "CVA-6 Enterprise 距中途岛约 108.5 nm"
-        },
-        {
-          "name": "Hornet",
-          "value": 105.9,
-          "side": "USN",
-          "detail": "CVA-7 Hornet 距中途岛约 105.9 nm"
-        },
-        {
-          "name": "Yorktown",
-          "value": 93,
-          "side": "USN",
-          "detail": "CVA-5 Yorktown 距中途岛约 93 nm"
-        }
-      ],
-      "why_type": "VMMP · M：Associative+Relate → Proximity ⇒ hbar · 适切100"
+      "why_type": "优先#2 · VMMP · M：Associative+Relate → Connection ⇒ radar（A 不会此图种） · 适切62"
     }
   ],
   "intent_findings": [],

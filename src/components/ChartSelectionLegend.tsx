@@ -1,162 +1,166 @@
 "use client";
 
 import { chartTypeLabel } from "@/lib/chartTypes";
-import {
-  extensionPickIds,
-  slotSelectionMatrix,
-} from "@/lib/vmmpChartSelect";
-import type { TaskFocus } from "@/lib/types";
+import { slotSelectionMatrix } from "@/lib/vmmpChartSelect";
+import type { ChartType, TaskFocus } from "@/lib/types";
 
 type Props = {
   taskFocus: TaskFocus;
   activeSide?: "A" | "B" | null;
-  /** 本片扩展适切度；有则表内勾选为真实入选，张数随切片变 */
   fitnessById?: ReadonlyMap<string, number> | Record<string, number>;
+  compact?: boolean;
+  pickedId?: string | null;
+  onPick?: (id: string) => void;
+  expandAll?: boolean;
+  onToggleExpand?: () => void;
 };
 
+function typeName(id: string, type: ChartType) {
+  if (id === "cmp-force-bearing" && type === "radar") return "玫瑰";
+  if (id === "cmp-intent-axes" && type === "radar") return "玫瑰";
+  return chartTypeLabel(type);
+}
+
 /**
- * 选图对照：只列扩展池（常驻 A/B 相同，不展示）。
- * 入选随本片适切度变化，不保证双方各凑满 3 张。
+ * 当前侧选图：从图种库挑最适配的项；其余进未选。
  */
 export function ChartSelectionLegend({
   taskFocus,
   activeSide,
   fitnessById,
+  compact = false,
+  pickedId = null,
+  onPick,
+  expandAll = false,
+  onToggleExpand,
 }: Props) {
   const opts = fitnessById ? { fitnessById } : undefined;
-  const rows = slotSelectionMatrix(taskFocus, opts).filter(
-    (r) => r.layer === "扩展池",
-  );
-  const aIds = extensionPickIds(taskFocus, false, opts);
-  const bIds = extensionPickIds(taskFocus, true, opts);
-  const labelOf = (id: string) =>
-    rows.find((r) => r.slot.id === id)?.slot.shortLabel ?? id;
-  const aNames = aIds.map(labelOf).join("、");
-  const bNames = bIds.map(labelOf).join("、");
+  const rows = slotSelectionMatrix(taskFocus, opts);
+  const pickedRows = (
+    activeSide === "A"
+      ? rows.filter((r) => r.aOn)
+      : activeSide === "B"
+        ? rows.filter((r) => r.bOn)
+        : rows.filter((r) => r.aOn || r.bOn)
+  ).sort((a, b) => {
+    const ra = activeSide === "B" ? (a.bRank ?? 99) : (a.aRank ?? a.bRank ?? 99);
+    const rb = activeSide === "B" ? (b.bRank ?? 99) : (b.aRank ?? b.bRank ?? 99);
+    return ra - rb;
+  });
+  const spareRows =
+    activeSide === "A"
+      ? rows.filter((r) => !r.aOn)
+      : activeSide === "B"
+        ? rows.filter((r) => !r.bOn)
+        : rows.filter((r) => !r.aOn && !r.bOn);
+  const taskName = taskFocus === "intent" ? "意图" : "威胁";
+
+  const sideLabel = activeSide === "B" ? "B" : activeSide === "A" ? "A" : "选图";
+
+  if (!compact) {
+    return (
+      <div className="border-t border-[var(--line)] px-3 py-3">
+        <h3 className="text-sm font-semibold text-[var(--ink)]">{sideLabel} 选图</h3>
+      </div>
+    );
+  }
 
   return (
-    <div className="border-t border-[var(--line)] px-3 py-3">
-      <div className="mb-2">
-        <h3 className="text-sm font-semibold text-[var(--ink)]">选图对照</h3>
-        <p className="mt-0.5 text-[10px] leading-snug text-[var(--muted)]">
-          扩展张数按本片数据适切度决定（A≤2、B≤3，可不凑满）；跨切片名单应不同，不是固定对偶。
-        </p>
-      </div>
-
-      <div className="mb-2 grid gap-2 sm:grid-cols-2">
-        <div
-          className={`rounded-md px-2.5 py-2 ring-1 ${
-            activeSide === "A"
-              ? "bg-[var(--accent)]/12 ring-[var(--accent)]/50"
-              : "bg-[var(--panel-2)] ring-[var(--line)]"
-          }`}
-        >
-          <div className="text-[10px] font-semibold text-[var(--ink)]">
-            A · 无 VMMP → 本片 {aIds.length} 张
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+            CHART PICK <span className="opacity-50">/</span> 图种库
           </div>
-          <p className="mt-0.5 text-[10px] leading-snug text-[var(--muted)]">
-            {fitnessById
-              ? aNames || "（未选扩展）"
-              : "生成后按适切度入选"}
-          </p>
+          <h3 className="text-sm font-semibold text-[var(--ink)]">
+            {sideLabel} 选图
+          </h3>
         </div>
-        <div
-          className={`rounded-md px-2.5 py-2 ring-1 ${
-            activeSide === "B"
-              ? "bg-[var(--accent)]/12 ring-[var(--accent)]/50"
-              : "bg-[var(--panel-2)] ring-[var(--line)]"
-          }`}
-        >
-          <div className="text-[10px] font-semibold text-[var(--ink)]">
-            B · 有 VMMP → 本片 {bIds.length} 张
-          </div>
-          <p className="mt-0.5 text-[10px] leading-snug text-[var(--muted)]">
-            {fitnessById
-              ? bNames || "（未选扩展）"
-              : "生成后按 M + 适切度入选"}
-          </p>
+        <div className="flex flex-wrap items-center gap-2">
+          {onToggleExpand ? (
+            <button
+              type="button"
+              onClick={onToggleExpand}
+              className={`rounded-md px-2 py-1 text-[10px] font-medium ring-1 ${
+                expandAll
+                  ? "bg-[var(--accent)] text-[var(--accent-fg)] ring-[var(--accent)]"
+                  : "bg-[var(--panel)] text-[var(--ink)] ring-[var(--line)]"
+              }`}
+            >
+              全部展开
+            </button>
+          ) : null}
+          <span className="text-[10px] text-[var(--muted)]">
+            {taskName}
+            {activeSide === "B"
+              ? " · 适配图种"
+              : activeSide === "A"
+                ? " · 直观图种"
+                : ""}
+          </span>
         </div>
       </div>
-
-      <div className="overflow-x-auto rounded-md ring-1 ring-[var(--line)]">
-        <table className="w-full min-w-[480px] border-collapse text-left text-[10px]">
-          <thead>
-            <tr className="bg-[var(--panel-2)] text-[var(--muted)]">
-              <th className="px-2 py-1.5 font-medium">扩展图槽</th>
-              <th className="px-2 py-1.5 font-medium">图种</th>
-              <th className="px-2 py-1.5 font-medium">任务问句</th>
-              <th
-                className={`px-2 py-1.5 text-center font-medium ${
-                  activeSide === "A"
-                    ? "bg-[var(--accent)]/20 text-[var(--ink)]"
-                    : ""
-                }`}
-              >
-                A
-              </th>
-              <th
-                className={`px-2 py-1.5 text-center font-medium ${
-                  activeSide === "B"
-                    ? "bg-[var(--accent)]/20 text-[var(--ink)]"
-                    : ""
-                }`}
-              >
-                B
-              </th>
-              <th className="px-2 py-1.5 font-medium">备注</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(({ slot, aOn, bOn, note }) => {
-              const diverge = aOn !== bOn;
-              const isRose = slot.id === "cmp-force-bearing";
-              return (
-                <tr
-                  key={slot.id}
-                  className={`border-t border-[var(--line)] ${
-                    diverge ? "bg-[var(--accent)]/8" : ""
-                  }`}
-                >
-                  <td className="px-2 py-1.5 align-top font-medium text-[var(--ink)]">
-                    {slot.shortLabel}
-                  </td>
-                  <td className="px-2 py-1.5 align-top text-[var(--muted)]">
-                    {isRose ? "玫瑰图" : chartTypeLabel(slot.type)}
-                  </td>
-                  <td className="px-2 py-1.5 align-top text-[var(--ink)]">
-                    {slot.question}
-                  </td>
-                  <td
-                    className={`px-2 py-1.5 text-center align-top ${
-                      activeSide === "A" ? "bg-[var(--accent)]/10" : ""
-                    }`}
-                  >
-                    {aOn ? (
-                      <span className="font-semibold text-emerald-700">选</span>
-                    ) : (
-                      <span className="text-[var(--muted)]">—</span>
-                    )}
-                  </td>
-                  <td
-                    className={`px-2 py-1.5 text-center align-top ${
-                      activeSide === "B" ? "bg-[var(--accent)]/10" : ""
-                    }`}
-                  >
-                    {bOn ? (
-                      <span className="font-semibold text-emerald-700">选</span>
-                    ) : (
-                      <span className="text-[var(--muted)]">—</span>
-                    )}
-                  </td>
-                  <td className="px-2 py-1.5 align-top text-[var(--muted)]">
-                    {note ?? ""}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="min-h-0 flex-1 overflow-auto rounded-md ring-1 ring-[var(--line)]">
+        <div className="bg-[var(--panel)] px-2 py-1 text-[10px] font-medium text-[var(--muted)]">
+          入选
+        </div>
+        {pickedRows.map((row) => {
+          const picked = pickedId === row.slot.family;
+          const type = row.slot.type;
+          const rank =
+            activeSide === "B" ? row.bRank : activeSide === "A" ? row.aRank : row.aRank ?? row.bRank;
+          const chartId = row.slot.family;
+          return (
+            <button
+              key={row.slot.id}
+              type="button"
+              className={`flex w-full items-baseline gap-2 border-t border-[var(--line)] px-2 py-1 text-left text-[11px] ${
+                picked
+                  ? "bg-[var(--accent)]/18"
+                  : "bg-[var(--panel)] hover:bg-[var(--accent)]/10"
+              }`}
+              onClick={() =>
+                onPick?.(chartId === pickedId ? "" : chartId)
+              }
+              title={row.note ?? row.slot.mapRead}
+            >
+              <span className="w-4 shrink-0 text-[10px] font-semibold tabular-nums text-[var(--muted)]">
+                {rank ? String(rank).padStart(2, "0") : "—"}
+              </span>
+              <span className="font-semibold text-[var(--ink)]">
+                {row.slot.shortLabel}
+              </span>
+              <span className="text-[var(--muted)]">
+                {typeName(row.slot.family, type)}
+                {activeSide === "B" && row.upgraded ? (
+                  <span className="ml-1 text-[10px] text-emerald-700">↑</span>
+                ) : null}
+              </span>
+            </button>
+          );
+        })}
       </div>
+      {spareRows.length ? (
+        <div className="mt-2 rounded-md bg-[var(--panel-2)] px-2 py-1.5 ring-1 ring-dashed ring-[var(--line)]">
+          <div className="mb-1 text-[10px] font-semibold tracking-wide text-[var(--muted)]">
+            未选
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {spareRows.map((row) => (
+              <span
+                key={row.slot.id}
+                className="rounded-sm border border-dashed border-[var(--line)] px-1.5 py-0.5 text-[10px] text-[var(--muted)]"
+                title={row.note ?? row.slot.mapRead}
+              >
+                {row.slot.shortLabel}
+                <span className="ml-1 opacity-70">
+                  {typeName(row.slot.family, row.slot.type)}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
