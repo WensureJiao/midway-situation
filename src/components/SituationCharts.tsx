@@ -152,7 +152,7 @@ function AxisAimHelp({
       ) : null}
       <p>
         {asRadar
-          ? "读法：轮廓突起=该侧作战指向所在扇区；瓣越长=轴越远（nm）。"
+          ? "读法：轮廓突起=该侧作战指向所在扇区（十六方位）；瓣越长=轴越远（nm）。近角轴落在相邻瓣，不会并成一条。"
           : "读法：横轴=方位°，纵轴=轴长 nm；点越靠上这条指向越长。"}
       </p>
       <p className="font-medium text-[var(--ink)]">{conclusion}</p>
@@ -392,6 +392,18 @@ export function ChartCard({
     chart.title.includes("证据") ||
     series.some((s) => Boolean(s.detail));
   const type = chart.type;
+  const intentRoseData =
+    type === "radar" && chart.id === "cmp-intent-axes"
+      ? intentAxesRoseRadarData(series)
+      : null;
+  const intentRoseTick = (label: string) => {
+    if (!intentRoseData) return label;
+    if (["N", "NE", "E", "SE", "S", "SW", "W", "NW"].includes(label)) {
+      return label;
+    }
+    const row = intentRoseData.find((d) => d.name === label);
+    return row && (row.美方 > 0 || row.日方 > 0) ? label : "";
+  };
   const isHBar = type === "hbar";
   const isGroupedBar = type === "grouped_bar";
   const isPie = type === "pie";
@@ -1206,26 +1218,25 @@ export function ChartCard({
             chart.id === "cmp-intent-axes" ? (
               <RadarChart
                 data={
-                  chart.id === "cmp-intent-axes"
-                    ? intentAxesRoseRadarData(series)
-                    : Array.from(new Set(data.map((d) => d.name))).map(
-                        (name) => {
-                          const us = data.find(
-                            (d) => d.name === name && d.side === "USN",
-                          );
-                          const ij = data.find(
-                            (d) => d.name === name && d.side === "IJN",
-                          );
-                          return {
-                            name,
-                            美方: Number(us?.value) || 0,
-                            日方: Number(ij?.value) || 0,
-                            detail: [us?.detail, ij?.detail]
-                              .filter(Boolean)
-                              .join("\n\n"),
-                          };
-                        },
-                      )
+                  intentRoseData ??
+                  Array.from(new Set(data.map((d) => d.name))).map(
+                    (name) => {
+                      const us = data.find(
+                        (d) => d.name === name && d.side === "USN",
+                      );
+                      const ij = data.find(
+                        (d) => d.name === name && d.side === "IJN",
+                      );
+                      return {
+                        name,
+                        美方: Number(us?.value) || 0,
+                        日方: Number(ij?.value) || 0,
+                        detail: [us?.detail, ij?.detail]
+                          .filter(Boolean)
+                          .join("\n\n"),
+                      };
+                    },
+                  )
                 }
                 margin={{
                   top: compact ? 8 : 12,
@@ -1239,6 +1250,11 @@ export function ChartCard({
                 <PolarAngleAxis
                   dataKey="name"
                   tick={{ fontSize: compact ? 9 : 10, fill: "#5c584f" }}
+                  tickFormatter={
+                    intentRoseData
+                      ? (v) => intentRoseTick(String(v))
+                      : undefined
+                  }
                 />
                 <PolarRadiusAxis
                   tick={{ fontSize: 9, fill: "#5c584f" }}

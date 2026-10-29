@@ -138,7 +138,7 @@ export const SHARED_CHART_SLOTS: ChartSlotDef[] = [
     tasks: ["intent"],
     shortLabel: "指向方位距",
     question: "图上作战指向朝哪、各多长？",
-    mapRead: "玫瑰看各轴所在扇区轮廓",
+    mapRead: "玫瑰看各轴所在扇区；十六方位避免近角并瓣",
     llmFit: { intent: 0.22 },
     topic: "aim",
   }),

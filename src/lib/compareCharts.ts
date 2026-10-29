@@ -307,6 +307,34 @@ function bearingSector(bearingDeg: number): (typeof BEARING_SECTORS)[number] {
   return BEARING_SECTORS[idx];
 }
 
+/** 指向玫瑰用十六方位：两条近角轴（如 128° / 156°）不会并进同一瓣 */
+const INTENT_ROSE_SECTORS = [
+  "N",
+  "NNE",
+  "NE",
+  "ENE",
+  "E",
+  "ESE",
+  "SE",
+  "SSE",
+  "S",
+  "SSW",
+  "SW",
+  "WSW",
+  "W",
+  "WNW",
+  "NW",
+  "NNW",
+] as const;
+
+function intentRoseSector(
+  bearingDeg: number,
+): (typeof INTENT_ROSE_SECTORS)[number] {
+  const deg = ((bearingDeg % 360) + 360) % 360;
+  const idx = Math.round(deg / 22.5) % 16;
+  return INTENT_ROSE_SECTORS[idx];
+}
+
 function topRoseSectors(
   series: ChartSpec["series"],
   pick: (s: ChartSpec["series"][number]) => boolean,
@@ -574,17 +602,17 @@ export function forceBearingRoseSeries(pack: SlicePack): ChartSpec["series"] {
   });
 }
 
-/** 作战指向 → 与方位分布相同的八方位玫瑰行（半径=海里） */
+/** 作战指向 → 十六方位玫瑰（半径=海里）；比兵力方位图更细，避免近角轴并瓣 */
 export function intentAxesRoseRadarData(
   series: ChartSpec["series"],
 ): { name: string; 美方: number; 日方: number; detail: string }[] {
   const bag = Object.fromEntries(
-    BEARING_SECTORS.map((s) => [
+    INTENT_ROSE_SECTORS.map((s) => [
       s,
       { USN: 0, IJN: 0, notes: [] as string[] },
     ]),
   ) as Record<
-    (typeof BEARING_SECTORS)[number],
+    (typeof INTENT_ROSE_SECTORS)[number],
     { USN: number; IJN: number; notes: string[] }
   >;
 
@@ -592,7 +620,7 @@ export function intentAxesRoseRadarData(
     if (!s.name || /（无/.test(s.name)) continue;
     const nm = Number(s.value) || Number(s.y) || 0;
     if (nm <= 0) continue;
-    const sec = bearingSector(Number(s.x) || 0);
+    const sec = intentRoseSector(Number(s.x) || 0);
     const side = s.side === "IJN" ? "IJN" : "USN";
     if (nm > bag[sec][side]) bag[sec][side] = nm;
     bag[sec].notes.push(
@@ -600,7 +628,7 @@ export function intentAxesRoseRadarData(
     );
   }
 
-  return BEARING_SECTORS.map((sec) => ({
+  return INTENT_ROSE_SECTORS.map((sec) => ({
     name: sec,
     美方: bag[sec].USN,
     日方: bag[sec].IJN,
@@ -1540,7 +1568,7 @@ function chartAsType(chart: ChartSpec, type: ChartType): ChartSpec {
     return {
       ...chart,
       type,
-      description: "美/日作战指向落入八方位；突起=指向所在扇区，半径=海里",
+      description: "美/日作战指向落入十六方位；突起=指向所在扇区，半径=海里",
     };
   }
   if (chart.id === "cmp-threat-level-bar" && type === "pie") {

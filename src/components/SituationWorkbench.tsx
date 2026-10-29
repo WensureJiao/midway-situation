@@ -121,23 +121,23 @@ export function SituationWorkbench() {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--panel)]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-3">
-          <div className="mr-2 flex items-center gap-2">
-            <MapIcon className="h-5 w-5 text-[var(--accent)]" />
-            <div className="font-display text-lg leading-none tracking-wide">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-2 px-4 py-1.5">
+          <div className="mr-1 flex items-center gap-1.5">
+            <MapIcon className="h-3.5 w-3.5 text-[var(--accent)]" />
+            <div className="font-display text-sm leading-none tracking-wide">
               中途岛态势生成台
             </div>
-            <span className="rounded bg-[var(--panel-2)] px-1.5 py-0.5 text-[10px] text-[var(--muted)] ring-1 ring-[var(--line)]">
+            <span className="rounded bg-[var(--panel-2)] px-1 py-px text-[9px] text-[var(--muted)] ring-1 ring-[var(--line)]">
               本地基线
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1">
             {index.map((s) => (
               <button
                 key={s.id}
                 onClick={() => setSliceId(s.id)}
-                className={`rounded-md px-2.5 py-1.5 text-xs ring-1 transition ${
+                className={`rounded px-2 py-0.5 text-[11px] ring-1 transition ${
                   sliceId === s.id
                     ? "bg-[var(--accent)] text-[var(--accent-fg)] ring-[var(--accent)]"
                     : "bg-[var(--panel-2)] text-[var(--ink)] ring-[var(--line)] hover:bg-[var(--panel-3)]"
@@ -148,33 +148,34 @@ export function SituationWorkbench() {
             ))}
           </div>
 
-          <div className="flex overflow-hidden rounded-md text-xs ring-1 ring-[var(--line)]">
+          <div className="flex overflow-hidden rounded text-[11px] ring-1 ring-[var(--line)]">
             <button
               type="button"
-              className={`px-2.5 py-1.5 ${taskFocus === "threat" ? "bg-[var(--accent)] font-semibold text-[var(--accent-fg)]" : "bg-[var(--panel-2)]"}`}
+              className={`px-2 py-0.5 ${taskFocus === "threat" ? "bg-[var(--accent)] font-semibold text-[var(--accent-fg)]" : "bg-[var(--panel-2)]"}`}
               onClick={() => setTaskFocus("threat")}
             >
               威胁分析
             </button>
             <button
               type="button"
-              className={`px-2.5 py-1.5 ${taskFocus === "intent" ? "bg-[var(--accent)] font-semibold text-[var(--accent-fg)]" : "bg-[var(--panel-2)]"}`}
+              className={`px-2 py-0.5 ${taskFocus === "intent" ? "bg-[var(--accent)] font-semibold text-[var(--accent-fg)]" : "bg-[var(--panel-2)]"}`}
               onClick={() => setTaskFocus("intent")}
             >
               意图研判
             </button>
           </div>
 
-          <div className="ml-auto flex flex-wrap items-center gap-2">
+          <div className="ml-auto flex flex-wrap items-center gap-1.5">
             <Link
               href="/compare"
-              className="inline-flex items-center gap-1.5 rounded-md bg-[var(--accent)] px-2.5 py-1.5 text-xs font-medium text-[var(--accent-fg)] hover:opacity-90"
+              className="inline-flex items-center gap-1 rounded bg-[var(--accent)] px-2 py-0.5 text-[11px] font-medium text-[var(--accent-fg)] hover:opacity-90"
             >
-              <ArrowLeftRight className="h-3.5 w-3.5" />
+              <ArrowLeftRight className="h-3 w-3" />
               VMMP 对比
             </Link>
             <Button
               size="sm"
+              className="h-6 px-2 text-[11px]"
               onClick={() => void generate(true)}
               disabled={loading || !pack}
             >
