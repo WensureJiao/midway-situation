@@ -296,8 +296,11 @@ function SideChartCard({
     chart.id === "cmp-alt-bands" ||
     chart.id === "cmp-force-range" ||
     chart.id === "cmp-highlight-range" ||
-    chart.id === "cmp-aim-link";
-  const levelLegend = chart.id === "cmp-threat-rank";
+    chart.id === "cmp-aim-link" ||
+    chart.id === "cmp-heading" ||
+    chart.id === "cmp-urgent-near";
+  const levelLegend =
+    chart.id === "cmp-threat-rank" || chart.id === "cmp-threat-evidence";
   return (
     <div
       className={`flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-md bg-[var(--panel)] px-1.5 py-1 ring-1 ${
@@ -571,6 +574,13 @@ export function SpatialStudyPanel({
     badge === "A" || badge === "B" ? badge : null;
   const viewSide: "A" | "B" = reasonSide ?? (richCharts ? "B" : "A");
   const sideCharts = viewSide === "B" ? chartsB : chartsA;
+  const mainCharts = sideCharts.filter((c) => c.band !== "extend");
+  const extendCharts = sideCharts.filter((c) => c.band === "extend");
+  const displayMain = mainCharts.length ? mainCharts : sideCharts;
+  const rowCharts = mainCharts.length
+    ? [...mainCharts, ...extendCharts]
+    : sideCharts;
+  const chartCols = Math.max(displayMain.length, 1);
   const [activeChartId, setActiveChartId] = useState<string | null>(null);
   const [traceOpen, setTraceOpen] = useState(false);
   const traceRef = useRef<HTMLDivElement>(null);
@@ -711,7 +721,8 @@ export function SpatialStudyPanel({
       : { en: "SITUATION", zh: "态势", sub: "态势图" };
 
   return (
-    <section className="grid h-full min-h-0 min-w-0 max-w-full flex-1 grid-rows-[auto_minmax(0,1fr)_minmax(228px,40%)] overflow-hidden rounded-lg bg-[var(--panel)] ring-1 ring-[var(--line)]">
+    <section className="flex h-full min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-hidden rounded-lg bg-[var(--panel)] ring-1 ring-[var(--line)]">
+      <div className="grid h-full min-h-full shrink-0 grid-rows-[auto_minmax(0,1fr)_minmax(228px,40%)]">
       <div className="relative z-[1100] flex shrink-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-[var(--line)] px-3 py-1">
         <span className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
           {frameTitle.en} <span className="opacity-50">/</span> {frameTitle.zh}
@@ -849,23 +860,30 @@ export function SpatialStudyPanel({
       <div className="flex min-h-0 min-w-0 flex-col overflow-hidden px-2 pb-1 pt-1">
         {sideCharts.length ? (
           <>
-            <div
-              className="grid min-h-0 min-w-0 flex-1 gap-1.5"
-              style={{
-                gridTemplateColumns: `repeat(${sideCharts.length}, minmax(0, 1fr))`,
-              }}
-            >
-              {sideCharts.map((chart) => (
-                <SideChartCard
-                  key={chart.id}
-                  chart={chart}
-                  active={activeChartId === chart.id}
-                  onSelectName={(name) => locateFromName(name, chart.id)}
-                />
-              ))}
+            <div className="chart-h-scroll min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-hidden">
+              <div
+                className="grid h-full min-h-0 min-w-full gap-1.5"
+                style={{
+                  width: `${(rowCharts.length / chartCols) * 100}%`,
+                  gridTemplateColumns: `repeat(${rowCharts.length}, minmax(0, 1fr))`,
+                }}
+              >
+                {rowCharts.map((chart) => (
+                  <SideChartCard
+                    key={chart.id}
+                    chart={chart}
+                    active={activeChartId === chart.id}
+                    onSelectName={(name) => locateFromName(name, chart.id)}
+                  />
+                ))}
+              </div>
             </div>
             <p className="mt-0.5 shrink-0 px-0.5 text-[9px] leading-tight text-[var(--muted)]">
-              {chartOrderCaption(taskFocus, viewSide === "B")}
+              {chartOrderCaption(
+                taskFocus,
+                viewSide === "B",
+                extendCharts.length > 0,
+              )}
             </p>
           </>
         ) : (
@@ -873,6 +891,7 @@ export function SpatialStudyPanel({
             本拍暂无统计图
           </p>
         )}
+      </div>
       </div>
     </section>
   );

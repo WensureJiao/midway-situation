@@ -18,6 +18,7 @@ type Props = {
 function typeName(id: string, type: ChartType) {
   if (id === "cmp-force-bearing" && type === "radar") return "玫瑰";
   if (id === "cmp-intent-axes" && type === "radar") return "玫瑰";
+  if (id === "cmp-heading" && type === "radar") return "玫瑰";
   if (type === "sankey") return "流向";
   return chartTypeLabel(type);
 }

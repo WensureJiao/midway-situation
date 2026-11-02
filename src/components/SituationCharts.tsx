@@ -373,6 +373,9 @@ const CARD_QUESTION: Record<string, string> = {
   "cmp-air-profile": "在空多高？",
   "cmp-alt-bands": "高度落在哪？",
   "cmp-highlight-range": "高亮离岛多远？",
+  "cmp-heading": "航向对准轴了吗？",
+  "cmp-urgent-near": "谁紧急又离岛近？",
+  "cmp-threat-evidence": "依据足不足？",
 };
 
 export function chartQuestion(chart: ChartSpec): string {
@@ -422,6 +425,7 @@ const RANGE_LOW_IDS = new Set([
   "cmp-force-range",
   "cmp-hunt-range",
   "cmp-highlight-range",
+  "cmp-heading",
 ]);
 
 const FORCE_ROSE_SECTORS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
@@ -534,6 +538,93 @@ export function chartInsight(chart: ChartSpec): string {
     if (ij[0]) return `日方 ${fmt(ij[0])}`;
     return "未画对准关系";
   }
+  if (chart.id === "cmp-heading") {
+    if (chart.type === "hbar") {
+      const near = [...s]
+        .filter((r) => r.name && !/（无/.test(r.name))
+        .sort((a, b) => Number(a.value) - Number(b.value))[0];
+      if (!near) return "无航向与轴可对";
+      const off = Math.round(Number(near.value) || 0);
+      return off <= 22
+        ? `${shortName(near.name, 10)} 对准（偏 ${off}°）`
+        : `${shortName(near.name, 10)} 偏 ${off}°`;
+    }
+    const axes = s.filter((r) => r.group === "作战轴" && Number(r.x) >= 0);
+    const fmt = (side: "USN" | "IJN") => {
+      const ax = axes.find((r) => r.side === side);
+      const peak = peakRow(
+        s,
+        (r) =>
+          r.side === side &&
+          r.group !== "作战轴" &&
+          !/（无/.test(r.name),
+      );
+      if (!ax || !peak) return null;
+      const deg: Record<string, number> = {
+        N: 0,
+        NE: 45,
+        E: 90,
+        SE: 135,
+        S: 180,
+        SW: 225,
+        W: 270,
+        NW: 315,
+      };
+      const hdg = deg[peak.name];
+      if (hdg == null) return `${peak.name}`;
+      let d = Math.abs(hdg - Number(ax.x));
+      d = d > 180 ? 360 - d : d;
+      const off = Math.round(d);
+      const tag = side === "USN" ? "美" : "日";
+      return off <= 22
+        ? `${tag}对准 ${shortName(ax.name, 8)}`
+        : `${tag}偏 ${off}°`;
+    };
+    const us = fmt("USN");
+    const ij = fmt("IJN");
+    if (us && ij) return `${us} · ${ij}`;
+    if (us) return us;
+    if (ij) return ij;
+    return "无航向与轴可对";
+  }
+  if (chart.id === "cmp-urgent-near") {
+    if (chart.type === "scatter") {
+      const hit = [...s]
+        .filter(
+          (r) =>
+            Number(r.y) >= 3 &&
+            Number(r.x) > 0 &&
+            !/（无/.test(r.name),
+        )
+        .sort(
+          (a, b) =>
+            Number(a.x) - Number(b.x) || Number(b.y) - Number(a.y),
+        )[0];
+      return hit
+        ? `${shortName(hit.name)} ${Math.round(Number(hit.x))}nm / ${hit.group ?? "高"}`
+        : "没有紧急且近的目标";
+    }
+    const top = peakRow(s);
+    return top
+      ? `${shortName(top.name)} 等级高且更近`
+      : "暂无对照";
+  }
+  if (chart.id === "cmp-threat-evidence") {
+    if (chart.type === "scatter") {
+      const weak = [...s]
+        .filter((r) => Number(r.y) >= 3 && Number(r.x) <= 1 && !/（无/.test(r.name))
+        .sort((a, b) => Number(b.y) - Number(a.y))[0];
+      const strong = [...s]
+        .filter((r) => Number(r.y) >= 3 && Number(r.x) >= 3 && !/（无/.test(r.name))
+        .sort((a, b) => Number(b.x) - Number(a.x))[0];
+      if (weak) return `${shortName(weak.name)} 定级高但依据虚`;
+      if (strong) return `${shortName(strong.name)} 有据`;
+    }
+    const top = peakRow(s);
+    return top
+      ? `${shortName(top.name)} 充分度 ${Math.round(Number(top.value))} /4`
+      : "暂无证据条";
+  }
   if (chart.id === "cmp-air-profile" || chart.id === "cmp-alt-bands") {
     const us = peakRow(s, (r) => r.side === "USN" || r.group === "美方");
     const ij = peakRow(s, (r) => r.side === "IJN" || r.group === "日方");
@@ -595,7 +686,8 @@ export function ChartCard({
     return peakValue > 0 && n >= peakValue * 0.98;
   };
   const forceWedges: RoseWedge[] | null =
-    chart.type === "radar" && chart.id === "cmp-force-bearing"
+    chart.type === "radar" &&
+    (chart.id === "cmp-force-bearing" || chart.id === "cmp-heading")
       ? FORCE_ROSE_SECTORS.map((name) => ({
           name,
           us: Number(
@@ -607,14 +699,14 @@ export function ChartCard({
         }))
       : null;
   const intentArrows: RoseArrow[] | null =
-    chart.type === "radar" && chart.id === "cmp-intent-axes"
+    chart.type === "radar" &&
+    (chart.id === "cmp-intent-axes" || chart.id === "cmp-heading")
       ? data
-          .filter(
-            (s) =>
-              Boolean(s.name) &&
-              !/（无/.test(s.name) &&
-              (Number(s.value) || Number(s.y) || 0) > 0,
-          )
+          .filter((s) => {
+            if (!s.name || /（无/.test(s.name)) return false;
+            if (chart.id === "cmp-heading") return s.group === "作战轴";
+            return (Number(s.value) || Number(s.y) || 0) > 0;
+          })
           .map((s) => ({
             name: s.name,
             bearingDeg: Number(s.x) || 0,
@@ -1249,6 +1341,8 @@ export function ChartCard({
                     ? "方位 °"
                     : chart.id === "cmp-threat-evidence"
                       ? "充分度"
+                      : chart.id === "cmp-urgent-near"
+                        ? "距岛 nm"
                       : isRangeStrip
                         ? "距岛 nm"
                       : chart.id === "cmp-force-landing" ||
@@ -1266,6 +1360,8 @@ export function ChartCard({
                     ? ([0, 360] as [number, number])
                     : chart.id === "cmp-threat-evidence"
                       ? ([0, 4] as [number, number])
+                      : chart.id === "cmp-urgent-near"
+                        ? ([0, Math.ceil(stripXMax * 1.08)] as [number, number])
                       : isRangeStrip
                         ? ([0, Math.ceil(stripXMax * 1.08)] as [number, number])
                       : GEO_SCATTER_IDS.has(chart.id)
@@ -1344,7 +1440,8 @@ export function ChartCard({
                 }
                 allowDecimals
                 domain={
-                  chart.id === "cmp-threat-evidence"
+                  chart.id === "cmp-threat-evidence" ||
+                  chart.id === "cmp-urgent-near"
                     ? ([0.5, 4.5] as [number, number])
                     : isRangeStrip
                       ? ([-1.2, 1.2] as [number, number])
@@ -1353,14 +1450,16 @@ export function ChartCard({
                       : undefined
                 }
                 ticks={
-                  chart.id === "cmp-threat-evidence"
+                  chart.id === "cmp-threat-evidence" ||
+                  chart.id === "cmp-urgent-near"
                     ? [1, 2, 3, 4]
                     : isRangeStrip
                       ? []
                     : undefined
                 }
                 tickFormatter={
-                  chart.id === "cmp-threat-evidence"
+                  chart.id === "cmp-threat-evidence" ||
+                  chart.id === "cmp-urgent-near"
                     ? (v: number) =>
                         ({ 1: "低", 2: "中", 3: "高", 4: "紧急" }[
                           Math.round(v)
@@ -1433,6 +1532,8 @@ export function ChartCard({
                 </>
               ) : isRangeStrip ? (
                 <ReferenceLine y={0} stroke="#d6d3ce" strokeDasharray="3 3" />
+              ) : chart.id === "cmp-urgent-near" ? (
+                <ReferenceLine y={3} stroke="#ea580c" strokeDasharray="3 3" />
               ) : null}
               <Tooltip
                 cursor={{ strokeDasharray: "3 3" }}
@@ -1460,6 +1561,8 @@ export function ChartCard({
                                 ? ` · 距岛 ${row.x} nm`
                               : chart.id === "cmp-threat-evidence"
                                 ? ` · 充分度 ${row.x}/4 · 等级 ${row.y}`
+                              : chart.id === "cmp-urgent-near"
+                                ? ` · 距岛 ${row.x} nm · 等级 ${row.y}`
                                 : `（${row.x}, ${row.y}）`}
                       </div>
                       {row.detail ? (
@@ -1588,6 +1691,30 @@ export function ChartCard({
                     position="top"
                     offset={8}
                     style={{ fontSize: 9, fill: "#3d3a34" }}
+                  />
+                ) : chart.id === "cmp-urgent-near" ? (
+                  <LabelList
+                    dataKey="name"
+                    position="top"
+                    offset={4}
+                    content={({ x, y, value, index }) => {
+                      const row = scatterData[Number(index) || 0];
+                      if (!row || Number(row.y) < 3) return null;
+                      const label = String(value ?? "")
+                        .replace(/^(USS|IJN)\s+/i, "")
+                        .slice(0, 6);
+                      return (
+                        <text
+                          x={x}
+                          y={Number(y) - 6}
+                          textAnchor="middle"
+                          fill="#3d3a34"
+                          fontSize={8}
+                        >
+                          {label}
+                        </text>
+                      );
+                    }}
                   />
                 ) : null}
               </Scatter>

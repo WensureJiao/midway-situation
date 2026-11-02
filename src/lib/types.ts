@@ -115,6 +115,8 @@ export interface ChartSpec {
   description?: string;
   /** 选用该图种的简要理由（范式选图时可填） */
   why_type?: string;
+  /** 对比页：上排主问 / 下排相关扩展 */
+  band?: "main" | "extend";
   series: {
     name: string;
     value: number;

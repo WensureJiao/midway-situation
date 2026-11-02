@@ -63,7 +63,7 @@ export function normalizeSituationSpec(
     charts: (raw.charts ?? [])
       .map((c) => {
         const rawType = c.type as string;
-        if (rawType === "stacked_bar" || rawType === "sankey") return null;
+        if (rawType === "stacked_bar") return null;
         const type = rawType === "donut" ? ("pie" as const) : c.type;
         return {
           ...c,

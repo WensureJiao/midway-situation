@@ -94,6 +94,8 @@ export type ChartSlotDef = {
   llmFit: Partial<Record<TaskFocus, number>>;
   /** 同一信息只入选一张 */
   topic: string;
+  /** 只进下排相关扩展，不抢上排 5 张 */
+  layer?: "extend";
 };
 
 function item(
@@ -164,7 +166,7 @@ export const SHARED_CHART_SLOTS: ChartSlotDef[] = [
     shortLabel: "活动区足迹",
     question: "关注圈圆心相对岛落在哪？",
     mapRead: "Filter：紧急/高圈圆心，对照圈色",
-    llmFit: { intent: 0.28, threat: 0.36 },
+    llmFit: { intent: 0, threat: 0.36 },
     topic: "zone-xy",
   }),
   item({
@@ -316,6 +318,87 @@ export const SHARED_CHART_SLOTS: ChartSlotDef[] = [
     llmFit: { intent: 0.18 },
     topic: "pair-range",
   }),
+  item({
+    id: "cmp-heading",
+    type: "hbar",
+    layer: "extend",
+    topologies: ["Alignment", "Consistency"],
+    primaryTopology: "Alignment",
+    tasks: ["intent"],
+    shortLabel: "航向对轴",
+    question: "航向对准作战轴了吗？",
+    mapRead: "条短=舰首航向相对作战轴的偏角小",
+    llmFit: { intent: 0.52 },
+    topic: "heading",
+  }),
+  item({
+    id: "cmp-heading-radar",
+    family: "cmp-heading",
+    type: "radar",
+    layer: "extend",
+    topologies: ["Alignment", "Consistency"],
+    primaryTopology: "Alignment",
+    tasks: ["intent"],
+    shortLabel: "航向对轴",
+    question: "航向对准作战轴了吗？",
+    mapRead: "瓣=舰首航向，箭头=作战轴；重合=对准",
+    llmFit: { intent: 0.16 },
+    topic: "heading",
+  }),
+  item({
+    id: "cmp-urgent-near",
+    type: "hbar",
+    layer: "extend",
+    topologies: ["Salience", "Proximity"],
+    primaryTopology: "Salience",
+    tasks: ["threat"],
+    shortLabel: "紧急且近",
+    question: "谁紧急又离岛近？",
+    mapRead: "Filter：把威胁等级和距岛合成一条，看谁又高又近",
+    llmFit: { threat: 0.58 },
+    topic: "urgent-near",
+  }),
+  item({
+    id: "cmp-urgent-near-scatter",
+    family: "cmp-urgent-near",
+    type: "scatter",
+    layer: "extend",
+    topologies: ["Salience", "Proximity"],
+    primaryTopology: "Salience",
+    tasks: ["threat"],
+    shortLabel: "紧急且近",
+    question: "谁紧急又离岛近？",
+    mapRead: "横轴距岛、纵轴等级；左上=紧急且近",
+    llmFit: { threat: 0.22 },
+    topic: "urgent-near",
+  }),
+  item({
+    id: "cmp-threat-evidence",
+    type: "hbar",
+    layer: "extend",
+    topologies: ["Uncertainty", "Salience"],
+    primaryTopology: "Uncertainty",
+    tasks: [],
+    shortLabel: "依据足不足",
+    question: "评级依据足不足？",
+    mapRead: "Verify：条长=证据充分度 0–4",
+    llmFit: { threat: 0 },
+    topic: "evidence",
+  }),
+  item({
+    id: "cmp-threat-evidence-scatter",
+    family: "cmp-threat-evidence",
+    type: "scatter",
+    layer: "extend",
+    topologies: ["Uncertainty", "Salience"],
+    primaryTopology: "Uncertainty",
+    tasks: [],
+    shortLabel: "依据足不足",
+    question: "评级依据足不足？",
+    mapRead: "横轴充分度、纵轴等级；右上=定级且有据",
+    llmFit: { threat: 0 },
+    topic: "evidence",
+  }),
 ];
 
 export const INTENT_EXTENSION_SLOTS: ChartSlotDef[] = SHARED_CHART_SLOTS;
@@ -324,9 +407,19 @@ export const INTENT_CHART_SLOTS: ChartSlotDef[] = SHARED_CHART_SLOTS;
 export const THREAT_CHART_SLOTS: ChartSlotDef[] = SHARED_CHART_SLOTS;
 
 const MIN_FITNESS = 28;
-/** A / B 都至少铺满 5 张；A 走直观图，B 走 M 拓扑 */
+/** 上排主问：A / B 都铺满 5 张；A 走直观图，B 走 M 拓扑 */
 const MAX_A = 5;
 const MAX_B = 5;
+/** 下排相关扩展：宁缺毋滥，不硬凑 */
+const MAX_EXTEND = 4;
+/** 上排没选中、但问句仍相关的槽，可进下排 */
+const LEFTOVER_EXTEND = new Set([
+  "cmp-air-profile",
+  "cmp-alt-bands",
+  "cmp-hunt-range",
+  "cmp-zone-footprint",
+  "cmp-force-range",
+]);
 /** A：相对头名，问句贴合掉出这截距才降为未选；随后仍补满 5 张 */
 const KEEP_RATIO = 0.4;
 /** B：覆盖某拓扑时，图种×数据过弱则跳过，不硬凑 */
@@ -386,6 +479,10 @@ function preferredTypes(topo: VisualTopology): ChartType[] {
       return ["sankey", "hbar", "scatter", "bar"];
     case "Continuity":
       return ["multi_line", "line", "area"];
+    case "Uncertainty":
+      return ["scatter", "hbar"];
+    case "Consistency":
+      return ["radar", "bar"];
     default:
       return ["scatter"];
   }
@@ -439,15 +536,23 @@ const TOPO_ZH: Record<VisualTopology, string> = {
 };
 
 /** 对比页图卡底部：A / B 各自的左→右排列依据 */
-export function chartOrderCaption(focus: TaskFocus, rich: boolean): string {
+export function chartOrderCaption(
+  focus: TaskFocus,
+  rich: boolean,
+  hasExtend = false,
+): string {
   if (!rich) {
-    return "左→右：问句贴合度，高的在前";
+    return hasExtend
+      ? "左→右：问句贴合度，其后为相关扩展，可横滑"
+      : "左→右：问句贴合度，高的在前";
   }
   const chain = DISPLAY_TOPOLOGY[focus]
     .slice(0, 5)
     .map((t) => TOPO_ZH[t])
     .join(" → ");
-  return `左→右：视觉拓扑覆盖（${chain}）`;
+  return hasExtend
+    ? `左→右：视觉拓扑覆盖（${chain}）；其后为相关扩展（补未覆盖拓扑），可横滑`
+    : `左→右：视觉拓扑覆盖（${chain}）`;
 }
 
 export type ExtPickOptions = {
@@ -492,6 +597,7 @@ function taskReadySlots(
 
 type RankedSide = {
   primary: ChartSlotDef[];
+  secondary: ChartSlotDef[];
   spare: ChartSlotDef[];
 };
 
@@ -513,6 +619,7 @@ function rankByLlm(
   opts?: ExtPickOptions,
 ): RankedSide {
   const ranked = [...eligible]
+    .filter((slot) => !blockedForSide(slot, focus, false))
     .map((slot) => {
       const fitness = familyFitness(slot, opts);
       const score = llmFitOf(slot, focus) * typeFit(slot, false);
@@ -524,7 +631,7 @@ function rankByLlm(
         b.fitness - a.fitness ||
         a.slot.id.localeCompare(b.slot.id),
     );
-  if (!ranked.length) return { primary: [], spare: [] };
+  if (!ranked.length) return { primary: [], secondary: [], spare: [] };
   const floor = ranked[0].score * KEEP_RATIO;
   const primary: ChartSlotDef[] = [];
   const spare: ChartSlotDef[] = [];
@@ -554,7 +661,7 @@ function rankByLlm(
     }
     takeSlot(row.slot, primary, usedFamily, usedTopic);
   }
-  return { primary, spare };
+  return { primary, secondary: [], spare };
 }
 
 function coverScore(
@@ -606,6 +713,7 @@ function coverByM(
     const cands = eligible.filter(
       (slot) =>
         servesTopology(slot, top) &&
+        !blockedForSide(slot, focus, true) &&
         !usedFamily.has(slot.family) &&
         !usedTopic.has(slot.topic),
     );
@@ -633,7 +741,9 @@ function coverByM(
     const rest = eligible
       .filter(
         (slot) =>
-          !usedFamily.has(slot.family) && !usedTopic.has(slot.topic),
+          !blockedForSide(slot, focus, true) &&
+          !usedFamily.has(slot.family) &&
+          !usedTopic.has(slot.topic),
       )
       .map((slot) => {
         const tf = typeFit(slot, true);
@@ -665,7 +775,118 @@ function coverByM(
   const spare = eligible.filter(
     (slot) => !primary.some((p) => p.id === slot.id),
   );
-  return { primary, spare };
+  return { primary, secondary: [], spare };
+}
+
+function isExtendCandidate(slot: ChartSlotDef): boolean {
+  return slot.layer === "extend" || LEFTOVER_EXTEND.has(slot.family);
+}
+
+/** 某侧不入选的图：A 意图圈心与落点重复；B 威胁去掉圈心/间隔 */
+function blockedForSide(
+  slot: ChartSlotDef,
+  focus: TaskFocus,
+  rich: boolean,
+): boolean {
+  if (!rich && focus === "intent" && slot.family === "cmp-zone-footprint") {
+    return true;
+  }
+  if (
+    rich &&
+    focus === "threat" &&
+    (slot.family === "cmp-zone-footprint" ||
+      slot.family === "cmp-hunt-range")
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/** 下排：相关扩展。不重复上排 topic，不硬凑满。B 仍按 M 图种优选。 */
+function pickExtend(
+  eligible: ChartSlotDef[],
+  focus: TaskFocus,
+  rich: boolean,
+  primary: ChartSlotDef[],
+  opts?: ExtPickOptions,
+  aSlots: ChartSlotDef[] = [],
+): ChartSlotDef[] {
+  const usedFamily = new Set(primary.map((s) => s.family));
+  const usedTopic = new Set(primary.map((s) => s.topic));
+  const covered = new Set(primary.map((s) => s.primaryTopology));
+  const aTypeByFamily = new Map(aSlots.map((s) => [s.family, s.type]));
+  const cands = eligible.filter(
+    (slot) =>
+      isExtendCandidate(slot) &&
+      !blockedForSide(slot, focus, rich) &&
+      !usedFamily.has(slot.family) &&
+      !usedTopic.has(slot.topic),
+  );
+  if (!cands.length) return [];
+
+  const scored = cands
+    .map((slot) => {
+      const fitness = familyFitness(slot, opts);
+      const uncovered = slot.topologies.some((t) => !covered.has(t)) ? 1.15 : 1;
+      const tf = typeFit(slot, rich);
+      const vsA = rich ? typeAgainstA(slot, aTypeByFamily) : 1;
+      const llm = rich ? 1 : Math.max(0.35, llmFitOf(slot, focus));
+      if (!rich && !INTUITIVE_TYPES.includes(slot.type)) {
+        return { slot, score: 0, fitness };
+      }
+      const score =
+        vsA * tf * llm * uncovered * (0.6 + 0.4 * (fitness / 100));
+      return { slot, score, fitness };
+    })
+    .filter((row) => row.score >= COVER_MIN)
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        b.fitness - a.fitness ||
+        displayIndex(focus, a.slot) - displayIndex(focus, b.slot) ||
+        a.slot.id.localeCompare(b.slot.id),
+    );
+
+  const out: ChartSlotDef[] = [];
+  for (const row of scored) {
+    if (out.length >= MAX_EXTEND) break;
+    if (usedFamily.has(row.slot.family) || usedTopic.has(row.slot.topic)) {
+      continue;
+    }
+    takeSlot(row.slot, out, usedFamily, usedTopic);
+  }
+  out.sort(
+    (a, b) =>
+      displayIndex(focus, a) - displayIndex(focus, b) ||
+      a.id.localeCompare(b.id),
+  );
+  return out;
+}
+
+function withExtend(
+  core: RankedSide,
+  eligible: ChartSlotDef[],
+  focus: TaskFocus,
+  rich: boolean,
+  opts?: ExtPickOptions,
+  aSlots: ChartSlotDef[] = [],
+): RankedSide {
+  const secondary = pickExtend(
+    eligible,
+    focus,
+    rich,
+    core.primary,
+    opts,
+    aSlots,
+  );
+  const taken = new Set(
+    [...core.primary, ...secondary].map((s) => s.id),
+  );
+  return {
+    primary: core.primary,
+    secondary,
+    spare: eligible.filter((slot) => !taken.has(slot.id)),
+  };
 }
 
 function rankPicks(
@@ -674,9 +895,12 @@ function rankPicks(
   rich: boolean,
   opts?: ExtPickOptions,
 ): RankedSide {
-  const aSide = rankByLlm(eligible, focus, opts);
-  if (!rich) return aSide;
-  return coverByM(eligible, focus, opts, aSide.primary);
+  const main = eligible.filter((slot) => slot.layer !== "extend");
+  const aCore = rankByLlm(main, focus, opts);
+  const aFull = withExtend(aCore, eligible, focus, false, opts);
+  if (!rich) return aFull;
+  const bCore = coverByM(main, focus, opts, aFull.primary);
+  return withExtend(bCore, eligible, focus, true, opts, flattenSide(aFull));
 }
 
 function sideRanked(
@@ -687,18 +911,22 @@ function sideRanked(
   return rankPicks(taskReadySlots(focus, opts), focus, rich, opts);
 }
 
+function flattenSide(side: RankedSide): ChartSlotDef[] {
+  return [...side.primary, ...side.secondary];
+}
+
 function pickWithoutVmmp(
   focus: TaskFocus,
   opts?: ExtPickOptions,
 ): ChartSlotDef[] {
-  return sideRanked(focus, false, opts).primary;
+  return flattenSide(sideRanked(focus, false, opts));
 }
 
 function pickWithVmmp(
   focus: TaskFocus,
   opts?: ExtPickOptions,
 ): ChartSlotDef[] {
-  return sideRanked(focus, true, opts).primary;
+  return flattenSide(sideRanked(focus, true, opts));
 }
 
 export function taskPickContrast(
@@ -761,22 +989,21 @@ export function slotSelectionMatrix(
   note?: string;
 }[] {
   const hasFitness = Boolean(opts?.fitnessById);
-  const aSide = hasFitness
-    ? sideRanked(focus, false, opts)
-    : { primary: [], spare: [] };
-  const bSide = hasFitness
-    ? sideRanked(focus, true, opts)
-    : { primary: [], spare: [] };
-  const aPick = new Set(aSide.primary.map((s) => s.id));
-  const bPick = new Set(bSide.primary.map((s) => s.id));
+  const emptySide: RankedSide = { primary: [], secondary: [], spare: [] };
+  const aSide = hasFitness ? sideRanked(focus, false, opts) : emptySide;
+  const bSide = hasFitness ? sideRanked(focus, true, opts) : emptySide;
+  const aFlat = flattenSide(aSide);
+  const bFlat = flattenSide(bSide);
+  const aPick = new Set(aFlat.map((s) => s.id));
+  const bPick = new Set(bFlat.map((s) => s.id));
   const aSpareSet = new Set(aSide.spare.map((s) => s.id));
   const bSpareSet = new Set(bSide.spare.map((s) => s.id));
   const aRankOf = (id: string) => {
-    const i = aSide.primary.findIndex((s) => s.id === id);
+    const i = aFlat.findIndex((s) => s.id === id);
     return i >= 0 ? i + 1 : null;
   };
   const bRankOf = (id: string) => {
-    const i = bSide.primary.findIndex((s) => s.id === id);
+    const i = bFlat.findIndex((s) => s.id === id);
     return i >= 0 ? i + 1 : null;
   };
 
@@ -795,8 +1022,13 @@ export function slotSelectionMatrix(
       const fit = familyFitness(slot, opts);
       let note: string | undefined;
       if (!hasFitness) note = "待适切度";
-      else if (aOn) note = `A · LLM直观#${aRank} · ${slot.type}`;
-      else if (bOn) note = `B · M覆盖#${bRank} · ${slot.primaryTopology} · ${slot.type}`;
+      else if (aOn) {
+        const row = (aRank ?? 0) > MAX_A ? "下行" : "上行";
+        note = `A · ${row}#${aRank} · ${slot.type}`;
+      } else if (bOn) {
+        const row = (bRank ?? 0) > MAX_B ? "下行" : "上行";
+        note = `B · ${row}#${bRank} · ${slot.primaryTopology} · ${slot.type}`;
+      }
       else if (aSpare || bSpare) note = "图种库未选";
       else if (fit < MIN_FITNESS) note = `适切不足（${Math.round(fit)}）`;
       else note = "本侧未选";
@@ -858,17 +1090,21 @@ export function selectChartSlotIds(
   whyById: Map<string, string>;
   typeByFamily: Map<string, ChartType>;
   picks: ChartSlotDef[];
+  secondary: ChartSlotDef[];
 } {
   const tops = topologiesFromVmmp(focus);
   const whyByTop = new Map(tops.map((t) => [t.topology, t.why]));
   const ranked = sideRanked(focus, rich, opts);
-  const ids = new Set(ranked.primary.map((s) => s.family));
+  const picks = flattenSide(ranked);
+  const ids = new Set(picks.map((s) => s.family));
   const whyById = new Map<string, string>();
   const typeByFamily = new Map<string, ChartType>();
+  const primaryIds = new Set(ranked.primary.map((s) => s.id));
 
-  ranked.primary.forEach((slot, index) => {
+  picks.forEach((slot, index) => {
     const fit = familyFitness(slot, opts);
-    const rankNote = `优先#${index + 1} · `;
+    const row = primaryIds.has(slot.id) ? "上行" : "下行";
+    const rankNote = `${row}#${index + 1} · `;
     const fitNote = Number.isFinite(fit) ? ` · 适切${Math.round(fit)}` : "";
     typeByFamily.set(slot.family, slot.type);
     if (rich) {
@@ -885,5 +1121,5 @@ export function selectChartSlotIds(
     }
   });
 
-  return { ids, whyById, typeByFamily, picks: ranked.primary };
+  return { ids, whyById, typeByFamily, picks, secondary: ranked.secondary };
 }

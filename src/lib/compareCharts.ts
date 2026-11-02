@@ -1411,6 +1411,233 @@ export function threatEvidenceScatterSeries(
     : [{ name: "（无条目）", value: 0, x: 0, y: 0, detail: "暂无威胁条目" }];
 }
 
+const TARGET_HULLS: { mention: RegExp; unit: RegExp }[] = [
+  { mention: /赤城|akagi/i, unit: /akagi/i },
+  { mention: /加贺|kaga/i, unit: /kaga/i },
+  { mention: /苍龙|soryu/i, unit: /soryu/i },
+  { mention: /飞龙|hiryu/i, unit: /hiryu/i },
+  { mention: /利根|tone/i, unit: /tone/i },
+  { mention: /筑摩|chikuma/i, unit: /chikuma/i },
+  { mention: /企业|enterprise/i, unit: /enterprise/i },
+  { mention: /约克城|yorktown/i, unit: /yorktown/i },
+  { mention: /大黄蜂|hornet/i, unit: /hornet/i },
+];
+
+function matchTargetPoint(
+  target: string,
+  points: ForceGeoPoint[],
+): ForceGeoPoint | undefined {
+  const t = target.trim().toLowerCase();
+  const named = TARGET_HULLS.find((h) => h.mention.test(target));
+  if (named) {
+    const hit = points.find((p) => named.unit.test(p.unit.name));
+    if (hit) return hit;
+  }
+  const byName = points.find((p) => {
+    const n = p.unit.name.toLowerCase();
+    const short = displayUnitName(p.unit.name).toLowerCase();
+    return (
+      n.includes(t) ||
+      t.includes(n) ||
+      short.includes(t) ||
+      t.includes(short)
+    );
+  });
+  if (byName) return byName;
+  if (/南云|nagumo/i.test(target)) {
+    return [...points]
+      .filter((p) => p.side === "IJN" && /航空母舰/.test(p.unit.unit_class ?? ""))
+      .sort((a, b) => a.rangeNm - b.rangeNm)[0];
+  }
+  if (/TF16|特混16/i.test(target)) {
+    return [...points]
+      .filter((p) => p.side === "USN" && /航空母舰/.test(p.unit.unit_class ?? ""))
+      .sort((a, b) => a.rangeNm - b.rangeNm)[0];
+  }
+  return undefined;
+}
+
+/** 威胁：距岛 nm × 等级。左上=又急又近 */
+export function urgentNearScatterSeries(
+  pack: SlicePack,
+  ratings: SituationViewSpec["threat_ratings"],
+): ChartSpec["series"] {
+  const { points, anchor } = forceGeoPoints(pack);
+  const rows: ChartSpec["series"] = [];
+  const seen = new Set<string>();
+  for (const r of ratings ?? []) {
+    if (!r.target) continue;
+    for (const target of expandBundledShipTarget(r.target)) {
+      const g = matchTargetPoint(target, points);
+      if (!g || g.rangeNm < 0.5) continue;
+      const key = displayUnitName(g.unit.name, 16);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const y = levelScoreValue(r.level);
+      rows.push({
+        name: key,
+        value: y,
+        x: Math.round(g.rangeNm),
+        y,
+        side: g.side,
+        group: normalizeThreatLevel(r.level),
+        detail: `${g.unit.name}\n${normalizeThreatLevel(r.level)} · 距${anchor.label} ${Math.round(g.rangeNm)} nm`,
+      });
+    }
+  }
+  return rows.length
+    ? rows.sort((a, b) => Number(b.y) - Number(a.y) || Number(a.x) - Number(b.x))
+    : [{ name: "（无）", value: 0, x: 0, y: 0, detail: "无法把评级对到舰位" }];
+}
+
+function toUrgentNearBars(series: ChartSpec["series"]): ChartSpec["series"] {
+  return series
+    .filter((s) => Number(s.y || s.value) > 0 && Number(s.x) > 0)
+    .map((s) => {
+      const range = Math.max(Number(s.x) || 12, 12);
+      const level = Number(s.y || s.value) || 1;
+      return {
+        ...s,
+        value: Math.round((level * 80) / range),
+        detail: `${s.detail ?? s.name}\n紧急近度 ${Math.round((level * 80) / range)}（等级÷距离）`,
+      };
+    })
+    .sort((a, b) => b.value - a.value);
+}
+
+/** 舰艇航向落入八方位（美/日分列） */
+export function headingRoseSeries(pack: SlicePack): ChartSpec["series"] {
+  const ships = pickForceShips(pack);
+  const counts: Record<string, { USN: number; IJN: number; names: string[] }> =
+    Object.fromEntries(
+      BEARING_SECTORS.map((s) => [s, { USN: 0, IJN: 0, names: [] as string[] }]),
+    );
+  for (const u of ships) {
+    if (!Number.isFinite(u.heading_deg)) continue;
+    // 停泊且航向 0：占位，不是正在往北开
+    if ((u.speed_kn ?? 0) < 0.5 && Math.abs(u.heading_deg) < 1) continue;
+    const side = u.side === "IJN" ? ("IJN" as const) : ("USN" as const);
+    const sec = bearingSector(((u.heading_deg % 360) + 360) % 360);
+    counts[sec][side] += 1;
+    counts[sec].names.push(
+      `${side === "USN" ? "美" : "日"}·${displayUnitName(u.name, 14)} ${Math.round(u.heading_deg)}°`,
+    );
+  }
+  return BEARING_SECTORS.flatMap((sec) => {
+    const c = counts[sec];
+    const detail = c.names.length
+      ? c.names.map((n, i) => `${i + 1}. ${n}`).join("\n")
+      : "该航向暂无取样舰艇";
+    return [
+      {
+        name: sec,
+        value: c.USN,
+        side: "USN" as const,
+        group: "美方",
+        detail: `美方航向 · ${sec}\n${detail}`,
+      },
+      {
+        name: sec,
+        value: c.IJN,
+        side: "IJN" as const,
+        group: "日方",
+        detail: `日方航向 · ${sec}\n${detail}`,
+      },
+    ];
+  });
+}
+
+const AXIS_GROUP = "作战轴";
+const SECTOR_DEG: Record<string, number> = {
+  N: 0,
+  NE: 45,
+  E: 90,
+  SE: 135,
+  S: 180,
+  SW: 225,
+  W: 270,
+  NW: 315,
+};
+
+function circDiffDeg(a: number, b: number): number {
+  const d = Math.abs(((a - b) % 360 + 360) % 360);
+  return d > 180 ? 360 - d : d;
+}
+
+/** 舰首航向瓣 + 作战轴：用来看航向有没有对准轴 */
+export function headingAlignSeries(
+  pack: SlicePack,
+  spec?: SituationViewSpec,
+): ChartSpec["series"] {
+  const heading = headingRoseSeries(pack);
+  const axisRows: ChartSpec["series"] = [];
+  for (const a of spec?.map?.axes ?? []) {
+    if (!a.from || !a.to) continue;
+    const { eastNm, northNm, rangeNm } = nmOffsetFrom(
+      a.to[0],
+      a.to[1],
+      a.from[0],
+      a.from[1],
+    );
+    if (rangeNm < 1) continue;
+    const bearing = bearingFromOffset(eastNm, northNm);
+    const label = (a.label || a.id).trim();
+    axisRows.push({
+      name: label.length > 18 ? `${label.slice(0, 16)}…` : label,
+      value: rangeNm,
+      x: Math.round(bearing),
+      y: rangeNm,
+      side: a.side === "IJN" ? "IJN" : "USN",
+      group: AXIS_GROUP,
+      detail: `作战轴 ${Math.round(bearing)}° · ${Math.round(rangeNm)} nm`,
+    });
+  }
+  return axisRows.length ? [...heading, ...axisRows] : heading;
+}
+
+function peakHeadingOf(
+  series: ChartSpec["series"],
+  side: "USN" | "IJN",
+): { name: string; deg: number } | null {
+  const peak = [...series]
+    .filter(
+      (s) =>
+        s.side === side &&
+        s.group !== AXIS_GROUP &&
+        Number(s.value) > 0 &&
+        SECTOR_DEG[s.name] != null,
+    )
+    .sort((a, b) => Number(b.value) - Number(a.value))[0];
+  if (!peak) return null;
+  return { name: peak.name, deg: SECTOR_DEG[peak.name] };
+}
+
+function toHeadingOffsetBars(series: ChartSpec["series"]): ChartSpec["series"] {
+  const axes = series.filter((s) => s.group === AXIS_GROUP);
+  const rows: ChartSpec["series"] = [];
+  for (const ax of axes) {
+    const side = ax.side === "IJN" ? "IJN" : "USN";
+    const peak = peakHeadingOf(series, side);
+    if (!peak) continue;
+    const off = Math.round(circDiffDeg(peak.deg, Number(ax.x) || 0));
+    rows.push({
+      name: ax.name,
+      value: off,
+      side,
+      detail: `主航向 ${peak.name}（${peak.deg}°）\n作战轴 ${Math.round(Number(ax.x) || 0)}°\n偏角 ${off}°`,
+    });
+  }
+  return rows.length
+    ? rows.sort((a, b) => a.value - b.value)
+    : [
+        {
+          name: "（无对照）",
+          value: 0,
+          detail: "无作战轴或无在航航向",
+        },
+      ];
+}
+
 function buildSpatialRelationCharts(
   pack?: SlicePack,
   spec?: SituationViewSpec,
@@ -1712,6 +1939,42 @@ export function extensionDataFitness(chart: ChartSpec): number {
     return clamp(30 + Math.min(pts.length, 8) * 5);
   }
 
+  if (id === "cmp-heading") {
+    const axes = series.filter((s) => s.group === "作战轴");
+    const headingN = series
+      .filter((s) => s.group !== "作战轴")
+      .reduce((a, s) => a + (Number(s.value) || 0), 0);
+    if (headingN < 2) return clamp(headingN * 10);
+    if (!axes.length) return clamp(24 + headingN);
+    const both =
+      axes.some((s) => s.side === "USN") && axes.some((s) => s.side === "IJN");
+    return clamp(48 + axes.length * 12 + Math.min(headingN, 16) + (both ? 8 : 0));
+  }
+
+  if (id === "cmp-urgent-near") {
+    const pts = series.filter(
+      (s) =>
+        s.name &&
+        !/（无/.test(s.name) &&
+        Number(s.x) > 0 &&
+        Number(s.y || s.value) > 0,
+    );
+    if (pts.length < 2) return clamp(pts.length * 16);
+    const xs = pts.map((s) => Number(s.x) || 0);
+    const ys = pts.map((s) => Number(s.y || s.value) || 0);
+    const span = Math.max(...xs) - Math.min(...xs);
+    const levels = new Set(ys.map((y) => Math.round(y))).size;
+    return clamp(42 + pts.length * 6 + Math.min(span, 80) * 0.15 + levels * 6);
+  }
+
+  if (id === "cmp-threat-evidence") {
+    const pts = series.filter((s) => s.name && !/（无|暂无）/.test(s.name));
+    if (pts.length < 2) return clamp(pts.length * 16);
+    const scores = pts.map((s) => Number(s.x ?? s.value) || 0);
+    const span = Math.max(...scores) - Math.min(...scores);
+    return clamp(40 + Math.min(pts.length, 8) * 6 + Math.min(span, 4) * 8);
+  }
+
   // 其它扩展：有有效点就给基础分
   const n = series.filter((s) => (Number(s.value) || 0) > 0 || s.x != null)
     .length;
@@ -1766,6 +2029,57 @@ function chartAsType(chart: ChartSpec, type: ChartType): ChartSpec {
     };
   }
   if (
+    chart.id === "cmp-heading" &&
+    (type === "bar" || type === "grouped_bar" || type === "hbar" || type === "radar")
+  ) {
+    if (type === "hbar" || type === "bar") {
+      return {
+        ...chart,
+        type: "hbar",
+        description: "条短=舰首航向相对作战轴偏角小（对准）",
+        series: toHeadingOffsetBars(chart.series),
+      };
+    }
+    return {
+      ...chart,
+      type,
+      description: "瓣=舰首航向，箭头=作战轴；重合=对准",
+    };
+  }
+  if (chart.id === "cmp-urgent-near" && type === "hbar") {
+    return {
+      ...chart,
+      type,
+      description: "条长=等级÷距岛；越长表示越紧急且越近",
+      series: toUrgentNearBars(chart.series),
+    };
+  }
+  if (chart.id === "cmp-urgent-near" && type === "scatter") {
+    return {
+      ...chart,
+      type,
+      description: "横轴距岛 nm，纵轴威胁等级；左上=紧急且近",
+    };
+  }
+  if (chart.id === "cmp-threat-evidence" && type === "hbar") {
+    return {
+      ...chart,
+      type,
+      description: "条长=证据充分度 0–4",
+      series: chart.series.map((s) => ({
+        ...s,
+        value: Number(s.x ?? s.value) || 0,
+      })),
+    };
+  }
+  if (chart.id === "cmp-threat-evidence" && type === "scatter") {
+    return {
+      ...chart,
+      type,
+      description: "横轴充分度，纵轴等级；右上=定级且有据",
+    };
+  }
+  if (
     (chart.id === "cmp-force-range" ||
       chart.id === "cmp-force-range-area") &&
     (type === "area" || type === "multi_line")
@@ -1806,9 +2120,10 @@ function applyVmmpChartSelection(
     if (!c.id) continue;
     fitnessById.set(c.id, extensionDataFitness(c));
   }
-  const { whyById, picks } = selectChartSlotIds(taskFocus, rich, {
+  const { whyById, picks, secondary } = selectChartSlotIds(taskFocus, rich, {
     fitnessById,
   });
+  const extendIds = new Set(secondary.map((s) => s.family));
   const byId = new Map(
     charts.filter((c) => c.id).map((c) => [c.id as string, c]),
   );
@@ -1822,6 +2137,7 @@ function applyVmmpChartSelection(
         id: slot.family,
         type: slot.type,
         why_type: whyById.get(slot.family) || typed.why_type,
+        band: extendIds.has(slot.family) ? ("extend" as const) : ("main" as const),
       };
     })
     .filter((c): c is ChartSpec => Boolean(c));
@@ -1876,6 +2192,27 @@ function buildTaskChartCandidates(
     ...byId("cmp-alt-bands"),
     ...byId("cmp-air-profile"),
     ...byId("cmp-hunt-range"),
+    {
+      id: "cmp-heading" as const,
+      type: "radar" as const,
+      title: "航向对准作战轴了吗？",
+      description: "瓣=舰首航向，箭头=作战轴；重合=对准",
+      series: pack ? headingAlignSeries(pack, spec) : [],
+    },
+    {
+      id: "cmp-urgent-near" as const,
+      type: "scatter" as const,
+      title: "谁紧急又离岛近？",
+      description: "横轴距岛 nm，纵轴威胁等级；左上=紧急且近",
+      series: pack ? urgentNearScatterSeries(pack, ratings) : [],
+    },
+    {
+      id: "cmp-threat-evidence" as const,
+      type: "scatter" as const,
+      title: "评级依据足不足？",
+      description: "横轴充分度，纵轴等级；右上=定级且有据",
+      series: threatEvidenceScatterSeries(ratings),
+    },
   ];
 }
 
