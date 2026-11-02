@@ -119,8 +119,8 @@ export function SituationWorkbench() {
   }, [pack, sliceId]);
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--panel)]/90 backdrop-blur">
+    <div className="flex h-dvh min-h-0 flex-col overflow-hidden">
+      <header className="z-20 shrink-0 border-b border-[var(--line)] bg-[var(--panel)]/90 backdrop-blur">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-2 px-4 py-1.5">
           <div className="mr-1 flex items-center gap-1.5">
             <MapIcon className="h-3.5 w-3.5 text-[var(--accent)]" />
@@ -190,7 +190,7 @@ export function SituationWorkbench() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1600px] space-y-4 px-4 py-4">
+      <main className="mx-auto flex min-h-0 w-full flex-1 flex-col overflow-hidden px-3 py-1.5">
         {(error || fallbackNote) && (
           <section className="flex gap-2 rounded-lg bg-[#f8efe4] p-3 text-xs text-[#7a4b12] ring-1 ring-[#e0c4a0]">
             <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -199,7 +199,7 @@ export function SituationWorkbench() {
         )}
 
         {!spec || !pack ? (
-          <div className="flex h-[70vh] items-center justify-center rounded-lg bg-[var(--panel)] text-sm text-[var(--muted)] ring-1 ring-[var(--line)]">
+          <div className="flex min-h-0 flex-1 items-center justify-center rounded-lg bg-[var(--panel)] text-sm text-[var(--muted)] ring-1 ring-[var(--line)]">
             {loading ? "正在生成态势界面…" : "等待数据…"}
           </div>
         ) : (

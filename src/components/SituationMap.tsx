@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   Circle,
   MapContainer,
@@ -17,25 +17,10 @@ import { zoneLevelLegend, zoneLevelVisual } from "@/lib/zoneLevel";
 import { drawnRadiusNm, nmToMeters } from "@/lib/utils";
 import "leaflet/dist/leaflet.css";
 
-type BasemapId = "satellite" | "ocean";
-
-const BASEMAPS: Record<
-  BasemapId,
-  { label: string; url: string; attribution: string; maxZoom?: number }
-> = {
-  satellite: {
-    label: "卫星影像",
-    // Esri World Imagery — 太平洋开阔海区能看清中途岛环礁
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    attribution: "Tiles © Esri",
-    maxZoom: 19,
-  },
-  ocean: {
-    label: "海图",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",
-    attribution: "Tiles © Esri — Ocean",
-    maxZoom: 16,
-  },
+const BASEMAP = {
+  // Esri World Imagery — 太平洋开阔海区能看清中途岛环礁
+  url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  maxZoom: 19,
 };
 
 function FitToSpec({
@@ -615,9 +600,6 @@ export function SituationMap({
   /** 意图页：高亮单位改成「实体」名牌，避免看成威胁金环 */
   markEntities?: boolean;
 }) {
-  const [basemap, setBasemap] = useState<BasemapId>("satellite");
-  const tile = BASEMAPS[basemap];
-
   const mapSpec = spec.map ?? {
     center: [28.21, -177.38] as [number, number],
     zoom: 6,
@@ -653,22 +635,6 @@ export function SituationMap({
 
   return (
     <div className="relative h-full w-full">
-      <div className="absolute right-2 top-2 z-[1000] flex overflow-hidden rounded-md text-[11px] shadow ring-1 ring-black/20">
-        {(Object.keys(BASEMAPS) as BasemapId[]).map((id) => (
-          <button
-            key={id}
-            type="button"
-            className={`px-2.5 py-1.5 backdrop-blur ${
-              basemap === id
-                ? "bg-white/95 font-semibold text-[var(--ink)]"
-                : "bg-white/70 text-[var(--muted)] hover:bg-white/85"
-            }`}
-            onClick={() => setBasemap(id)}
-          >
-            {BASEMAPS[id].label}
-          </button>
-        ))}
-      </div>
       <MapIconLegend showEntityTag={markEntities} />
 
       <MapContainer
@@ -679,10 +645,9 @@ export function SituationMap({
         attributionControl={false}
       >
         <TileLayer
-          key={basemap}
-          url={tile.url}
+          url={BASEMAP.url}
           attribution=""
-          maxZoom={tile.maxZoom}
+          maxZoom={BASEMAP.maxZoom}
         />
         <FitToSpec center={center} zoom={zoom} />
         <FocusCenterFly

@@ -224,8 +224,8 @@ export function VmmpCompareWorkbench() {
   const rich = abSide === "B";
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--panel)]/90 backdrop-blur">
+    <div className="flex h-dvh min-h-0 flex-col overflow-hidden">
+      <header className="z-20 shrink-0 border-b border-[var(--line)] bg-[var(--panel)]/90 backdrop-blur">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-2 px-4 py-1.5">
           <div className="mr-1 flex items-center gap-1.5">
             <ArrowLeftRight className="h-3.5 w-3.5 text-[var(--accent)]" />
@@ -314,7 +314,7 @@ export function VmmpCompareWorkbench() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1600px] space-y-2 px-4 py-2">
+      <main className="mx-auto flex min-h-0 w-full flex-1 flex-col overflow-hidden px-3 py-1.5">
         {(error || notes.length > 0) && (
           <section className="flex gap-2 rounded-lg bg-[#f8efe4] p-3 text-xs text-[#7a4b12] ring-1 ring-[#e0c4a0]">
             <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -328,7 +328,7 @@ export function VmmpCompareWorkbench() {
         )}
 
         {!pack || !specA || !specB || !activeSpec ? (
-          <div className="flex h-[60vh] items-center justify-center rounded-lg bg-[var(--panel)] text-sm text-[var(--muted)] ring-1 ring-[var(--line)]">
+          <div className="flex min-h-0 flex-1 items-center justify-center rounded-lg bg-[var(--panel)] text-sm text-[var(--muted)] ring-1 ring-[var(--line)]">
             {loading
               ? "正在生成 A/B 态势与推理…"
               : `当前是${taskFocus === "intent" ? "意图研判" : "威胁分析"}。点「生成 A/B」写出这一任务，或切换到已有预存的任务。`}

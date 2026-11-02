@@ -1,6 +1,7 @@
 /**
- * 对比页选图：共用一座图种库，A / B 都从里面挑最适配的项。
- * 每项 = 一种可画的图（问句 + 图种），不预埋 A/B 各一张。
+ * 对比页选图：共用一座图种库，A / B 各自挑选，界面不混用、不并排。
+ * A = 无范式，只留 LLM 最常直接回答问句的直观图。
+ * B = 有 VMMP，按 M 激活拓扑覆盖；问句可与 A 相同，图种必须按拓扑优选且尽量不同。
  */
 import type { ChartType, TaskFocus } from "./types";
 import vmmpI from "../../data/vmmp/VMMP_I_intent_assessment.json";
@@ -114,7 +115,7 @@ export const SHARED_CHART_SLOTS: ChartSlotDef[] = [
     shortLabel: "敌我落点",
     question: "敌我水面相对中途岛落在哪？",
     mapRead: "Locate：把 CombatEntity 落到相对岛的平面",
-    llmFit: { intent: 0.72, threat: 0.92 },
+    llmFit: { intent: 0.78, threat: 0.92 },
     topic: "unit-xy",
   }),
   item({
@@ -159,11 +160,11 @@ export const SHARED_CHART_SLOTS: ChartSlotDef[] = [
     type: "scatter",
     topologies: ["Salience", "Position"],
     primaryTopology: "Salience",
-    tasks: ["threat"],
+    tasks: ["intent", "threat"],
     shortLabel: "活动区足迹",
     question: "关注圈圆心相对岛落在哪？",
     mapRead: "Filter：紧急/高圈圆心，对照圈色",
-    llmFit: { threat: 0.52 },
+    llmFit: { intent: 0.28, threat: 0.36 },
     topic: "zone-xy",
   }),
   item({
@@ -171,11 +172,12 @@ export const SHARED_CHART_SLOTS: ChartSlotDef[] = [
     type: "hbar",
     topologies: ["Hierarchy", "Salience"],
     primaryTopology: "Hierarchy",
-    tasks: ["threat"],
+    // 地图已按真半径画圈；条图对意图几乎无增量，对威胁也只是再数一遍
+    tasks: [],
     shortLabel: "圈半径",
     question: "各关注圈半径差多少海里？",
     mapRead: "Assess：用海里比出谁罩得更宽",
-    llmFit: { threat: 0.58 },
+    llmFit: { intent: 0.12, threat: 0.18 },
     topic: "zone-size",
   }),
   item({
@@ -188,6 +190,32 @@ export const SHARED_CHART_SLOTS: ChartSlotDef[] = [
     question: "各舰距中途岛多远？",
     mapRead: "条长=海里，越短越近",
     llmFit: { threat: 0.88 },
+    topic: "island-range",
+  }),
+  item({
+    id: "cmp-force-range-area",
+    family: "cmp-force-range",
+    type: "area",
+    topologies: ["Continuity", "Proximity"],
+    primaryTopology: "Continuity",
+    tasks: ["threat"],
+    shortLabel: "距岛远近",
+    question: "各舰距中途岛多远？",
+    mapRead: "面积：距岛 X nm 内已有多少艘，看铺开过程",
+    llmFit: { threat: 0.1 },
+    topic: "island-range",
+  }),
+  item({
+    id: "cmp-force-range-strip",
+    family: "cmp-force-range",
+    type: "scatter",
+    topologies: ["Grouping", "Proximity"],
+    primaryTopology: "Grouping",
+    tasks: ["threat"],
+    shortLabel: "距岛远近",
+    question: "各舰距中途岛多远？",
+    mapRead: "沿距岛海里铺开，一点一艘；颜色分美/日，0=中途岛",
+    llmFit: { threat: 0.14 },
     topic: "island-range",
   }),
   item({
@@ -217,14 +245,14 @@ export const SHARED_CHART_SLOTS: ChartSlotDef[] = [
   }),
   item({
     id: "cmp-highlight-range",
-    type: "scatter",
-    topologies: ["Salience", "Position", "Proximity"],
+    type: "hbar",
+    topologies: ["Salience", "Proximity"],
     primaryTopology: "Salience",
     tasks: ["intent", "threat"],
-    shortLabel: "高亮方位距",
-    question: "高亮实体相对岛的方位×距离？",
-    mapRead: "筛出实体离岛多远、偏哪一扇区",
-    llmFit: { intent: 0.76, threat: 0.48 },
+    shortLabel: "高亮距岛",
+    question: "高亮实体离中途岛多远？",
+    mapRead: "条长=海里，越短越近；只看图上高亮",
+    llmFit: { intent: 0.42, threat: 0.46 },
     topic: "highlight",
   }),
   item({
@@ -236,7 +264,7 @@ export const SHARED_CHART_SLOTS: ChartSlotDef[] = [
     shortLabel: "在空高度",
     question: "美/日在空兵力落在哪些高度带？",
     mapRead: "Aggregate：各高度带架次分组柱",
-    llmFit: { threat: 0.42 },
+    llmFit: { threat: 0.3 },
     topic: "air",
   }),
   item({
@@ -261,7 +289,7 @@ export const SHARED_CHART_SLOTS: ChartSlotDef[] = [
     shortLabel: "在空剖面",
     question: "在空飞机相对岛的东向×高度？",
     mapRead: "飞机东向×高度，对照岛与圈",
-    llmFit: { intent: 0.8 },
+    llmFit: { intent: 0.82 },
     topic: "air",
   }),
   item({
@@ -273,7 +301,19 @@ export const SHARED_CHART_SLOTS: ChartSlotDef[] = [
     shortLabel: "关联远近",
     question: "高亮之间/对岛间隔有多远？",
     mapRead: "Relate：条长=海里，高亮对岛/彼此",
-    llmFit: { intent: 0.58, threat: 0.4 },
+    llmFit: { intent: 0.7, threat: 0.68 },
+    topic: "pair-range",
+  }),
+  item({
+    id: "cmp-aim-link",
+    type: "sankey",
+    topologies: ["Proximity", "Connection"],
+    primaryTopology: "Proximity",
+    tasks: ["intent"],
+    shortLabel: "对准关系",
+    question: "谁在对准谁？",
+    mapRead: "Relate：左=发起，右=目标，带宽=指向长度",
+    llmFit: { intent: 0.18 },
     topic: "pair-range",
   }),
 ];
@@ -283,13 +323,14 @@ export const THREAT_EXTENSION_SLOTS: ChartSlotDef[] = SHARED_CHART_SLOTS;
 export const INTENT_CHART_SLOTS: ChartSlotDef[] = SHARED_CHART_SLOTS;
 export const THREAT_CHART_SLOTS: ChartSlotDef[] = SHARED_CHART_SLOTS;
 
-const MIN_FITNESS = 38;
-/** 一侧入选上限：留出第二档，但不把目录铺满 */
-const MAX_PRIMARY = 5;
-/** A：相对头名，问句贴合掉出这截距才降为未选 */
-const KEEP_RATIO = 0.45;
+const MIN_FITNESS = 28;
+/** A / B 都至少铺满 5 张；A 走直观图，B 走 M 拓扑 */
+const MAX_A = 5;
+const MAX_B = 5;
+/** A：相对头名，问句贴合掉出这截距才降为未选；随后仍补满 5 张 */
+const KEEP_RATIO = 0.4;
 /** B：覆盖某拓扑时，图种×数据过弱则跳过，不硬凑 */
-const COVER_MIN = 0.28;
+const COVER_MIN = 0.22;
 
 /** 无范式时 LLM 更常直接画出的图种 */
 const INTUITIVE_TYPES: ChartType[] = [
@@ -305,22 +346,22 @@ const WHY_A = "无范式 · 直观回答问句";
 const DISPLAY_TOPOLOGY: Record<TaskFocus, VisualTopology[]> = {
   threat: [
     "Ordering",
-    "Position",
     "Alignment",
     "Grouping",
-    "Salience",
     "Hierarchy",
+    "Salience",
+    "Position",
     "Proximity",
     "Connection",
   ],
   intent: [
     "Connection",
     "Alignment",
-    "Position",
     "Proximity",
-    "Continuity",
     "Salience",
     "Hierarchy",
+    "Position",
+    "Continuity",
   ],
 };
 
@@ -330,19 +371,19 @@ function preferredTypes(topo: VisualTopology): ChartType[] {
     case "Ordering":
       return ["hbar"];
     case "Hierarchy":
-      return ["hbar", "bar"];
+      return ["hbar", "bar", "grouped_bar"];
     case "Grouping":
-      return ["heatmap", "grouped_bar"];
+      return ["scatter", "grouped_bar", "heatmap"];
     case "Alignment":
       return ["radar", "bar"];
     case "Connection":
-      return ["radar", "scatter"];
+      return ["radar", "scatter", "sankey"];
     case "Position":
       return ["scatter"];
     case "Salience":
-      return ["scatter", "hbar", "bar"];
-    case "Proximity":
       return ["hbar", "scatter", "bar"];
+    case "Proximity":
+      return ["sankey", "hbar", "scatter", "bar"];
     case "Continuity":
       return ["multi_line", "line", "area"];
     default:
@@ -383,6 +424,32 @@ function displayIndex(focus: TaskFocus, slot: ChartSlotDef): number {
   return i < 0 ? 80 : i;
 }
 
+const TOPO_ZH: Record<VisualTopology, string> = {
+  Position: "落点",
+  Continuity: "过程",
+  Connection: "指向",
+  Proximity: "关联",
+  Alignment: "方位",
+  Hierarchy: "层次",
+  Salience: "显著",
+  Ordering: "排序",
+  Grouping: "分组",
+  Consistency: "一致",
+  Uncertainty: "不确定",
+};
+
+/** 对比页图卡底部：A / B 各自的左→右排列依据 */
+export function chartOrderCaption(focus: TaskFocus, rich: boolean): string {
+  if (!rich) {
+    return "左→右：问句贴合度，高的在前";
+  }
+  const chain = DISPLAY_TOPOLOGY[focus]
+    .slice(0, 5)
+    .map((t) => TOPO_ZH[t])
+    .join(" → ");
+  return `左→右：视觉拓扑覆盖（${chain}）`;
+}
+
 export type ExtPickOptions = {
   fitnessById?: ReadonlyMap<string, number> | Record<string, number>;
 };
@@ -400,7 +467,10 @@ function familyFitness(
   slot: ChartSlotDef,
   opts?: ExtPickOptions,
 ): number {
-  return fitnessOf(slot.family, opts?.fitnessById);
+  return Math.max(
+    fitnessOf(slot.family, opts?.fitnessById),
+    fitnessOf(slot.id, opts?.fitnessById),
+  );
 }
 
 export function catalogSlots(_focus?: TaskFocus): ChartSlotDef[] {
@@ -462,8 +532,9 @@ function rankByLlm(
   const usedTopic = new Set<string>();
   for (const row of ranked) {
     if (
-      primary.length < MAX_PRIMARY &&
+      primary.length < MAX_A &&
       row.score >= floor &&
+      INTUITIVE_TYPES.includes(row.slot.type) &&
       !usedFamily.has(row.slot.family) &&
       !usedTopic.has(row.slot.topic)
     ) {
@@ -471,6 +542,17 @@ function rankByLlm(
     } else {
       spare.push(row.slot);
     }
+  }
+  for (const row of ranked) {
+    if (primary.length >= MAX_A) break;
+    if (
+      !INTUITIVE_TYPES.includes(row.slot.type) ||
+      usedFamily.has(row.slot.family) ||
+      usedTopic.has(row.slot.topic)
+    ) {
+      continue;
+    }
+    takeSlot(row.slot, primary, usedFamily, usedTopic);
   }
   return { primary, spare };
 }
@@ -485,16 +567,29 @@ function coverScore(
   return primaryBonus * tf * (0.6 + 0.4 * (fitness / 100));
 }
 
-/** B：有 VMMP，按 M 激活的拓扑各盖一张最贴的图 */
+/** 同一问句：B 换图种加分；同图种则降权，但不禁止（Ordering 的 hbar 仍可保留） */
+function typeAgainstA(
+  slot: ChartSlotDef,
+  aTypeByFamily: Map<string, ChartType>,
+): number {
+  const aType = aTypeByFamily.get(slot.family);
+  if (!aType) return 1;
+  if (aType === slot.type) return 0.62;
+  return 1.28;
+}
+
+/** B：有 VMMP。问句可与 A 相同，图种按 M 拓扑优选，并尽量与 A 不同。 */
 function coverByM(
   eligible: ChartSlotDef[],
   focus: TaskFocus,
   opts?: ExtPickOptions,
+  aPrimary: ChartSlotDef[] = [],
 ): RankedSide {
   const primary: ChartSlotDef[] = [];
   const usedFamily = new Set<string>();
   const usedTopic = new Set<string>();
   const usedTop = new Set<string>();
+  const aTypeByFamily = new Map(aPrimary.map((s) => [s.family, s.type]));
   const activated = new Set(topologiesFromVmmp(focus).map((t) => t.topology));
   const coverOrder: VisualTopology[] = [];
   for (const top of DISPLAY_TOPOLOGY[focus]) {
@@ -506,7 +601,7 @@ function coverByM(
   }
 
   for (const top of coverOrder) {
-    if (primary.length >= MAX_PRIMARY) break;
+    if (primary.length >= MAX_B) break;
     if (usedTop.has(top)) continue;
     const cands = eligible.filter(
       (slot) =>
@@ -518,7 +613,9 @@ function coverByM(
     const scored = cands
       .map((slot) => {
         const fitness = familyFitness(slot, opts);
-        return { slot, score: coverScore(slot, top, fitness), fitness };
+        const score =
+          typeAgainstA(slot, aTypeByFamily) * coverScore(slot, top, fitness);
+        return { slot, score, fitness };
       })
       .sort(
         (a, b) =>
@@ -530,6 +627,33 @@ function coverByM(
     if (!best || best.score < COVER_MIN) continue;
     takeSlot(best.slot, primary, usedFamily, usedTopic);
     usedTop.add(top);
+  }
+
+  if (primary.length < MAX_B) {
+    const rest = eligible
+      .filter(
+        (slot) =>
+          !usedFamily.has(slot.family) && !usedTopic.has(slot.topic),
+      )
+      .map((slot) => {
+        const tf = typeFit(slot, true);
+        const fit = familyFitness(slot, opts);
+        return {
+          slot,
+          score:
+            typeAgainstA(slot, aTypeByFamily) *
+            tf *
+            (0.6 + 0.4 * (fit / 100)),
+        };
+      })
+      .sort(
+        (a, b) =>
+          b.score - a.score || a.slot.id.localeCompare(b.slot.id),
+      );
+    for (const row of rest) {
+      if (primary.length >= MAX_B) break;
+      takeSlot(row.slot, primary, usedFamily, usedTopic);
+    }
   }
 
   primary.sort(
@@ -550,9 +674,9 @@ function rankPicks(
   rich: boolean,
   opts?: ExtPickOptions,
 ): RankedSide {
-  return rich
-    ? coverByM(eligible, focus, opts)
-    : rankByLlm(eligible, focus, opts);
+  const aSide = rankByLlm(eligible, focus, opts);
+  if (!rich) return aSide;
+  return coverByM(eligible, focus, opts, aSide.primary);
 }
 
 function sideRanked(
@@ -733,6 +857,7 @@ export function selectChartSlotIds(
   ids: Set<string>;
   whyById: Map<string, string>;
   typeByFamily: Map<string, ChartType>;
+  picks: ChartSlotDef[];
 } {
   const tops = topologiesFromVmmp(focus);
   const whyByTop = new Map(tops.map((t) => [t.topology, t.why]));
@@ -760,5 +885,5 @@ export function selectChartSlotIds(
     }
   });
 
-  return { ids, whyById, typeByFamily };
+  return { ids, whyById, typeByFamily, picks: ranked.primary };
 }

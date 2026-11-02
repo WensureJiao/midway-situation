@@ -1,19 +1,16 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
-import { ChartCard } from "@/components/SituationCharts";
-import { ChartSelectionLegend } from "@/components/ChartSelectionLegend";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ChartCard,
+  chartInsight,
+  chartQuestion,
+} from "@/components/SituationCharts";
 import { VmmpReasoningTrace } from "@/components/VmmpReasoningTrace";
-import {
-  buildExtensionFitnessMap,
-  buildTaskCompareCharts,
-} from "@/lib/compareCharts";
-import { defaultCompareSlotId } from "@/lib/vmmpChartSelect";
-import {
-  inferCampaignBeat,
-  intentEvidenceItems,
-} from "@/lib/vmmpCompare";
+import { buildTaskCompareCharts } from "@/lib/compareCharts";
+import { chartOrderCaption } from "@/lib/vmmpChartSelect";
+import { inferCampaignBeat } from "@/lib/vmmpCompare";
 import type {
   ChartSpec,
   CompactUnit,
@@ -23,10 +20,9 @@ import type {
   SlicePack,
   TaskFocus,
 } from "@/lib/types";
-import { drawnRadiusNm } from "@/lib/utils";
 import { expandBundledShipTarget } from "@/lib/splitShipTargets";
 import { levelColor } from "@/lib/zoneLevel";
-import { Check, Crosshair, MapPin } from "lucide-react";
+import { Crosshair, MapPin, X } from "lucide-react";
 
 function unitCentroid(units: CompactUnit[]): [number, number] | null {
   if (!units.length) return null;
@@ -225,15 +221,14 @@ function usnThreatRows(spec: SituationViewSpec) {
     .sort((a, b) => b.pct - a.pct);
 }
 
-function firstSentence(text: string, max = 72): string {
-  const t = text.trim().replace(/\s+/g, " ");
-  if (!t) return "";
-  const m = t.match(/^(.+?[。！？.!?])/);
-  const s = (m?.[1] ?? t).trim();
-  return s.length > max ? `${s.slice(0, max)}…` : s;
+function locatorTone(item: PriorityItem): string {
+  if (/紧急|高|中|低/.test(item.level)) return levelTone(item.level);
+  if (item.axis?.side === "USN") return "#dc2626";
+  if (item.axis?.side === "IJN") return "#2563eb";
+  return "#64748b";
 }
 
-function IntentPick({
+function LocatorRow({
   item,
   active,
   onPick,
@@ -242,40 +237,40 @@ function IntentPick({
   active: boolean;
   onPick: () => void;
 }) {
-  const tone = /紧急|高|中|低/.test(item.level)
-    ? levelTone(item.level)
-    : item.axis?.side === "USN"
-      ? "#dc2626"
-      : item.axis?.side === "IJN"
-        ? "#2563eb"
-        : "#64748b";
+  const tone = locatorTone(item);
+  const badge = /紧急|高|中|低/.test(item.level)
+    ? item.level
+    : item.axis
+      ? "指向"
+      : item.zone
+        ? "活动区"
+        : "实体";
   return (
     <button
       type="button"
       onClick={onPick}
-      className={`flex w-full items-start gap-1.5 rounded bg-[var(--panel)] px-1.5 py-1 text-left ring-1 ${
+      className={`flex w-full items-center gap-1.5 rounded bg-[var(--panel)] px-1.5 py-1 text-left ring-1 ${
         active ? "" : "ring-[var(--line)] hover:ring-[var(--accent)]"
       }`}
       style={active ? { boxShadow: `0 0 0 2px ${tone}` } : undefined}
     >
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center justify-between gap-1.5">
-          <span className="truncate text-xs font-medium text-[var(--ink)]">
-            {item.title}
-          </span>
-          <span
-            className={`shrink-0 rounded px-1 py-px text-[10px] font-semibold ${
-              /紧急|高|中|低/.test(item.level)
-                ? levelBadgeClass(item.level)
-                : "bg-[var(--panel-2)] text-[var(--muted)] ring-1 ring-[var(--line)]"
-            }`}
-          >
-            {/紧急|高|中|低/.test(item.level) ? item.level : "指向"}
-          </span>
-        </span>
-        <span className="mt-px block line-clamp-1 text-[10px] leading-snug text-[var(--muted)]">
-          {item.subtitle}
-        </span>
+      <span
+        className="w-5 shrink-0 text-left text-[11px] font-semibold tabular-nums leading-none"
+        style={{ color: tone }}
+      >
+        {String(item.rank).padStart(2, "0")}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-xs font-medium text-[var(--ink)]">
+        {item.title.replace(/^IJN\s+/i, "").replace(/^USS\s+/i, "")}
+      </span>
+      <span
+        className={`shrink-0 rounded px-1 py-px text-[10px] font-semibold ${
+          /紧急|高|中|低/.test(item.level)
+            ? levelBadgeClass(item.level)
+            : "bg-[var(--panel-2)] text-[var(--muted)] ring-1 ring-[var(--line)]"
+        }`}
+      >
+        {badge}
       </span>
     </button>
   );
@@ -283,18 +278,70 @@ function IntentPick({
 
 function SideChartCard({
   chart,
-  fill = false,
+  active,
+  onSelectName,
 }: {
   chart: ChartSpec;
-  fill?: boolean;
+  active?: boolean;
+  onSelectName?: (name: string) => void;
 }) {
+  const question = chartQuestion(chart);
+  const insight = chartInsight(chart);
+  const sideLegend =
+    chart.id === "cmp-force-landing" ||
+    chart.id === "cmp-force-bearing" ||
+    chart.id === "cmp-intent-axes" ||
+    chart.id === "cmp-air-profile" ||
+    chart.id === "cmp-zone-footprint" ||
+    chart.id === "cmp-alt-bands" ||
+    chart.id === "cmp-force-range" ||
+    chart.id === "cmp-highlight-range" ||
+    chart.id === "cmp-aim-link";
+  const levelLegend = chart.id === "cmp-threat-rank";
   return (
     <div
-      className={`rounded-md p-2.5 ring-1 ring-[var(--line)] ${
-        fill ? "flex h-full min-h-0 flex-col" : ""
+      className={`flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-md bg-[var(--panel)] px-1.5 py-1 ring-1 ${
+        active ? "ring-[var(--accent)]" : "ring-[var(--line)]"
       }`}
     >
-      <ChartCard chart={chart} compact showWhyType fill={fill} />
+      <div className="mb-0.5 flex shrink-0 min-w-0 items-center gap-1">
+        <span className="shrink-0 rounded bg-[var(--panel-3)] px-1 py-px text-[9px] font-semibold tracking-wide text-[var(--muted)]">
+          Q
+        </span>
+        <h3 className="min-w-0 flex-1 truncate text-[11px] font-semibold leading-tight text-[var(--ink)]">
+          {question}
+        </h3>
+        {sideLegend ? (
+          <span className="flex shrink-0 items-center gap-1 text-[9px] text-[var(--muted)]">
+            <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: "#c45c4a" }} />
+            美
+            <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: "#3b82a8" }} />
+            日
+          </span>
+        ) : null}
+        {levelLegend ? (
+          <span className="flex shrink-0 items-center gap-0.5 text-[9px] text-[var(--muted)]">
+            <span className="inline-block h-1.5 w-2 rounded-sm bg-[#9f1239]" />
+            <span className="inline-block h-1.5 w-2 rounded-sm bg-[#ea580c]" />
+            <span className="inline-block h-1.5 w-2 rounded-sm bg-[#f59e0b]" />
+          </span>
+        ) : null}
+      </div>
+      <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+        <ChartCard
+          chart={chart}
+          compact
+          fill
+          plotOnly
+          onSelectName={onSelectName}
+        />
+      </div>
+      {insight ? (
+        <p className="mt-0.5 shrink-0 truncate border-t border-[var(--line)] pt-0.5 text-[10px] leading-tight text-[var(--ink)]">
+          <span className="mr-1 font-semibold text-[var(--accent)]">结论</span>
+          {insight}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -307,7 +354,7 @@ function SlotHead({
 }: {
   en: string;
   zh: string;
-  title: string;
+  title?: string;
   compact?: boolean;
 }) {
   return (
@@ -317,13 +364,15 @@ function SlotHead({
       >
         {en} <span className="opacity-50">/</span> {zh}
       </div>
-      <h3
-        className={`font-semibold text-[var(--ink)] ${
-          compact ? "text-xs leading-tight" : "text-sm"
-        }`}
-      >
-        {title}
-      </h3>
+      {title ? (
+        <h3
+          className={`line-clamp-2 font-semibold text-[var(--ink)] ${
+            compact ? "text-xs leading-tight" : "text-sm"
+          }`}
+        >
+          {title}
+        </h3>
+      ) : null}
     </div>
   );
 }
@@ -332,7 +381,6 @@ type PriorityItem = {
   id: string;
   rank: number;
   title: string;
-  subtitle: string;
   level: string;
   locateQuery: string;
   /** 点这条时高亮整段轴线，而不是终点一个钉 */
@@ -352,7 +400,6 @@ function buildPriorityItems(
         id: t.id,
         rank: i + 1,
         title: t.target,
-        subtitle: firstSentence(t.evidence || "", 48) || "威胁排序条目",
         level: t.level,
         locateQuery: t.target,
       }));
@@ -368,29 +415,23 @@ function buildPriorityItems(
   );
   const items: PriorityItem[] = [];
 
-  axes.slice(0, 2).forEach((a, i) => {
+  axes.forEach((a, i) => {
+    if (a.side === "USN") return;
     items.push({
       id: `axis-${a.id || i}`,
       rank: items.length + 1,
       title: a.label || "作战指向",
-      subtitle:
-        a.side === "USN"
-          ? "美方视角 · 我方这一拍往哪打"
-          : a.side === "IJN"
-            ? "美方看到的日方指向"
-            : "作战指向",
       level: "指向",
       locateQuery: a.label || highlights[0] || "",
       axis: a,
     });
   });
 
-  zones.slice(0, 2).forEach((z) => {
+  zones.slice(0, 3).forEach((z) => {
     items.push({
       id: `z-${z.id}`,
       rank: items.length + 1,
       title: z.label,
-      subtitle: "活动区",
       level: String(z.level || "中"),
       locateQuery: z.label,
       zone: z,
@@ -403,7 +444,6 @@ function buildPriorityItems(
       id: `hl-${name}`,
       rank: items.length + 1,
       title: name,
-      subtitle: "支撑这条意图的单位，不按威胁高低排序",
       level: "实体",
       locateQuery: name,
     });
@@ -428,17 +468,10 @@ function buildCoreJudgment(
     return {
       title:
         names.length > 1
-          ? names.join("、")
+          ? `${names[0]} 等 ${names.length} 个`
           : names[0] || top?.title || "待研判",
-      body:
-        firstSentence(tied[0]?.evidence || spec.narrative || "", 120) ||
-        "暂无核心威胁判断",
       locateQuery: names[0] || top?.locateQuery || "",
       locateQueries: names,
-      hint:
-        names.length > 1
-          ? `最高档「${topLevel}」共 ${names.length} 个，等级相同，一并作为核心对象`
-          : "当前最高优先威胁对象",
       axis: undefined as MapAxis | undefined,
     };
   }
@@ -447,50 +480,10 @@ function buildCoreJudgment(
   const axis = usnAxis || (spec.map.axes ?? [])[0];
   return {
     title: axis?.label || top?.title || `${beat}阶段`,
-    body:
-      firstSentence(spec.narrative || "", 120) ||
-      `美方观察下，这一拍更接近「${beat}」。`,
     locateQuery: axis?.label || top?.locateQuery || "",
     locateQueries: [] as string[],
-    hint: `美方视角 · 我方主作战指向 · 更接近「${beat}」`,
     axis,
   };
-}
-
-function buildEvidenceWhy(
-  spec: SituationViewSpec,
-  taskFocus: TaskFocus,
-): { title: string; detail: string }[] {
-  if (taskFocus === "threat") {
-    const rows = usnThreatRows(spec).slice(0, 3);
-    if (rows.length) {
-      return rows.map((r) => ({
-        title: r.target,
-        detail: firstSentence(r.evidence || "", 90) || `等级：${r.level}`,
-      }));
-    }
-    return (spec.map.threat_zones ?? []).slice(0, 3).map((z) => ({
-      title: z.label,
-      detail: `${z.level}区${z.radius_nm != null ? ` · 约 ${drawnRadiusNm(z.radius_nm)} nm` : ""}`,
-    }));
-  }
-
-  const items = intentEvidenceItems(spec).filter(
-    (i) => i.kind !== "叙述" && i.kind !== "叙述依据",
-  );
-  if (items.length) {
-    return items.slice(0, 4).map((i) => ({
-      title: i.kind,
-      detail: i.text,
-    }));
-  }
-  const beat = inferCampaignBeat("", spec);
-  return [
-    {
-      title: "阶段",
-      detail: `当前节拍：${beat}${spec.phase_label ? ` · ${spec.phase_label}` : ""}`,
-    },
-  ];
 }
 
 export function SpatialStudyPanel({
@@ -540,10 +533,6 @@ export function SpatialStudyPanel({
     () => buildCoreJudgment(spec, taskFocus, priorities),
     [spec, taskFocus, priorities],
   );
-  const evidence = useMemo(
-    () => buildEvidenceWhy(spec, taskFocus),
-    [spec, taskFocus],
-  );
   const coreItem = core.axis
     ? priorities.find(
         (p) =>
@@ -578,30 +567,34 @@ export function SpatialStudyPanel({
       }),
     [spec, taskFocus, pack],
   );
-  const extensionFitness = useMemo(
-    () =>
-      buildExtensionFitnessMap(spec, taskFocus, {
-        pack,
-      }),
-    [spec, taskFocus, pack],
-  );
   const reasonSide: "A" | "B" | null =
     badge === "A" || badge === "B" ? badge : null;
   const viewSide: "A" | "B" = reasonSide ?? (richCharts ? "B" : "A");
   const sideCharts = viewSide === "B" ? chartsB : chartsA;
-  const [pickedChartId, setPickedChartId] = useState<string | null>(null);
-  const [expandAll, setExpandAll] = useState(false);
+  const [activeChartId, setActiveChartId] = useState<string | null>(null);
+  const [traceOpen, setTraceOpen] = useState(false);
+  const traceRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    setExpandAll(false);
-    setPickedChartId(
-      defaultCompareSlotId(
-        taskFocus,
-        { fitnessById: extensionFitness },
-        viewSide,
-      ),
-    );
-  }, [spec.time_slice, taskFocus, extensionFitness, viewSide]);
-  const pickedChart = sideCharts.find((c) => c.id && c.id === pickedChartId);
+    setTraceOpen(false);
+  }, [reasonSide, taskFocus, threatReason, intentReason]);
+
+  useEffect(() => {
+    if (!traceOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setTraceOpen(false);
+    };
+    const onPtr = (e: PointerEvent) => {
+      if (traceRef.current?.contains(e.target as Node)) return;
+      setTraceOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPtr);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPtr);
+    };
+  }, [traceOpen]);
 
   const locate = (
     query: string,
@@ -673,22 +666,53 @@ export function SpatialStudyPanel({
     setFocusLabel(points[0].label);
   };
 
+  const locateFromName = (name: string, chartId?: string) => {
+    if (chartId) setActiveChartId(chartId);
+    const hit =
+      priorities.find(
+        (p) =>
+          p.title === name ||
+          p.locateQuery === name ||
+          p.title.includes(name) ||
+          name.includes(p.title),
+      ) ?? null;
+    const zone =
+      hit?.zone ??
+      spec.map.threat_zones?.find(
+        (z) => z.label.includes(name) || name.includes(z.label),
+      );
+    const axis =
+      hit?.axis ??
+      spec.map.axes?.find(
+        (a) =>
+          (a.label || "").includes(name) || name.includes(a.label || ""),
+      );
+    locate(hit?.locateQuery || name, {
+      color: hit ? locatorTone(hit) : undefined,
+      key: hit?.id ?? `chart-${name}`,
+      axis,
+      zone,
+    });
+  };
+
+  const pickLocator = (p: PriorityItem) => {
+    setActiveChartId(null);
+    locate(p.locateQuery, {
+      color: locatorTone(p),
+      key: p.id,
+      axis: p.axis,
+      zone: p.zone,
+    });
+  };
+
   const frameTitle =
     taskFocus === "intent"
-      ? {
-          en: "INTENT VERIFICATION",
-          zh: "意图验证",
-          sub: "意图指向空间态势",
-        }
-      : {
-          en: "SPATIAL VERIFICATION",
-          zh: "空间验证",
-          sub: "态势图",
-        };
+      ? { en: "INTENT", zh: "意图", sub: "意图指向" }
+      : { en: "SITUATION", zh: "态势", sub: "态势图" };
 
   return (
-    <section className="flex min-w-0 max-w-full flex-col overflow-hidden rounded-lg bg-[var(--panel)] ring-1 ring-[var(--line)]">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-[var(--line)] px-3 py-1">
+    <section className="grid h-full min-h-0 min-w-0 max-w-full flex-1 grid-rows-[auto_minmax(0,1fr)_minmax(228px,40%)] overflow-hidden rounded-lg bg-[var(--panel)] ring-1 ring-[var(--line)]">
+      <div className="relative z-[1100] flex shrink-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-[var(--line)] px-3 py-1">
         <span className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
           {frameTitle.en} <span className="opacity-50">/</span> {frameTitle.zh}
         </span>
@@ -708,22 +732,46 @@ export function SpatialStudyPanel({
               {pack.phase_label || spec.phase_label}
             </>
           )}
-          {spec.phase_label &&
-            pack.phase_label &&
-            spec.phase_label !== pack.phase_label && (
-              <>
-                <span className="mx-1">·</span>
-                {spec.phase_label}
-              </>
-            )}
-          <span className="mx-1">·</span>
-          美方单视角
         </span>
+        {reasonSide && (threatReason?.trim() || intentReason?.trim()) ? (
+          <div ref={traceRef} className="relative ml-auto shrink-0">
+            <button
+              type="button"
+              className={`cursor-pointer text-[11px] font-medium ${
+                traceOpen ? "text-[var(--ink)]" : "text-[var(--muted)]"
+              }`}
+              aria-expanded={traceOpen}
+              onClick={() => setTraceOpen((o) => !o)}
+            >
+              {traceOpen ? "收起推理" : "推理路径"}
+            </button>
+            {traceOpen ? (
+              <div className="fixed right-3 top-12 z-[2000] max-h-[calc(100dvh-4rem)] w-[min(44rem,calc(100vw-1.5rem))] overflow-y-auto rounded-md bg-[var(--panel)] p-2 shadow-xl ring-1 ring-[var(--line)]">
+                <div className="mb-1 flex items-center justify-end">
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[11px] text-[var(--muted)] hover:bg-[var(--panel-3)] hover:text-[var(--ink)]"
+                    onClick={() => setTraceOpen(false)}
+                  >
+                    <X className="h-3 w-3" />
+                    收起
+                  </button>
+                </div>
+                <VmmpReasoningTrace
+                  reasoningThreat={threatReason}
+                  reasoningIntent={intentReason}
+                  side={reasonSide}
+                  observerLabel="美方"
+                  lockedFocus={taskFocus}
+                />
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
-      {/* 上：地图 + 右侧 PRIORITY / CORE（与本地主界面同构） */}
-      <div className="grid border-b border-[var(--line)] lg:grid-cols-[minmax(0,1fr)_minmax(300px,42%)]">
-        <div className="map-shell relative min-h-[380px] h-[min(62vh,680px)] overflow-hidden border-b border-[var(--line)] lg:border-b-0 lg:border-r">
+      <div className="grid min-h-0 grid-cols-[minmax(0,1fr)_minmax(168px,210px)] overflow-hidden border-b border-[var(--line)]">
+        <div className="map-shell relative min-h-0 overflow-hidden border-r border-[var(--line)]">
           <SituationMap
             key={mapKey || `${spec.time_slice}-${taskFocus}`}
             pack={pack}
@@ -739,381 +787,93 @@ export function SpatialStudyPanel({
           />
         </div>
 
-        <aside className="flex max-h-[min(62vh,680px)] flex-col divide-y divide-[var(--line)] bg-[var(--panel-2)]/35">
-          <div
-            className={`flex min-h-0 flex-col ${
-              taskFocus === "intent"
-                ? "order-2 shrink-0 overflow-visible px-1.5 pb-2 pt-1.5"
-                : "flex-[1.1] overflow-hidden p-1.5"
-            }`}
-          >
-            {taskFocus === "intent" ? (
-              <div>
-                <section>
-                  <SlotHead
-                    compact
-                    en="ENEMY AIM"
-                    zh="日方指向"
-                    title="我方看到的对方指向"
-                  />
-                  <p className="mb-0.5 text-[10px] leading-snug text-[var(--muted)]">
-                    对方往哪打。这是美方的观察，不是我方主指向。
-                  </p>
-                  <div className="space-y-1">
-                    {priorities.filter((p) => p.axis?.side === "IJN").length ? (
-                      priorities
-                        .filter((p) => p.axis?.side === "IJN")
-                        .map((p) => (
-                          <IntentPick
-                            key={p.id}
-                            item={p}
-                            active={focusKey === p.id}
-                            onPick={() =>
-                              locate(p.locateQuery, {
-                                color: "#2563eb",
-                                key: p.id,
-                                axis: p.axis,
-                              })
-                            }
-                          />
-                        ))
-                    ) : (
-                      <p className="text-[11px] text-[var(--muted)]">暂无日方指向</p>
-                    )}
-                  </div>
-                </section>
-              </div>
-            ) : (
-              <>
+        <aside className="flex min-h-0 flex-col divide-y divide-[var(--line)] bg-[var(--panel-2)]/35">
+          <div className="shrink-0 p-1.5">
             <SlotHead
               compact
-              en="PRIORITY"
-              zh="优先度"
-              title="关键目标排序"
+              en={taskFocus === "intent" ? "CLAIM" : "CORE"}
+              zh={taskFocus === "intent" ? "主指向" : "核心"}
+              title={core.title}
+            />
+            <button
+              type="button"
+              disabled={!core.locateQuery}
+              onClick={() =>
+                locate(core.locateQuery, {
+                  color: coreColor,
+                  key: "core",
+                  axis: core.axis,
+                  queries:
+                    (core.locateQueries?.length ?? 0) > 1
+                      ? core.locateQueries
+                      : undefined,
+                })
+              }
+              className="inline-flex w-full items-center justify-center gap-1 rounded px-2 py-1 text-[11px] font-medium text-white disabled:opacity-40"
+              style={{
+                background: coreColor,
+                boxShadow:
+                  focusKey === "core" ? `0 0 0 2px ${coreColor}` : undefined,
+              }}
+            >
+              <Crosshair className="h-3 w-3" />
+              <MapPin className="h-3 w-3" />
+              定位
+            </button>
+          </div>
+
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-1.5">
+            <SlotHead
+              compact
+              en={taskFocus === "intent" ? "TRACKS" : "PRIORITY"}
+              zh={taskFocus === "intent" ? "依据" : "排序"}
             />
             <div className="min-h-0 flex-1 space-y-1 overflow-auto p-0.5">
               {priorities.length ? (
-                priorities.map((p) => {
-                  const tone = /紧急|高|中|低/.test(p.level)
-                    ? levelTone(p.level)
-                    : p.axis?.side === "USN"
-                      ? "#dc2626"
-                      : p.axis?.side === "IJN"
-                        ? "#2563eb"
-                        : "#9ca3af";
-                  const active = focusKey === p.id;
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() =>
-                        locate(p.locateQuery, {
-                          color: tone,
-                          key: p.id,
-                          axis: p.axis,
-                        })
-                      }
-                      className={`flex w-full items-start gap-1.5 rounded bg-[var(--panel)] px-1.5 py-1 text-left ring-1 transition ${
-                        active ? "" : "ring-[var(--line)] hover:ring-[var(--accent)]"
-                      }`}
-                      style={
-                        active
-                          ? { boxShadow: `0 0 0 2px ${tone}` }
-                          : undefined
-                      }
-                    >
-                      <span
-                        className="mt-0.5 w-5 shrink-0 text-left text-[11px] font-semibold tabular-nums leading-none"
-                        style={{ color: tone }}
-                      >
-                        {String(p.rank).padStart(2, "0")}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center justify-between gap-1.5">
-                          <span className="truncate text-xs font-medium text-[var(--ink)]">
-                            {p.title}
-                          </span>
-                          <span
-                            className={`shrink-0 rounded px-1 py-px text-[10px] font-semibold ${levelBadgeClass(p.level)}`}
-                          >
-                            {/紧急|高|中|低|指向|实体/.test(p.level) ? p.level : "关注"}
-                          </span>
-                        </span>
-                        <span className="mt-px block line-clamp-1 text-[10px] leading-snug text-[var(--muted)]">
-                          {p.subtitle}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })
+                priorities.map((p) => (
+                  <LocatorRow
+                    key={p.id}
+                    item={p}
+                    active={focusKey === p.id}
+                    onPick={() => pickLocator(p)}
+                  />
+                ))
               ) : (
-                <p className="py-2 text-[10px] text-[var(--muted)]">
-                  暂无美方视角威胁条目
-                </p>
+                <p className="py-2 text-[10px] text-[var(--muted)]">暂无条目</p>
               )}
-            </div>
-              </>
-            )}
-          </div>
-
-          <div className={`shrink-0 p-1.5 ${taskFocus === "intent" ? "order-1" : ""}`}>
-            <SlotHead
-              compact
-              en={taskFocus === "intent" ? "CLAIM" : "CORE NODE"}
-              zh={taskFocus === "intent" ? "意图结论" : "核心对象"}
-              title={taskFocus === "intent" ? "主作战指向" : "当前核心判断"}
-            />
-            <div
-              className="rounded bg-[var(--panel)] px-1.5 py-1.5 ring-1 ring-[var(--line)]"
-              style={
-                focusKey === "core"
-                  ? { boxShadow: `0 0 0 2px ${coreColor}` }
-                  : undefined
-              }
-            >
-              <div className="flex items-start gap-1.5">
-                <MapPin
-                  className="mt-0.5 h-3 w-3 shrink-0"
-                  style={{ color: coreColor }}
-                />
-                <div className="min-w-0">
-                  <div className="text-xs font-semibold leading-tight text-[var(--ink)]">
-                    {(core.locateQueries?.length ?? 0) > 1
-                      ? `${core.locateQueries.length} 个${/紧急/.test(core.hint) ? "紧急" : "同级"}目标`
-                      : core.title}
-                  </div>
-                  {(core.locateQueries?.length ?? 0) > 1 ? (
-                    <div className="mt-1 flex flex-wrap gap-0.5">
-                      {core.locateQueries.map((name) => {
-                        const placed = Boolean(resolveMapFocus(name, pack, spec));
-                        return (
-                          <span
-                            key={name}
-                            className={`rounded px-1 py-px text-[10px] font-medium ring-1 ring-[var(--line)] ${
-                              placed
-                                ? "bg-[var(--panel-2)] text-[var(--ink)]"
-                                : "bg-[var(--panel)] text-[var(--muted)] line-through"
-                            }`}
-                            title={placed ? "可在地图上定位" : "这一拍没有对应舰体坐标"}
-                          >
-                            {name}
-                            {placed ? "" : " · 无舰体"}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-                  <p
-                    className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-[var(--muted)]"
-                    title={core.body}
-                  >
-                    {core.body}
-                  </p>
-                  <p className="mt-px line-clamp-1 text-[10px] text-[var(--muted)]">
-                    {core.hint}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                disabled={!core.locateQuery}
-                onClick={() =>
-                  locate(core.locateQuery, {
-                    color: coreColor,
-                    key: "core",
-                    axis: core.axis,
-                    queries:
-                      (core.locateQueries?.length ?? 0) > 1
-                        ? core.locateQueries
-                        : undefined,
-                  })
-                }
-                className="mt-1 inline-flex w-full items-center justify-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-white disabled:opacity-40"
-                style={{ background: coreColor }}
-              >
-                <Crosshair className="h-3 w-3" />
-                {taskFocus === "intent"
-                  ? "定位这条指向"
-                  : (core.locateQueries?.length ?? 0) > 1
-                    ? `定位这 ${
-                        core.locateQueries.filter((name) =>
-                          resolveMapFocus(name, pack, spec),
-                        ).length
-                      } 个`
-                    : "在地图中定位"}
-              </button>
-            </div>
-          </div>
-
-          <div className="order-3 flex min-h-0 flex-1 flex-col overflow-hidden p-1.5">
-            <SlotHead
-              compact
-              en={taskFocus === "intent" ? "BASIS" : "EVIDENCE"}
-              zh={taskFocus === "intent" ? "依据" : "判断依据"}
-              title={taskFocus === "intent" ? "支撑这条意图的证据" : "为什么重要"}
-            />
-            <div className="min-h-0 flex-1 overflow-auto pr-0.5">
-              {taskFocus === "intent" ? (
-                <div className="space-y-1.5">
-                  <p className="text-[10px] leading-snug text-[var(--muted)]">
-                    活动区和关键实体都是依据。点一下可在地图上定位。
-                  </p>
-                  <div>
-                    <div className="mb-0.5 text-[10px] font-semibold text-[var(--ink)]">
-                      活动区
-                    </div>
-                    <div className="space-y-1">
-                      {priorities.filter((p) => p.id.startsWith("z-")).length ? (
-                        priorities
-                          .filter((p) => p.id.startsWith("z-"))
-                          .map((p) => (
-                            <IntentPick
-                              key={p.id}
-                              item={p}
-                              active={focusKey === p.id}
-                              onPick={() =>
-                                locate(p.locateQuery, {
-                                  color: levelTone(p.level),
-                                  key: p.id,
-                                  zone: p.zone,
-                                })
-                              }
-                            />
-                          ))
-                      ) : (
-                        <p className="text-[11px] text-[var(--muted)]">
-                          暂无活动区
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="mb-0.5 text-[10px] font-semibold text-[var(--ink)]">
-                      关键实体
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {priorities.filter((p) => p.id.startsWith("hl-")).length ? (
-                        priorities
-                          .filter((p) => p.id.startsWith("hl-"))
-                          .map((p) => (
-                            <button
-                              key={p.id}
-                              type="button"
-                              onClick={() =>
-                                locate(p.locateQuery, {
-                                  color: "#334155",
-                                  key: p.id,
-                                })
-                              }
-                              className={`rounded bg-[var(--panel)] px-1.5 py-0.5 text-left text-[11px] ring-1 ${
-                                focusKey === p.id
-                                  ? "ring-[#334155]"
-                                  : "ring-[var(--line)] hover:ring-[#64748b]"
-                              }`}
-                            >
-                              <span className="mr-1 text-[10px] font-semibold text-[#64748b]">
-                                实体
-                              </span>
-                              <span className="font-medium text-[var(--ink)]">
-                                {p.title
-                                  .replace(/^IJN\s+/i, "")
-                                  .replace(/^USS\s+/i, "")}
-                              </span>
-                            </button>
-                          ))
-                      ) : (
-                        <p className="text-[11px] text-[var(--muted)]">
-                          暂无关键实体
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <ul className="space-y-1">
-                  {evidence.map((e, i) => (
-                    <li
-                      key={`${e.title}-${i}`}
-                      className="flex items-start gap-1.5 text-[11px] leading-snug"
-                    >
-                      <Check className="mt-0.5 h-3 w-3 shrink-0 text-[var(--accent)]" />
-                      <span className="min-w-0">
-                        <span className="font-medium text-[var(--ink)]">
-                          {e.title}
-                        </span>
-                        <span className="mt-px block line-clamp-2 break-words text-[10px] text-[var(--muted)]">
-                          {e.detail}
-                        </span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {threatReason?.trim() && !reasonSide ? (
-                <details className="mt-2 rounded-md bg-[var(--panel-2)] px-2 py-1.5 ring-1 ring-[var(--line)]">
-                  <summary className="cursor-pointer text-[10px] font-medium text-[var(--muted)]">
-                    展开完整推理路径
-                  </summary>
-                  <div className="mt-1 max-h-28 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-relaxed text-[var(--muted)]">
-                    {threatReason.trim()}
-                  </div>
-                </details>
-              ) : null}
             </div>
           </div>
         </aside>
       </div>
 
-      <div className="border-t border-[var(--line)] px-3 py-2.5">
-        <div className="grid items-stretch gap-3 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-          <div className="flex min-w-0 flex-col">
-            <ChartSelectionLegend
-              compact
-              taskFocus={taskFocus}
-              activeSide={viewSide}
-              fitnessById={extensionFitness}
-              pickedId={expandAll ? null : pickedChartId}
-              onPick={(id) => {
-                setExpandAll(false);
-                setPickedChartId(id || null);
+      <div className="flex min-h-0 min-w-0 flex-col overflow-hidden px-2 pb-1 pt-1">
+        {sideCharts.length ? (
+          <>
+            <div
+              className="grid min-h-0 min-w-0 flex-1 gap-1.5"
+              style={{
+                gridTemplateColumns: `repeat(${sideCharts.length}, minmax(0, 1fr))`,
               }}
-              expandAll={expandAll}
-              onToggleExpand={() => setExpandAll((v) => !v)}
-            />
-          </div>
-          <div className="flex min-w-0 flex-col">
-            {expandAll ? (
-              <div className="min-h-0 flex-1 space-y-3 overflow-auto">
-                {sideCharts.length ? (
-                  sideCharts.map((chart) => (
-                    <SideChartCard key={chart.id} chart={chart} />
-                  ))
-                ) : (
-                  <p className="text-[11px] text-[var(--muted)]">本侧暂无入选问句</p>
-                )}
-              </div>
-            ) : pickedChart ? (
-              <SideChartCard chart={pickedChart} fill />
-            ) : (
-              <p className="flex min-h-[10rem] items-center justify-center rounded-md px-3 text-center text-[11px] text-[var(--muted)] ring-1 ring-[var(--line)]">
-                点左侧问句，或「全部展开」
-              </p>
-            )}
-          </div>
-        </div>
-        {reasonSide ? (
-          <div className="mt-3 border-t border-[var(--line)] pt-2.5">
-            <VmmpReasoningTrace
-              reasoningThreat={threatReason}
-              reasoningIntent={intentReason}
-              side={reasonSide}
-              observerLabel="美方"
-              lockedFocus={taskFocus}
-            />
-          </div>
-        ) : null}
+            >
+              {sideCharts.map((chart) => (
+                <SideChartCard
+                  key={chart.id}
+                  chart={chart}
+                  active={activeChartId === chart.id}
+                  onSelectName={(name) => locateFromName(name, chart.id)}
+                />
+              ))}
+            </div>
+            <p className="mt-0.5 shrink-0 px-0.5 text-[9px] leading-tight text-[var(--muted)]">
+              {chartOrderCaption(taskFocus, viewSide === "B")}
+            </p>
+          </>
+        ) : (
+          <p className="flex h-full items-center justify-center text-[11px] text-[var(--muted)]">
+            本拍暂无统计图
+          </p>
+        )}
       </div>
-
     </section>
   );
 }

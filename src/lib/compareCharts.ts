@@ -6,51 +6,9 @@ import type {
   SlicePack,
   TaskFocus,
 } from "./types";
-import {
-  CAMPAIGN_BEAT_CODE,
-  inferCampaignBeat,
-  intentEvidenceItems,
-  type CampaignBeat,
-} from "./vmmpCompare";
+import { intentEvidenceItems } from "./vmmpCompare";
 import { selectChartSlotIds } from "./vmmpChartSelect";
 import { expandBundledShipTarget } from "./splitShipTargets";
-
-const INTENT_BEATS: CampaignBeat[] = [
-  "集结",
-  "搜索",
-  "危机",
-  "残局",
-  "终局",
-];
-
-function intentPhaseSeries(
-  spec: SituationViewSpec,
-  packPhase?: string,
-): ChartSpec["series"] {
-  const beat = inferCampaignBeat(packPhase ?? "", spec);
-  return INTENT_BEATS.map((name) => ({
-    name,
-    value: name === beat ? CAMPAIGN_BEAT_CODE[name] : 0,
-    detail:
-      name === beat
-        ? `当前阶段 · ${spec.phase_label?.trim() || name}`
-        : `${name}（非当前）`,
-  }));
-}
-
-/** 主栏 PHASE：五拍柱状（当前拍高亮） */
-export function buildPhaseBeatChart(
-  spec: SituationViewSpec,
-  packPhase?: string,
-): ChartSpec {
-  return {
-    id: "cmp-intent-phase",
-    type: "bar",
-    title: "战役阶段",
-    description: "五拍节拍；当前阶段柱高为节拍编码",
-    series: intentPhaseSeries(spec, packPhase),
-  };
-}
 
 /** 作战指向：每条轴的方位° × 长度 nm（从图上虚线量出来，不是数条数） */
 export function axisVectorScatterSeries(
@@ -99,6 +57,45 @@ export function buildAxisVectorChart(spec: SituationViewSpec): ChartSpec {
     description: "横轴方位°，纵轴长度 nm；红美蓝日 — 对照地图虚线轴",
     series: axisVectorScatterSeries(spec),
   };
+}
+
+/** 意图关联：作战指向拆成 发起→目标，条宽=海里 */
+export function aimLinkSankeySeries(
+  spec: SituationViewSpec,
+): ChartSpec["series"] {
+  const axes = spec.map?.axes ?? [];
+  const rows: ChartSpec["series"] = [];
+  for (const a of axes) {
+    if (!a.from || !a.to) continue;
+    const { rangeNm } = nmOffsetFrom(
+      a.to[0],
+      a.to[1],
+      a.from[0],
+      a.from[1],
+    );
+    if (rangeNm < 1) continue;
+    const label = (a.label || a.id).trim();
+    const parts = label.split(/\s*[→\-–>➡]\s*/);
+    const fromName = (parts[0] || label).trim().slice(0, 10);
+    const toName = (parts[1] || "目标").trim().slice(0, 10);
+    rows.push({
+      name: fromName || label,
+      group: toName || "目标",
+      value: Math.round(rangeNm),
+      side: a.side === "IJN" ? "IJN" : "USN",
+      detail: `${label}\n${a.side === "USN" ? "美方" : "日方"}对准\n长 ${Math.round(rangeNm)} nm`,
+    });
+  }
+  return rows.length
+    ? rows
+    : [
+        {
+          name: "（无指向）",
+          group: "—",
+          value: 0,
+          detail: "本侧未画出轴线",
+        },
+      ];
 }
 
 /** 关注圈半径：每圈多大多急，地图上不好比大小 */
@@ -508,6 +505,145 @@ export function forceLandingScatterSeries(
   return points;
 }
 
+/** 距岛铺开过程：横轴距离阈值，纵轴该距离内舰数（美/日对照） */
+export function closeProfileSeries(pack: SlicePack): ChartSpec["series"] {
+  const { anchor, points } = forceGeoPoints(pack);
+  const ships = points.filter((g) => g.rangeNm > 0.5);
+  if (ships.length < 2) {
+    return [{ name: "（无）", value: 0, detail: "无水面兵力可测距" }];
+  }
+  const maxR = Math.max(...ships.map((g) => g.rangeNm));
+  const steps = [0.3, 0.5, 0.7, 0.85, 1].map((p) =>
+    Math.max(20, Math.round((maxR * p) / 10) * 10),
+  );
+  const uniq = [...new Set(steps)];
+  return uniq.flatMap((thresh) => {
+    const us = ships.filter((g) => g.side === "USN" && g.rangeNm <= thresh);
+    const ij = ships.filter((g) => g.side === "IJN" && g.rangeNm <= thresh);
+    const namesOf = (rows: typeof us) =>
+      rows
+        .slice(0, 4)
+        .map((g) => displayUnitName(g.unit.name, 12))
+        .join("、");
+    return [
+      {
+        name: `${thresh}nm`,
+        value: us.length,
+        group: "美方",
+        side: "USN" as const,
+        detail: `距${anchor.label} ${thresh}nm 内美方 ${us.length} 艘\n${namesOf(us)}${us.length > 4 ? "…" : ""}`,
+      },
+      {
+        name: `${thresh}nm`,
+        value: ij.length,
+        group: "日方",
+        side: "IJN" as const,
+        detail: `距${anchor.label} ${thresh}nm 内日方 ${ij.length} 艘\n${namesOf(ij)}${ij.length > 4 ? "…" : ""}`,
+      },
+    ];
+  });
+}
+
+function toCloseProfileFromBars(
+  series: ChartSpec["series"],
+): ChartSpec["series"] {
+  const ships = series.filter(
+    (s) => Number(s.value) > 0 && s.name && !/（无/.test(s.name),
+  );
+  if (ships.length < 2) {
+    return [{ name: "（无）", value: 0, detail: "无水面兵力可测距" }];
+  }
+  const maxR = Math.max(...ships.map((s) => Number(s.value) || 0));
+  const steps = [0.3, 0.5, 0.7, 0.85, 1].map((p) =>
+    Math.max(20, Math.round((maxR * p) / 10) * 10),
+  );
+  const uniq = [...new Set(steps)];
+  return uniq.flatMap((thresh) => {
+    const us = ships.filter(
+      (s) => s.side !== "IJN" && Number(s.value) <= thresh,
+    ).length;
+    const ij = ships.filter(
+      (s) => s.side === "IJN" && Number(s.value) <= thresh,
+    ).length;
+    return [
+      {
+        name: `${thresh}nm`,
+        value: us,
+        group: "美方",
+        side: "USN" as const,
+        detail: `距岛 ${thresh}nm 内美方 ${us} 艘`,
+      },
+      {
+        name: `${thresh}nm`,
+        value: ij,
+        group: "日方",
+        side: "IJN" as const,
+        detail: `距岛 ${thresh}nm 内日方 ${ij} 艘`,
+      },
+    ];
+  });
+}
+
+function toRangeStripFromBars(
+  series: ChartSpec["series"],
+): ChartSpec["series"] {
+  const ships = series.filter(
+    (s) =>
+      Number(s.value) > 0 &&
+      s.name &&
+      !/（无/.test(s.name) &&
+      !/中途岛/.test(s.name),
+  );
+  if (!ships.length) {
+    return [{ name: "（无）", value: 0, x: 0, y: 0, detail: "无水面兵力可测距" }];
+  }
+  const used: number[] = [];
+  const jitterY = (x: number) => {
+    const n = used.filter((v) => Math.abs(v - x) < 5).length;
+    used.push(x);
+    if (n === 0) return 0;
+    const sign = n % 2 === 0 ? 1 : -1;
+    return sign * Math.ceil(n / 2) * 0.22;
+  };
+  return [
+    {
+      name: "中途岛",
+      value: 0,
+      x: 0,
+      y: 0,
+      side: "both" as const,
+      group: "登陆海域",
+      detail: "原点=中途岛 · 距岛 0 nm",
+    },
+    ...ships.map((s) => {
+      const side = s.side === "IJN" ? ("IJN" as const) : ("USN" as const);
+      const x = Math.round(Number(s.value) || 0);
+      return {
+        name: s.name,
+        value: x,
+        x,
+        y: jitterY(x),
+        side,
+        group: side === "IJN" ? "日方" : "美方",
+        detail: s.detail ?? `距岛 ${x} nm`,
+      };
+    }),
+  ];
+}
+
+function isRangeStripSeries(series: ChartSpec["series"]): boolean {
+  return series.some(
+    (s) =>
+      typeof s.x === "number" &&
+      typeof s.y === "number" &&
+      Number(s.x) > 4,
+  );
+}
+
+function isCloseProfileSeries(series: ChartSpec["series"]): boolean {
+  return series.some((s) => Boolean(s.group) && /nm$/i.test(s.name));
+}
+
 /** 距中途岛海里：近→远条形，条长就是海里 */
 export function forceRangeBarSeries(pack: SlicePack): ChartSpec["series"] {
   const { anchor, points } = forceGeoPoints(pack);
@@ -526,39 +662,29 @@ export function forceRangeBarSeries(pack: SlicePack): ChartSpec["series"] {
     }));
 }
 
-/** 美/日 × 距岛档（贴身/可及/疏远）热力：看兵力远近结构，不堆条形 */
-export function forceRangeHeatSeries(pack: SlicePack): ChartSpec["series"] {
-  const { points } = forceGeoPoints(pack);
-  const bag = new Map<string, { n: number; names: string[] }>();
-  for (const side of ["美方", "日方"] as const) {
-    for (const b of HUNT_RANGE_BANDS) {
-      bag.set(`${side}|${b.shortLabel}`, { n: 0, names: [] });
-    }
+/** 沿距岛海里铺开，一点一艘；红美蓝日，纵轴只是错开重叠点 */
+export function forceRangeStripSeries(pack: SlicePack): ChartSpec["series"] {
+  const { anchor, points } = forceGeoPoints(pack);
+  const ships = points.filter((g) => g.rangeNm > 0.5);
+  if (!ships.length) {
+    return [
+      {
+        name: "（无）",
+        value: 0,
+        x: 0,
+        y: 1,
+        detail: "无水面兵力可测距",
+      },
+    ];
   }
-  for (const g of points) {
-    if (g.rangeNm <= 0.5) continue;
-    const side = g.side === "IJN" ? "日方" : "美方";
-    const band = huntRangeBand(g.rangeNm);
-    const key = `${side}|${band.shortLabel}`;
-    const cell = bag.get(key)!;
-    cell.n += 1;
-    if (cell.names.length < 4) {
-      cell.names.push(displayUnitName(g.unit.name, 14));
-    }
-  }
-  return [...bag.entries()].map(([key, cell]) => {
-    const [group, name] = key.split("|");
-    const band = HUNT_RANGE_BANDS.find((b) => b.shortLabel === name)!;
-    return {
-      name,
-      group,
-      value: cell.n,
-      side: group === "日方" ? ("IJN" as const) : ("USN" as const),
-      detail: cell.n
-        ? `${group}·${name}（${band.rangeLabel}）${cell.n} 艘\n${cell.names.join("、")}${cell.n > cell.names.length ? "…" : ""}\n${band.meaning}`
-        : `${group}·${name}：无取样`,
-    };
-  });
+  return toRangeStripFromBars(
+    ships.map((g) => ({
+      name: displayUnitName(g.unit.name, 16),
+      value: Math.round(g.rangeNm),
+      side: g.side,
+      detail: `${g.side === "USN" ? "美方" : "日方"} · ${g.unit.name}\n距${anchor.label} ${Math.round(g.rangeNm)} nm · 方位 ${Math.round(g.bearingDeg)}°`,
+    })),
+  );
 }
 
 /** 相对中途岛的八方位兵力计数（美/日分列，供双序列雷达） */
@@ -1170,7 +1296,7 @@ export function altBandsSeries(pack: SlicePack): ChartSpec["series"] {
   return out;
 }
 
-/** 高亮实体距中途岛：方位° × 距离 nm 散点（替代条形堆叠） */
+/** 高亮实体距中途岛：条长=海里，近→远 */
 export function highlightRangeSeries(
   pack: SlicePack,
   spec: SituationViewSpec,
@@ -1206,17 +1332,17 @@ export function highlightRangeSeries(
     const bearing = Math.round(bearingFromOffset(eastNm, northNm));
     const band = huntRangeBand(rangeNm);
     rows.push({
-      name: displayUnitName(u.name, 22),
-      value: rangeNm,
+      name: displayUnitName(u.name, 18),
+      value: Math.round(rangeNm),
       x: bearing,
       y: rangeNm,
       side: u.side === "IJN" ? "IJN" : "USN",
       group: band.shortLabel,
-      detail: `${u.name}\n方位 ${bearing}° · 距岛 ${rangeNm} nm\n【${band.shortLabel} ${band.rangeLabel}】${band.meaning}`,
+      detail: `${u.name}\n距岛 ${Math.round(rangeNm)} nm · 方位 ${bearing}°\n【${band.shortLabel} ${band.rangeLabel}】${band.meaning}`,
     });
   }
   return rows.length
-    ? rows.sort((a, b) => (b.y ?? 0) - (a.y ?? 0)).slice(0, 10)
+    ? rows.sort((a, b) => a.value - b.value).slice(0, 10)
     : [
         {
           name: "（无高亮）",
@@ -1338,6 +1464,20 @@ function buildSpatialRelationCharts(
       title: "各舰距中途岛多远？",
       description: "条长=海里；越短越近。红美蓝日",
       series: forceRangeBarSeries(pack),
+    },
+    {
+      id: "cmp-force-range-area",
+      type: "area",
+      title: "各舰距中途岛多远？",
+      description: "横轴距岛海里，纵轴该距离内舰数；面积看美/日铺开过程",
+      series: closeProfileSeries(pack),
+    },
+    {
+      id: "cmp-force-range-strip",
+      type: "scatter",
+      title: "各舰距中途岛多远？",
+      description: "横轴距岛 nm（0=中途岛）；红美蓝日，一点一艘",
+      series: forceRangeStripSeries(pack),
     },
     ...(spec
       ? [
@@ -1499,6 +1639,20 @@ export function extensionDataFitness(chart: ChartSpec): number {
     return clamp(38 + rows.length * 12);
   }
 
+  if (id === "cmp-aim-link") {
+    const rows = series.filter(
+      (s) =>
+        s.name &&
+        !/（无/.test(s.name) &&
+        (Number(s.value) || 0) > 0 &&
+        Boolean(s.group) &&
+        s.group !== "—",
+    );
+    if (rows.length < 1) return 0;
+    const both = rows.some((s) => s.side === "USN") && rows.some((s) => s.side === "IJN");
+    return clamp(44 + rows.length * 14 + (both ? 12 : 0));
+  }
+
   if (id === "cmp-zone-radius") {
     const rows = series.filter(
       (s) => s.name && !/（无/.test(s.name) && (Number(s.value) || 0) > 0,
@@ -1507,6 +1661,25 @@ export function extensionDataFitness(chart: ChartSpec): number {
     const vals = rows.map((s) => Number(s.value) || 0);
     const span = Math.max(...vals) - Math.min(...vals);
     return clamp(36 + rows.length * 12 + Math.min(span, 40));
+  }
+
+  if (id === "cmp-force-range-area") {
+    const rows = series.filter((s) => (Number(s.value) || 0) > 0);
+    const sides = new Set(rows.map((s) => s.side)).size;
+    const steps = new Set(rows.map((s) => s.name)).size;
+    if (rows.length < 2) return 0;
+    return clamp(40 + steps * 8 + (sides > 1 ? 12 : 0));
+  }
+
+  if (id === "cmp-force-range-strip") {
+    const rows = series.filter(
+      (s) => s.name && !/（无/.test(s.name) && (Number(s.value) || Number(s.x) || 0) > 0,
+    );
+    if (rows.length < 2) return clamp(rows.length * 12);
+    const vals = rows.map((s) => Number(s.value || s.x) || 0);
+    const span = Math.max(...vals) - Math.min(...vals);
+    const sides = new Set(rows.map((s) => s.side)).size;
+    return clamp(40 + rows.length * 3 + Math.min(span, 80) * 0.2 + (sides > 1 ? 10 : 0));
   }
 
   if (id === "cmp-alt-bands") {
@@ -1585,6 +1758,41 @@ function chartAsType(chart: ChartSpec, type: ChartType): ChartSpec {
       description: "美/日八方位计数（柱）",
     };
   }
+  if (chart.id === "cmp-force-bearing" && type === "radar") {
+    return {
+      ...chart,
+      type,
+      description: "美/日八方位玫瑰；突起=兵力所在扇区",
+    };
+  }
+  if (
+    (chart.id === "cmp-force-range" ||
+      chart.id === "cmp-force-range-area") &&
+    (type === "area" || type === "multi_line")
+  ) {
+    return {
+      ...chart,
+      type,
+      description: "横轴距岛海里，纵轴该距离内舰数；面积看美/日铺开过程",
+      series: isCloseProfileSeries(chart.series)
+        ? chart.series
+        : toCloseProfileFromBars(chart.series),
+    };
+  }
+  if (
+    (chart.id === "cmp-force-range" ||
+      chart.id === "cmp-force-range-strip") &&
+    type === "scatter"
+  ) {
+    return {
+      ...chart,
+      type,
+      description: "横轴距岛 nm（0=中途岛）；红美蓝日，一点一艘",
+      series: isRangeStripSeries(chart.series)
+        ? chart.series
+        : toRangeStripFromBars(chart.series),
+    };
+  }
   return { ...chart, type };
 }
 
@@ -1598,20 +1806,25 @@ function applyVmmpChartSelection(
     if (!c.id) continue;
     fitnessById.set(c.id, extensionDataFitness(c));
   }
-  const { ids, whyById, typeByFamily } = selectChartSlotIds(taskFocus, rich, {
+  const { whyById, picks } = selectChartSlotIds(taskFocus, rich, {
     fitnessById,
   });
-  const byId = new Map(charts.filter((c) => c.id).map((c) => [c.id as string, c]));
-  return [...ids]
-    .map((id) => byId.get(id))
-    .filter((c): c is ChartSpec => Boolean(c))
-    .map((c) => {
-      const type = typeByFamily.get(c.id!) ?? c.type;
+  const byId = new Map(
+    charts.filter((c) => c.id).map((c) => [c.id as string, c]),
+  );
+  return picks
+    .map((slot) => {
+      const raw = byId.get(slot.id) ?? byId.get(slot.family);
+      if (!raw) return null;
+      const typed = chartAsType(raw, slot.type);
       return {
-        ...chartAsType(c, type),
-        why_type: whyById.get(c.id!) || c.why_type,
+        ...typed,
+        id: slot.family,
+        type: slot.type,
+        why_type: whyById.get(slot.family) || typed.why_type,
       };
-    });
+    })
+    .filter((c): c is ChartSpec => Boolean(c));
 }
 
 /** 生成共用预选图槽候选；意图/威胁同一套，入选再按 A/B 规则筛 */
@@ -1634,6 +1847,13 @@ function buildTaskChartCandidates(
     ...byId("cmp-force-landing"),
     buildAxisVectorChart(spec),
     {
+      id: "cmp-aim-link" as const,
+      type: "sankey" as const,
+      title: "谁在对准谁？",
+      description: "左=发起，右=目标；带宽=指向长度 nm。红美蓝日",
+      series: aimLinkSankeySeries(spec),
+    },
+    {
       id: "cmp-threat-rank",
       type: "hbar",
       title: "威胁目标排序",
@@ -1643,12 +1863,14 @@ function buildTaskChartCandidates(
     ...byId("cmp-zone-footprint"),
     ...byId("cmp-zone-radius"),
     ...byId("cmp-force-range"),
+    ...byId("cmp-force-range-area"),
+    ...byId("cmp-force-range-strip"),
     ...byId("cmp-force-bearing"),
     {
       id: "cmp-highlight-range" as const,
-      type: "scatter" as const,
-      title: "高亮实体相对岛的方位×距离？",
-      description: "横轴方位°，纵轴距岛 nm",
+      type: "hbar" as const,
+      title: "高亮实体离中途岛多远？",
+      description: "条长=海里；越短越近。只看图上高亮",
       series: pack ? highlightRangeSeries(pack, spec) : [],
     },
     ...byId("cmp-alt-bands"),
@@ -1673,7 +1895,7 @@ export function buildExtensionFitnessMap(
 
 /**
  * 单切片任务认知图槽：先生成候选图，再按 VMMP M/T（有范式）或基线（无范式）
- * + 本片适切度筛选；按任务优先级入选（至多 5 张），其余合格降为备选。
+ * + 本片适切度筛选；A 走直观图种，B 按 M 拓扑换图种，问句可相同。
  */
 export function buildAllTaskCompareCharts(
   spec: SituationViewSpec,

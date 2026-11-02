@@ -103,7 +103,9 @@ export type ChartType =
   | "radar"
   | "heatmap"
   /** 流向：series.name→series.group，value=流量 */
-  | "sankey";
+  | "sankey"
+  /** 简化小地图：与态势图同框的岛心示意 */
+  | "schematic";
 
 export interface ChartSpec {
   id: string;
@@ -123,6 +125,10 @@ export interface ChartSpec {
     x?: number;
     /** 散点纵轴；缺省用 value */
     y?: number;
+    /** 小地图轴/连线终点：东向 nm */
+    x2?: number;
+    /** 小地图轴/连线终点：北向 nm */
+    y2?: number;
     /** 悬停提示用，如证据条目明细 */
     detail?: string;
   }[];

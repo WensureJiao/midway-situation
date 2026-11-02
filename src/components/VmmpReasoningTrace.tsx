@@ -127,7 +127,7 @@ export function VmmpReasoningTrace({
                 : "");
             if (processText) {
               return (
-                <div className="mt-1.5 max-h-36 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-relaxed text-[var(--ink)]">
+                <div className="mt-1.5 whitespace-pre-wrap break-words text-[10px] leading-relaxed text-[var(--ink)]">
                   {processText}
                 </div>
               );
@@ -220,7 +220,7 @@ export function VmmpReasoningTrace({
               ) : null}
             </dl>
           ) : reasoning?.trim() ? (
-            <div className="mt-1.5 max-h-28 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-relaxed text-[var(--muted)]">
+            <div className="mt-1.5 whitespace-pre-wrap break-words text-[10px] leading-relaxed text-[var(--muted)]">
               {reasoning.trim()}
             </div>
           ) : (
