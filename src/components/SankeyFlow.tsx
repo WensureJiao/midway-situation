@@ -29,6 +29,7 @@ export function SankeyFlow({
   const w = compact ? 260 : 320;
   const leftX = 6;
   const rightX = w - 6;
+  const nodeW = 68;
   const nodeH = compact ? 16 : 14;
   const fillOf = (name: string, side: "left" | "right") => {
     const hit = links.find((l) =>
@@ -49,12 +50,18 @@ export function SankeyFlow({
       aria-label="对准关系流向"
       preserveAspectRatio="xMidYMid meet"
     >
+      {links.map((l, i) => {
+        const si = left.indexOf(l.name);
+        const ti = right.indexOf(String(l.group ?? "其他"));
+        if (si < 0 || ti < 0) return null;
+        const y1 = leftY(si) + nodeH / 2;
+        const y2 = rightY(ti) + nodeH / 2;
         const thick = 2 + (10 * (Number(l.value) || 0)) / maxV;
-        const mid = (leftX + 72 + rightX - 72) / 2;
+        const mid = (leftX + nodeW + rightX - nodeW) / 2;
         return (
           <path
             key={`${l.name}-${l.group}-${i}`}
-            d={`M ${leftX + 72} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${rightX - 72} ${y2}`}
+            d={`M ${leftX + nodeW} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${rightX - nodeW} ${y2}`}
             fill="none"
             stroke={l.fill || DEFAULT_STROKE}
             strokeOpacity={0.35 + (0.45 * (Number(l.value) || 0)) / maxV}
@@ -67,12 +74,6 @@ export function SankeyFlow({
         );
       })}
       {left.map((name, i) => (
-        <g key={`L-${name}`}>
-          <rect
-            x={leftX}
-            y={leftY(i)}
-            width={68}
-            height={nodeH}
         <g
           key={`L-${name}`}
           className={onSelectName ? "cursor-pointer" : undefined}
@@ -81,7 +82,7 @@ export function SankeyFlow({
           <rect
             x={leftX}
             y={leftY(i)}
-            width={68}
+            width={nodeW}
             height={nodeH}
             rx={3}
             fill={fillOf(name, "left")}
@@ -89,7 +90,7 @@ export function SankeyFlow({
             stroke={fillOf(name, "left")}
           />
           <text
-            x={leftX + 34}
+            x={leftX + nodeW / 2}
             y={leftY(i) + (compact ? 11 : 10)}
             textAnchor="middle"
             fontSize={9}
@@ -106,19 +107,25 @@ export function SankeyFlow({
           onClick={() => onSelectName?.(name)}
         >
           <rect
-            x={rightX - 68}
+            x={rightX - nodeW}
             y={rightY(i)}
-            width={68}
+            width={nodeW}
             height={nodeH}
             rx={3}
             fill="var(--panel)"
             stroke="var(--line)"
           />
           <text
-            x={rightX - 34}
+            x={rightX - nodeW / 2}
             y={rightY(i) + (compact ? 11 : 10)}
             textAnchor="middle"
             fontSize={9}
             fill="var(--ink)"
           >
             {name.length > 7 ? `${name.slice(0, 6)}…` : name}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
