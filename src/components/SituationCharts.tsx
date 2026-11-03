@@ -454,7 +454,7 @@ export function chartInsight(chart: ChartSpec): string {
     const us = peakRow(s, (r) => r.side === "USN");
     const ij = peakRow(s, (r) => r.side === "IJN");
     const fmt = (r: NonNullable<ReturnType<typeof peakRow>>) =>
-      `${shortName(r.name, 7)} ${Math.round(Number(r.value || r.y || 0))}nm`;
+      `${shortName(r.name, 12)} ${Math.round(Number(r.value || r.y || 0))}nm`;
     if (us && ij) return `美 ${fmt(us)} · 日 ${fmt(ij)}`;
     if (us) return `美方 ${fmt(us)}`;
     if (ij) return `日方 ${fmt(ij)}`;
@@ -1308,8 +1308,9 @@ export function ChartCard({
           <ResponsiveContainer width="100%" height="100%">
             <ScatterChart
               margin={{
-                top: chart.id === "cmp-intent-axes" ? 16 : 8,
-                right: compact ? 6 : 10,
+                top: chart.id === "cmp-intent-axes" ? 14 : 8,
+                right:
+                  chart.id === "cmp-intent-axes" ? 64 : compact ? 6 : 10,
                 bottom:
                   chart.id === "cmp-force-landing" ||
                   chart.id === "cmp-air-profile" ||
@@ -1445,6 +1446,21 @@ export function ChartCard({
                     ? ([0.5, 4.5] as [number, number])
                     : isRangeStrip
                       ? ([-1.2, 1.2] as [number, number])
+                    : chart.id === "cmp-intent-axes"
+                      ? ([
+                          0,
+                          Math.max(
+                            80,
+                            Math.ceil(
+                              Math.max(
+                                ...scatterData.map((s) => Number(s.y) || 0),
+                                0,
+                              ) / 20,
+                            ) *
+                              20 +
+                              40,
+                          ),
+                        ] as [number, number])
                     : GEO_SCATTER_IDS.has(chart.id)
                       ? padDomain(scatterData.map((s) => Number(s.y) || 0))
                       : undefined
@@ -1518,6 +1534,8 @@ export function ChartCard({
                     ? [16, 48]
                     : isRangeStrip
                       ? [10, 22]
+                    : chart.id === "cmp-urgent-near"
+                      ? [8, 14]
                     : chart.id === "cmp-force-landing" ||
                         chart.id === "cmp-air-profile" ||
                         chart.id === "cmp-evidence-focus"
@@ -1585,6 +1603,8 @@ export function ChartCard({
                         : 3.2
                       : isRangeStrip
                         ? 0.7
+                      : chart.id === "cmp-urgent-near"
+                        ? 0.28
                       : chart.id === "cmp-force-landing" ||
                           chart.id === "cmp-air-profile" ||
                           chart.id === "cmp-evidence-focus"
@@ -1652,7 +1672,12 @@ export function ChartCard({
                       </g>
                     );
                   }
-                  const r = Math.max(3, Math.sqrt(Number(payload?.z ?? 1) * 18));
+                  const r =
+                    chart.id === "cmp-urgent-near"
+                      ? compact
+                        ? 3
+                        : 3.5
+                      : Math.max(3, Math.sqrt(Number(payload?.z ?? 1) * 18));
                   const nearest =
                     isRangeStrip &&
                     isEmphasizedValue(Number(payload?.value ?? 0));
@@ -1688,9 +1713,32 @@ export function ChartCard({
                 {chart.id === "cmp-intent-axes" ? (
                   <LabelList
                     dataKey="name"
-                    position="top"
+                    position="right"
                     offset={8}
-                    style={{ fontSize: 9, fill: "#3d3a34" }}
+                    content={({ x, y, width, height, value }) => {
+                      const label = String(value ?? "");
+                      if (!label || /（无/.test(label)) return null;
+                      const px = Number(x) || 0;
+                      const py = Number(y) || 0;
+                      const w = Number(width) || 8;
+                      const h = Number(height) || 8;
+                      return (
+                        <text
+                          x={px + w / 2 + 8}
+                          y={py + h / 2}
+                          textAnchor="start"
+                          dominantBaseline="middle"
+                          fill="#3d3a34"
+                          stroke="#f3f0ea"
+                          strokeWidth={3}
+                          paintOrder="stroke"
+                          fontSize={8}
+                          style={{ paintOrder: "stroke fill" }}
+                        >
+                          {label}
+                        </text>
+                      );
+                    }}
                   />
                 ) : chart.id === "cmp-urgent-near" ? (
                   <LabelList
@@ -1698,15 +1746,31 @@ export function ChartCard({
                     position="top"
                     offset={4}
                     content={({ x, y, value, index }) => {
-                      const row = scatterData[Number(index) || 0];
+                      const idx = Number(index) || 0;
+                      const row = scatterData[idx];
                       if (!row || Number(row.y) < 3) return null;
+                      const yLvl = Math.round(Number(row.y));
+                      const peers = scatterData.filter(
+                        (s) =>
+                          Number(s.y) >= 3 &&
+                          Math.round(Number(s.y)) === yLvl,
+                      );
+                      const pos = scatterData
+                        .map((s, i) => ({ s, i }))
+                        .filter(
+                          ({ s }) =>
+                            Number(s.y) >= 3 &&
+                            Math.round(Number(s.y)) === yLvl,
+                        )
+                        .findIndex(({ i }) => i === idx);
+                      const below = peers.length > 1 && pos % 2 === 1;
                       const label = String(value ?? "")
                         .replace(/^(USS|IJN)\s+/i, "")
                         .slice(0, 6);
                       return (
                         <text
                           x={x}
-                          y={Number(y) - 6}
+                          y={Number(y) + (below ? 12 : -6)}
                           textAnchor="middle"
                           fill="#3d3a34"
                           fontSize={8}

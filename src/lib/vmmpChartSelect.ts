@@ -162,7 +162,7 @@ export const SHARED_CHART_SLOTS: ChartSlotDef[] = [
     type: "scatter",
     topologies: ["Salience", "Position"],
     primaryTopology: "Salience",
-    tasks: ["intent", "threat"],
+    tasks: [],
     shortLabel: "活动区足迹",
     question: "关注圈圆心相对岛落在哪？",
     mapRead: "Filter：紧急/高圈圆心，对照圈色",
@@ -417,7 +417,6 @@ const LEFTOVER_EXTEND = new Set([
   "cmp-air-profile",
   "cmp-alt-bands",
   "cmp-hunt-range",
-  "cmp-zone-footprint",
   "cmp-force-range",
 ]);
 /** A：相对头名，问句贴合掉出这截距才降为未选；随后仍补满 5 张 */
@@ -782,21 +781,15 @@ function isExtendCandidate(slot: ChartSlotDef): boolean {
   return slot.layer === "extend" || LEFTOVER_EXTEND.has(slot.family);
 }
 
-/** 某侧不入选的图：A 意图圈心与落点重复；B 威胁去掉圈心/间隔 */
+/** A：高度带与落点重复；两侧都去掉圈心；B 威胁再去掉间隔 */
 function blockedForSide(
   slot: ChartSlotDef,
   focus: TaskFocus,
   rich: boolean,
 ): boolean {
-  if (!rich && focus === "intent" && slot.family === "cmp-zone-footprint") {
-    return true;
-  }
-  if (
-    rich &&
-    focus === "threat" &&
-    (slot.family === "cmp-zone-footprint" ||
-      slot.family === "cmp-hunt-range")
-  ) {
+  if (slot.family === "cmp-zone-footprint") return true;
+  if (!rich && slot.family === "cmp-alt-bands") return true;
+  if (rich && focus === "threat" && slot.family === "cmp-hunt-range") {
     return true;
   }
   return false;

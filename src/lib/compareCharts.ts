@@ -1486,8 +1486,35 @@ export function urgentNearScatterSeries(
     }
   }
   return rows.length
-    ? rows.sort((a, b) => Number(b.y) - Number(a.y) || Number(a.x) - Number(b.x))
+    ? spreadCollidingUrgentNear(
+        rows.sort((a, b) => Number(b.y) - Number(a.y) || Number(a.x) - Number(b.x)),
+      )
     : [{ name: "（无）", value: 0, x: 0, y: 0, detail: "无法把评级对到舰位" }];
+}
+
+/** 同等级、距岛接近的点左右错开，避免赤城/加贺/苍龙叠成一点 */
+function spreadCollidingUrgentNear(
+  rows: ChartSpec["series"],
+): ChartSpec["series"] {
+  const groups = new Map<string, number[]>();
+  rows.forEach((r, i) => {
+    const key = `${Number(r.y)}:${Math.round(Number(r.x) / 4) * 4}`;
+    const list = groups.get(key) ?? [];
+    list.push(i);
+    groups.set(key, list);
+  });
+  return rows.map((r, i) => {
+    const key = `${Number(r.y)}:${Math.round(Number(r.x) / 4) * 4}`;
+    const idxs = groups.get(key) ?? [i];
+    if (idxs.length < 2) return r;
+    const pos = idxs.indexOf(i);
+    const n = idxs.length;
+    const step = 6;
+    return {
+      ...r,
+      x: Number(r.x) + (pos - (n - 1) / 2) * step,
+    };
+  });
 }
 
 function toUrgentNearBars(series: ChartSpec["series"]): ChartSpec["series"] {
