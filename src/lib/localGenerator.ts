@@ -247,9 +247,7 @@ export function buildPromptBundle(
     vmmp_mode,
     task_focus,
     lock_charts,
-    zone_skeleton: buildThreatZoneSkeleton(pack),
-    vmmp_json:
-      vmmp_mode === "on" ? loadVmmpJson(task_focus) : null,
+    vmmp_json: vmmp_mode === "on" ? loadVmmpJson(task_focus) : null,
   };
   return {
     system_prompt: SITUATION_SYSTEM_PROMPT,

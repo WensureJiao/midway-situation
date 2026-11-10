@@ -4,6 +4,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SpatialStudyPanel } from "@/components/SpatialStudyPanel";
+import { LayoutModeSwitch } from "@/components/LayoutModeSwitch";
+import { type LayoutTemplateId } from "@/lib/layoutTemplates";
+import {
+  resolveRecommendedLayout,
+  type LayoutChoice,
+} from "@/lib/recommendLayout";
 import type {
   GenerateResponse,
   SituationViewSpec,
@@ -29,6 +35,9 @@ export function SituationWorkbench() {
   const [spec, setSpec] = useState<SituationViewSpec | null>(null);
   const [fallbackNote, setFallbackNote] = useState<string | null>(null);
   const [taskFocus, setTaskFocus] = useState<TaskFocus>("threat");
+  const [layoutId, setLayoutId] = useState<LayoutTemplateId>("map_dominant");
+  const [layoutPinned, setLayoutPinned] = useState(false);
+  const [layoutChoice, setLayoutChoice] = useState<LayoutChoice | null>(null);
   /** 刷新前按切片缓存本地结果，换切片再回来可复用 */
   const [specCache, setSpecCache] = useState<
     Partial<Record<string, SituationViewSpec>>
@@ -77,6 +86,7 @@ export function SituationWorkbench() {
           body: JSON.stringify({
             time_slice: requestSlice,
             mode: "local",
+            task_focus: taskFocus,
           }),
         });
         const data = (await res.json()) as GenerateResponse & {
@@ -101,8 +111,19 @@ export function SituationWorkbench() {
         if (sliceRef.current === requestSlice) setLoading(false);
       }
     },
-    [pack, sliceId],
+    [pack, sliceId, taskFocus],
   );
+
+  useEffect(() => {
+    setLayoutPinned(false);
+  }, [sliceId, taskFocus]);
+
+  useEffect(() => {
+    if (!spec) return;
+    const choice = resolveRecommendedLayout(taskFocus, spec);
+    setLayoutChoice(choice);
+    if (!layoutPinned) setLayoutId(choice.id);
+  }, [spec, taskFocus, layoutPinned]);
 
   useEffect(() => {
     if (!pack) return;
@@ -165,6 +186,17 @@ export function SituationWorkbench() {
             </button>
           </div>
 
+          <LayoutModeSwitch
+            value={layoutId}
+            recommendedId={layoutChoice?.id}
+            reason={layoutChoice?.reason}
+            pinned={layoutPinned}
+            onChange={(id) => {
+              setLayoutId(id);
+              setLayoutPinned(true);
+            }}
+          />
+
           <div className="ml-auto flex flex-wrap items-center gap-1.5">
             <Link
               href="/compare"
@@ -213,7 +245,8 @@ export function SituationWorkbench() {
                 : "威胁分析 · 本地基线"
             }
             richCharts={false}
-            mapKey={`main-${sliceId}-${taskFocus}`}
+            layoutId={layoutId}
+            mapKey={`main-${sliceId}-${taskFocus}-${layoutId}`}
           />
         )}
       </main>

@@ -4,6 +4,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SpatialStudyPanel } from "@/components/SpatialStudyPanel";
+import { LayoutModeSwitch } from "@/components/LayoutModeSwitch";
+import { type LayoutTemplateId } from "@/lib/layoutTemplates";
+import {
+  layoutForComparePair,
+  type LayoutChoice,
+} from "@/lib/recommendLayout";
 import type {
   GenerateResponse,
   SituationViewSpec,
@@ -35,6 +41,9 @@ export function VmmpCompareWorkbench() {
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
   const [abSide, setAbSide] = useState<"A" | "B">("A");
+  const [layoutId, setLayoutId] = useState<LayoutTemplateId>("map_dominant");
+  const [layoutPinned, setLayoutPinned] = useState(false);
+  const [layoutChoice, setLayoutChoice] = useState<LayoutChoice | null>(null);
 
   useEffect(() => {
     fetch("/data/midway/index.json")
@@ -219,6 +228,16 @@ export function VmmpCompareWorkbench() {
   const specA = activePair?.a ?? null;
   const specB = activePair?.b ?? null;
   const activeSpec = abSide === "A" ? specA : specB;
+
+  useEffect(() => {
+    setLayoutPinned(false);
+  }, [sliceId, taskFocus]);
+
+  useEffect(() => {
+    const choice = layoutForComparePair(taskFocus, specA, specB);
+    setLayoutChoice(choice);
+    if (!layoutPinned) setLayoutId(choice.id);
+  }, [specA, specB, taskFocus, layoutPinned]);
   const activeThreatReason = abSide === "A" ? reasonThreatA : reasonThreatB;
   const activeIntentReason = abSide === "A" ? reasonIntentA : reasonIntentB;
   const rich = abSide === "B";
@@ -270,6 +289,17 @@ export function VmmpCompareWorkbench() {
               意图研判
             </button>
           </div>
+
+          <LayoutModeSwitch
+            value={layoutId}
+            recommendedId={layoutChoice?.id}
+            reason={layoutChoice?.reason}
+            pinned={layoutPinned}
+            onChange={(id) => {
+              setLayoutId(id);
+              setLayoutPinned(true);
+            }}
+          />
 
           <div className="flex overflow-hidden rounded text-[11px] ring-1 ring-[var(--line)]">
             <button
@@ -348,7 +378,8 @@ export function VmmpCompareWorkbench() {
               badge={abSide}
               pack={pack}
               spec={activeSpec}
-              mapKey={`compare-${sliceId}-${taskFocus}-${abSide}`}
+              mapKey={`compare-${sliceId}-${taskFocus}-${abSide}-${layoutId}`}
+              layoutId={layoutId}
               taskFocus={taskFocus}
               reasoningThreat={activeThreatReason}
               reasoningIntent={activeIntentReason}

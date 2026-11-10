@@ -153,12 +153,40 @@ export interface ThreatZone {
   side?: SideId;
 }
 
+/** 模型填槽：轴两端用单位/集群名，不要经纬度 */
+export interface AxisSlot {
+  from: string;
+  to: string;
+  side?: SideId;
+  label?: string;
+}
+
+/** 模型填槽：圈围着谁；圆心和半径由渲染器算 */
+export interface ZoneSlot {
+  around: string;
+  level: ThreatLevel | string;
+  label?: string;
+  side?: SideId;
+}
+
+export interface RendererSlots {
+  highlights?: string[];
+  axes?: AxisSlot[];
+  zones?: ZoneSlot[];
+  /** 白名单：map_dominant | space_first | chart_dominant；非法值由服务端丢弃 */
+  layout?: string;
+  /** 一句：为何选这种工作模式 */
+  layout_reason?: string;
+}
+
 export interface SituationViewSpec {
   generated_by: "local" | "llm";
   time_slice: string;
   title: string;
   phase_label: string;
   narrative: string;
+  /** 模型可只填 slots；map 几何由 fillRendererSlots 写入 */
+  slots?: RendererSlots;
   map: {
     center: [number, number];
     zoom: number;
@@ -172,6 +200,7 @@ export interface SituationViewSpec {
     value: string | number;
     tone: "usn" | "ijn" | "warn" | "neutral";
   }[];
+  /** 由渲染器根据 pack + 填槽结果生成；模型不要填统计图 */
   charts: ChartSpec[];
   intent_findings: {
     task_id: string;
@@ -194,9 +223,12 @@ export interface SituationViewSpec {
     level: string;
     evidence: string;
   }[];
+  /** 解析后的工作模式；仅白名单 id */
+  layout_id?: string;
+  layout_reason?: string;
+  layout_source?: "rule" | "llm" | "default";
   /**
-   * 可选：仅当 map.threat_zones 为空/校验失败、回退本地骨架时使用。
-   * 优先请直接写 map.threat_zones（按任务自绘）。
+   * 可选：仅当 slots.zones 为空、渲染器回退本地骨架时使用。
    * id 仅限 nagumo / midway / tf16 / tf17 / air-contact；hidden 或 level=无/不适用 → 不绘制。
    */
   zone_overrides?: {

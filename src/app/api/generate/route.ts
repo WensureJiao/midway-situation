@@ -16,7 +16,8 @@ import type {
   SlicePack,
 } from "@/lib/types";
 import { filterUsnObserverRatings, normalizeSituationSpec } from "@/lib/utils";
-import { mergeLlmThreatZones } from "@/lib/threatZones";
+import { fillRendererSlots } from "@/lib/fillSlots";
+import { applyLayoutChoice } from "@/lib/recommendLayout";
 
 async function loadPack(timeSlice: string): Promise<SlicePack> {
   const file = path.join(
@@ -112,6 +113,8 @@ export async function POST(req: Request) {
       spec = generateSituationLocal(pack, body.task_ids);
     }
 
+    spec = fillRendererSlots(pack, spec);
+
     // 主生成台锁定四张兵力统计图；对比页按任务从 ratings/map 生成固定图槽
     // 威胁任务只保留美方观察视角，丢掉日方视角结论
     const rawRatings =
@@ -122,19 +125,12 @@ export async function POST(req: Request) {
           : buildThreatRatingsFromPack(pack);
     const ratings = filterUsnObserverRatings(rawRatings);
 
-    // LLM：优先采纳自绘 threat_zones；空/无效才回退骨架+overrides。本地模式用本地骨架。
-    const threatZones =
-      body.mode === "llm" && !used_fallback
-        ? mergeLlmThreatZones(pack, spec, ratings)
-        : (spec.map?.threat_zones ?? []);
-
     const charts = lockCharts
       ? buildFixedCharts(pack)
       : buildTaskCompareCharts(
           {
             ...spec,
             threat_ratings: ratings,
-            map: { ...spec.map, threat_zones: threatZones },
           },
           taskFocus,
           pack.phase_label,
@@ -147,25 +143,18 @@ export async function POST(req: Request) {
     } = spec;
     void _zoneOverrides;
 
-    spec = {
-      ...specWithoutOverrides,
-      kpis: buildFixedKpis(pack),
-      charts,
-      intent_findings: [],
-      threat_findings: [],
-      priorities: [],
-      threat_ratings: ratings,
-      map: {
-        ...(spec.map ?? {
-          center: [28.21, -177.38] as [number, number],
-          zoom: 6,
-          highlight_names: [],
-          axes: [],
-          threat_zones: [],
-        }),
-        threat_zones: threatZones,
+    spec = applyLayoutChoice(
+      {
+        ...specWithoutOverrides,
+        kpis: buildFixedKpis(pack),
+        charts,
+        intent_findings: [],
+        threat_findings: [],
+        priorities: [],
+        threat_ratings: ratings,
       },
-    };
+      taskFocus,
+    );
 
     const payload: GenerateResponse = {
       ok: true,

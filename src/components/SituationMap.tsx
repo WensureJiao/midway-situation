@@ -41,6 +41,53 @@ function FitToSpec({
   return null;
 }
 
+/** 容器被抽屉挤占或从分栏切全屏时，Leaflet 必须重算视口，否则瓦片错位、点击偏移。 */
+function InvalidateMapOnResize() {
+  const map = useMap();
+  useEffect(() => {
+    const el = map.getContainer();
+    if (!el) return;
+    let frame = 0;
+    let gone = false;
+    const refresh = () => {
+      if (gone || !el.parentNode) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (gone || !el.parentNode) return;
+        try {
+          map.invalidateSize({ animate: false });
+        } catch {
+          /* 热更新卸载时 Leaflet 实例可能已拆 */
+        }
+      });
+    };
+    const ro = new ResizeObserver(refresh);
+    ro.observe(el);
+    window.addEventListener("resize", refresh);
+    const kick = window.setTimeout(refresh, 80);
+    return () => {
+      gone = true;
+      cancelAnimationFrame(frame);
+      window.clearTimeout(kick);
+      ro.disconnect();
+      window.removeEventListener("resize", refresh);
+    };
+  }, [map]);
+  return null;
+}
+
+type ViewInset = { right?: number; bottom?: number };
+
+function flyPad(inset?: ViewInset) {
+  return {
+    paddingTopLeft: [48, 56] as [number, number],
+    paddingBottomRight: [
+      48 + Math.max(0, inset?.right ?? 0),
+      48 + Math.max(0, inset?.bottom ?? 0),
+    ] as [number, number],
+  };
+}
+
 /** 飞到已解析好的坐标（由面板侧做威胁名→坐标映射） */
 function FocusCenterFly({
   center,
@@ -48,6 +95,7 @@ function FocusCenterFly({
   points,
   zone,
   tick,
+  viewInset,
 }: {
   center?: [number, number] | null;
   /** 有起终点时按整段指向取景，而不是钉在一个点上 */
@@ -57,10 +105,12 @@ function FocusCenterFly({
   /** 活动区按整圈取景 */
   zone?: { center: [number, number]; radius_nm: number } | null;
   tick?: number;
+  viewInset?: ViewInset;
 }) {
   const map = useMap();
   useEffect(() => {
     if (!tick) return;
+    const pad = flyPad(viewInset);
     if (zone?.center && zone.radius_nm > 0) {
       const [lat, lon] = zone.center;
       const dLat = zone.radius_nm / 60;
@@ -72,7 +122,7 @@ function FocusCenterFly({
       );
       if (!bounds.isValid()) return;
       map.flyToBounds(bounds, {
-        padding: [48, 48],
+        ...pad,
         maxZoom: 9,
         duration: 0.6,
       });
@@ -92,13 +142,20 @@ function FocusCenterFly({
         11,
       );
       map.flyTo(bounds.getCenter(), zoom, { duration: 0.65 });
+      if ((viewInset?.right || viewInset?.bottom) && map.getSize) {
+        const dx = -Math.round((viewInset?.right ?? 0) / 2);
+        const dy = -Math.round((viewInset?.bottom ?? 0) / 2);
+        if (dx || dy) {
+          window.setTimeout(() => map.panBy([dx, dy], { animate: false }), 680);
+        }
+      }
       return;
     }
     if (points && points.length > 1) {
       const bounds = L.latLngBounds(points);
       if (!bounds.isValid()) return;
       map.flyToBounds(bounds, {
-        padding: [72, 72],
+        ...pad,
         maxZoom: 12,
         duration: 0.6,
       });
@@ -108,8 +165,16 @@ function FocusCenterFly({
     if (!one) return;
     const [lat, lon] = one;
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-    map.flyTo([lat, lon], Math.max(map.getZoom(), 7), { duration: 0.6 });
-  }, [map, center, span, points, zone, tick]);
+    const bump = 0.04;
+    map.flyToBounds(
+      L.latLngBounds([lat - bump, lon - bump], [lat + bump, lon + bump]),
+      {
+        ...pad,
+        maxZoom: Math.max(map.getZoom(), 7),
+        duration: 0.6,
+      },
+    );
+  }, [map, center, span, points, zone, tick, viewInset]);
   return null;
 }
 
@@ -451,14 +516,24 @@ function axisArrowIcon(side: string, bearing: number) {
 }
 
 /** 地图左下角图标图例；单位点用原样式，箭头用当前实心三角 */
-function MapIconLegend({ showEntityTag = false }: { showEntityTag?: boolean }) {
+function MapIconLegend({
+  showEntityTag = false,
+  offsetBottom = 0,
+}: {
+  showEntityTag?: boolean;
+  /** 空间优先底栏抽屉占用的高度，图例抬到抽屉上方 */
+  offsetBottom?: number;
+}) {
   const us = "#c45c4a";
   const ij = "#3b82a8";
   const usAir = "#e07a6a";
   const ijAir = "#6eb0d0";
   const fac = "#c4a35a";
   return (
-    <div className="pointer-events-none absolute bottom-2 left-2 z-[1000] max-w-[min(100%-1rem,340px)] rounded bg-white/88 px-1.5 py-1 text-[9px] leading-none text-[var(--ink)] shadow-sm ring-1 ring-black/10 backdrop-blur-sm">
+    <div
+      className="pointer-events-none absolute left-2 z-[1000] max-w-[min(100%-1rem,340px)] rounded bg-white/88 px-1.5 py-1 text-[9px] leading-none text-[var(--ink)] shadow-sm ring-1 ring-black/10 backdrop-blur-sm"
+      style={{ bottom: 8 + offsetBottom }}
+    >
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span className="inline-flex items-center gap-0.5">
           <span className="inline-block h-2 w-2 rounded-full bg-[#c45c4a]" />
@@ -574,6 +649,7 @@ export function SituationMap({
   focusZone,
   focusPoints,
   markEntities = false,
+  viewInset,
 }: {
   pack: SlicePack;
   spec: SituationViewSpec;
@@ -585,6 +661,8 @@ export function SituationMap({
   focusColor?: string;
   /** 递增以重复触发定位 */
   focusTick?: number;
+  /** 浮动抽屉占用的右侧 / 底部像素，定位时避开遮挡 */
+  viewInset?: ViewInset;
   /** 意图「定位这条指向」：高亮整段轴线，而不是终点一个钉 */
   focusAxis?: {
     id?: string;
@@ -635,7 +713,10 @@ export function SituationMap({
 
   return (
     <div className="relative h-full w-full">
-      <MapIconLegend showEntityTag={markEntities} />
+      <MapIconLegend
+        showEntityTag={markEntities}
+        offsetBottom={viewInset?.bottom ?? 0}
+      />
 
       <MapContainer
         center={center}
@@ -650,6 +731,7 @@ export function SituationMap({
           maxZoom={BASEMAP.maxZoom}
         />
         <FitToSpec center={center} zoom={zoom} />
+        <InvalidateMapOnResize />
         <FocusCenterFly
           center={focusCenter}
           span={
@@ -671,6 +753,7 @@ export function SituationMap({
               : null
           }
           tick={focusTick}
+          viewInset={viewInset}
         />
 
         {focusAxis && focusTick ? (

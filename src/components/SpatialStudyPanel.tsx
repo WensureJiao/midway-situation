@@ -22,7 +22,12 @@ import type {
 } from "@/lib/types";
 import { expandBundledShipTarget } from "@/lib/splitShipTargets";
 import { levelColor } from "@/lib/zoneLevel";
-import { Crosshair, MapPin, X } from "lucide-react";
+import {
+  evidenceGridCols,
+  layoutTemplate,
+  type LayoutTemplateId,
+} from "@/lib/layoutTemplates";
+import { ChevronUp, Crosshair, Map as MapIcon, MapPin, PanelRight, X } from "lucide-react";
 
 function unitCentroid(units: CompactUnit[]): [number, number] | null {
   if (!units.length) return null;
@@ -280,10 +285,12 @@ function SideChartCard({
   chart,
   active,
   onSelectName,
+  variant = "strip",
 }: {
   chart: ChartSpec;
   active?: boolean;
   onSelectName?: (name: string) => void;
+  variant?: "strip" | "board";
 }) {
   const question = chartQuestion(chart);
   const insight = chartInsight(chart);
@@ -301,17 +308,24 @@ function SideChartCard({
     chart.id === "cmp-urgent-near";
   const levelLegend =
     chart.id === "cmp-threat-rank" || chart.id === "cmp-threat-evidence";
+  const board = variant === "board";
   return (
     <div
-      className={`flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-md bg-[var(--panel)] px-1.5 py-1 ring-1 ${
-        active ? "ring-[var(--accent)]" : "ring-[var(--line)]"
-      }`}
+      className={`flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--panel)] ring-1 ${
+        board
+          ? "rounded-lg px-2.5 py-2 shadow-sm"
+          : "rounded-md px-1.5 py-1"
+      } ${active ? "ring-[var(--accent)]" : "ring-[var(--line)]"}`}
     >
       <div className="mb-0.5 flex shrink-0 min-w-0 items-center gap-1">
         <span className="shrink-0 rounded bg-[var(--panel-3)] px-1 py-px text-[9px] font-semibold tracking-wide text-[var(--muted)]">
           Q
         </span>
-        <h3 className="min-w-0 flex-1 truncate text-[11px] font-semibold leading-tight text-[var(--ink)]">
+        <h3
+          className={`min-w-0 flex-1 font-semibold leading-tight text-[var(--ink)] ${
+            board ? "line-clamp-2 text-xs" : "truncate text-[11px]"
+          }`}
+        >
           {question}
         </h3>
         {sideLegend ? (
@@ -340,7 +354,11 @@ function SideChartCard({
         />
       </div>
       {insight ? (
-        <p className="mt-0.5 shrink-0 truncate border-t border-[var(--line)] pt-0.5 text-[10px] leading-tight text-[var(--ink)]">
+        <p
+          className={`mt-1 shrink-0 border-t border-[var(--line)] pt-1 text-[10px] leading-snug text-[var(--ink)] ${
+            board ? "line-clamp-3" : "truncate leading-tight pt-0.5 mt-0.5"
+          }`}
+        >
           <span className="mr-1 font-semibold text-[var(--accent)]">结论</span>
           {insight}
         </p>
@@ -363,7 +381,7 @@ function SlotHead({
   return (
     <div className={compact ? "mb-0.5" : "mb-2"}>
       <div
-        className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]"
+        className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]"
       >
         {en} <span className="opacity-50">/</span> {zh}
       </div>
@@ -500,6 +518,7 @@ export function SpatialStudyPanel({
   reasoningIntent,
   richCharts = true,
   mapKey,
+  layoutId = "map_dominant",
 }: {
   pack: SlicePack;
   spec: SituationViewSpec;
@@ -512,6 +531,7 @@ export function SpatialStudyPanel({
   reasoningIntent?: string;
   richCharts?: boolean;
   mapKey?: string;
+  layoutId?: LayoutTemplateId;
 }) {
   const threatReason = reasoningThreat ?? reasoning;
   const intentReason = reasoningIntent;
@@ -583,11 +603,40 @@ export function SpatialStudyPanel({
   const chartCols = Math.max(displayMain.length, 1);
   const [activeChartId, setActiveChartId] = useState<string | null>(null);
   const [traceOpen, setTraceOpen] = useState(false);
+  const [analysisOpen, setAnalysisOpen] = useState(false);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
   const traceRef = useRef<HTMLDivElement>(null);
+  const layout = layoutTemplate(layoutId, taskFocus);
+  const overlay = layout.chrome === "overlay";
+  const evidenceFirst = layout.chrome === "evidence";
+  const viewInset = useMemo(
+    () =>
+      overlay
+        ? {
+            right: analysisOpen ? 288 : 0,
+            bottom: evidenceOpen ? 244 : 44,
+          }
+        : undefined,
+    [overlay, analysisOpen, evidenceOpen],
+  );
 
   useEffect(() => {
     setTraceOpen(false);
   }, [reasonSide, taskFocus, threatReason, intentReason]);
+
+  useEffect(() => {
+    if (!evidenceFirst) setMapOpen(false);
+  }, [evidenceFirst]);
+
+  useEffect(() => {
+    if (!evidenceFirst || !mapOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMapOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [evidenceFirst, mapOpen]);
 
   useEffect(() => {
     if (!traceOpen) return;
@@ -605,6 +654,10 @@ export function SpatialStudyPanel({
       document.removeEventListener("pointerdown", onPtr);
     };
   }, [traceOpen]);
+
+  const revealMapIfNeeded = () => {
+    if (evidenceFirst) setMapOpen(true);
+  };
 
   const locate = (
     query: string,
@@ -625,6 +678,7 @@ export function SpatialStudyPanel({
       setFocusColor(opts.color || levelTone(String(opts.zone.level || "")));
       setFocusKey(opts.key ?? null);
       setFocusTick((n) => n + 1);
+      revealMapIfNeeded();
       return;
     }
     if (opts?.axis?.from && opts.axis.to) {
@@ -638,6 +692,7 @@ export function SpatialStudyPanel({
       );
       setFocusKey(opts.key ?? null);
       setFocusTick((n) => n + 1);
+      revealMapIfNeeded();
       return;
     }
     const queries = (opts?.queries?.length ? opts.queries : [query]).filter(
@@ -669,11 +724,13 @@ export function SpatialStudyPanel({
       setFocusPoints(points);
       setFocusCenter(null);
       setFocusLabel(points.map((p) => p.label).join("、"));
+      revealMapIfNeeded();
       return;
     }
     setFocusPoints([]);
     setFocusCenter(points[0].at);
     setFocusLabel(points[0].label);
+    revealMapIfNeeded();
   };
 
   const locateFromName = (name: string, chartId?: string) => {
@@ -720,178 +777,474 @@ export function SpatialStudyPanel({
       ? { en: "INTENT", zh: "意图", sub: "意图指向" }
       : { en: "SITUATION", zh: "态势", sub: "态势图" };
 
-  return (
-    <section className="flex h-full min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-hidden rounded-lg bg-[var(--panel)] ring-1 ring-[var(--line)]">
-      <div className="grid h-full min-h-full shrink-0 grid-rows-[auto_minmax(0,1fr)_minmax(228px,40%)]">
-      <div className="relative z-[1100] flex shrink-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-[var(--line)] px-3 py-1">
-        <span className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
-          {frameTitle.en} <span className="opacity-50">/</span> {frameTitle.zh}
-        </span>
-        <h2 className="min-w-0 truncate font-display text-sm tracking-wide text-[var(--ink)]">
-          {label || frameTitle.sub}
-          {badge ? (
-            <span className="ml-1.5 rounded bg-[var(--panel-3)] px-1.5 py-px align-middle font-sans text-[9px] font-semibold uppercase tracking-normal text-[var(--muted)]">
-              {badge}
-            </span>
-          ) : null}
-        </h2>
-        <span className="min-w-0 truncate font-sans text-[11px] font-normal text-[var(--muted)]">
-          {spec.time_slice}
-          {(pack.phase_label || spec.phase_label) && (
-            <>
-              <span className="mx-1">·</span>
-              {pack.phase_label || spec.phase_label}
-            </>
-          )}
-        </span>
-        {reasonSide && (threatReason?.trim() || intentReason?.trim()) ? (
-          <div ref={traceRef} className="relative ml-auto shrink-0">
-            <button
-              type="button"
-              className={`cursor-pointer text-[11px] font-medium ${
-                traceOpen ? "text-[var(--ink)]" : "text-[var(--muted)]"
-              }`}
-              aria-expanded={traceOpen}
-              onClick={() => setTraceOpen((o) => !o)}
-            >
-              {traceOpen ? "收起推理" : "推理路径"}
-            </button>
-            {traceOpen ? (
-              <div className="fixed right-3 top-12 z-[2000] max-h-[calc(100dvh-4rem)] w-[min(44rem,calc(100vw-1.5rem))] overflow-y-auto rounded-md bg-[var(--panel)] p-2 shadow-xl ring-1 ring-[var(--line)]">
-                <div className="mb-1 flex items-center justify-end">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[11px] text-[var(--muted)] hover:bg-[var(--panel-3)] hover:text-[var(--ink)]"
-                    onClick={() => setTraceOpen(false)}
-                  >
-                    <X className="h-3 w-3" />
-                    收起
-                  </button>
-                </div>
-                <VmmpReasoningTrace
-                  reasoningThreat={threatReason}
-                  reasoningIntent={intentReason}
-                  side={reasonSide}
-                  observerLabel="美方"
-                  lockedFocus={taskFocus}
-                />
-              </div>
-            ) : null}
-          </div>
+  const titleBar = (
+    <>
+      <span className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+        {frameTitle.en} <span className="opacity-50">/</span> {frameTitle.zh}
+      </span>
+      <h2 className="min-w-0 truncate font-display text-sm tracking-wide text-[var(--ink)]">
+        {label || frameTitle.sub}
+        {badge ? (
+          <span className="ml-1.5 rounded bg-[var(--panel-3)] px-1.5 py-px align-middle font-sans text-[9px] font-semibold uppercase tracking-normal text-[var(--muted)]">
+            {badge}
+          </span>
         ) : null}
-      </div>
-
-      <div className="grid min-h-0 grid-cols-[minmax(0,1fr)_minmax(168px,210px)] overflow-hidden border-b border-[var(--line)]">
-        <div className="map-shell relative min-h-0 overflow-hidden border-r border-[var(--line)]">
-          <SituationMap
-            key={mapKey || `${spec.time_slice}-${taskFocus}`}
-            pack={pack}
-            spec={spec}
-            focusCenter={focusCenter}
-            focusLabel={focusLabel}
-            focusColor={focusColor}
-            focusTick={focusTick}
-            focusAxis={focusAxis}
-            focusZone={focusZone}
-            focusPoints={focusPoints}
-            markEntities={taskFocus === "intent"}
-          />
+      </h2>
+      <span className="min-w-0 truncate font-sans text-[11px] font-normal text-[var(--muted)]">
+        {spec.time_slice}
+        {(pack.phase_label || spec.phase_label) && (
+          <>
+            <span className="mx-1">·</span>
+            {pack.phase_label || spec.phase_label}
+          </>
+        )}
+      </span>
+      {layout.chrome !== "split" ? (
+        <span className="rounded bg-[var(--panel-3)] px-1.5 py-px text-[9px] font-medium text-[var(--muted)]">
+          {layout.shortLabel}
+        </span>
+      ) : null}
+      {reasonSide && (threatReason?.trim() || intentReason?.trim()) ? (
+        <div ref={traceRef} className="relative ml-auto shrink-0">
+          <button
+            type="button"
+            className={`cursor-pointer text-[11px] font-medium ${
+              traceOpen ? "text-[var(--ink)]" : "text-[var(--muted)]"
+            }`}
+            aria-expanded={traceOpen}
+            onClick={() => setTraceOpen((o) => !o)}
+          >
+            {traceOpen ? "收起推理" : "推理路径"}
+          </button>
+          {traceOpen ? (
+            <div className="fixed right-3 top-12 z-[2000] max-h-[calc(100dvh-4rem)] w-[min(44rem,calc(100vw-1.5rem))] overflow-y-auto rounded-md bg-[var(--panel)] p-2 shadow-xl ring-1 ring-[var(--line)]">
+              <div className="mb-1 flex items-center justify-end">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[11px] text-[var(--muted)] hover:bg-[var(--panel-3)] hover:text-[var(--ink)]"
+                  onClick={() => setTraceOpen(false)}
+                >
+                  <X className="h-3 w-3" />
+                  收起
+                </button>
+              </div>
+              <VmmpReasoningTrace
+                reasoningThreat={threatReason}
+                reasoningIntent={intentReason}
+                side={reasonSide}
+                observerLabel="美方"
+                lockedFocus={taskFocus}
+              />
+            </div>
+          ) : null}
         </div>
+      ) : null}
+    </>
+  );
 
-        <aside className="flex min-h-0 flex-col divide-y divide-[var(--line)] bg-[var(--panel-2)]/35">
-          <div className="shrink-0 p-1.5">
+  const mapEl = (
+    <SituationMap
+      key={mapKey || `${spec.time_slice}-${taskFocus}`}
+      pack={pack}
+      spec={spec}
+      focusCenter={focusCenter}
+      focusLabel={focusLabel}
+      focusColor={focusColor}
+      focusTick={focusTick}
+      focusAxis={focusAxis}
+      focusZone={focusZone}
+      focusPoints={focusPoints}
+      markEntities={taskFocus === "intent"}
+      viewInset={viewInset}
+    />
+  );
+
+  const analysisBody = (
+    <>
+      <div className="shrink-0 p-1.5">
+        <SlotHead
+          compact
+          en={taskFocus === "intent" ? "CLAIM" : "CORE"}
+          zh={taskFocus === "intent" ? "主指向" : "核心"}
+          title={core.title}
+        />
+        <button
+          type="button"
+          disabled={!core.locateQuery}
+          onClick={() =>
+            locate(core.locateQuery, {
+              color: coreColor,
+              key: "core",
+              axis: core.axis,
+              queries:
+                (core.locateQueries?.length ?? 0) > 1
+                  ? core.locateQueries
+                  : undefined,
+            })
+          }
+          className="inline-flex w-full items-center justify-center gap-1 rounded px-2 py-1 text-[11px] font-medium text-white disabled:opacity-40"
+          style={{
+            background: coreColor,
+            boxShadow:
+              focusKey === "core" ? `0 0 0 2px ${coreColor}` : undefined,
+          }}
+        >
+          <Crosshair className="h-3 w-3" />
+          <MapPin className="h-3 w-3" />
+          定位
+        </button>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-1.5">
+        <SlotHead
+          compact
+          en={taskFocus === "intent" ? "TRACKS" : "PRIORITY"}
+          zh={taskFocus === "intent" ? "依据" : "排序"}
+        />
+        <div className="min-h-0 flex-1 space-y-1 overflow-auto p-0.5">
+          {priorities.length ? (
+            priorities.map((p) => (
+              <LocatorRow
+                key={p.id}
+                item={p}
+                active={focusKey === p.id}
+                onPick={() => pickLocator(p)}
+              />
+            ))
+          ) : (
+            <p className="py-2 text-[10px] text-[var(--muted)]">暂无条目</p>
+          )}
+        </div>
+      </div>
+    </>
+  );
+
+  const evidenceBody = sideCharts.length ? (
+    <>
+      <div className="chart-h-scroll min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-hidden">
+        <div
+          className="grid h-full min-h-0 min-w-full gap-1.5"
+          style={{
+            width: `${(rowCharts.length / chartCols) * 100}%`,
+            gridTemplateColumns: `repeat(${rowCharts.length}, minmax(0, 1fr))`,
+          }}
+        >
+          {rowCharts.map((chart) => (
+            <SideChartCard
+              key={chart.id}
+              chart={chart}
+              active={activeChartId === chart.id}
+              onSelectName={(name) => locateFromName(name, chart.id)}
+            />
+          ))}
+        </div>
+      </div>
+      <p className="mt-0.5 shrink-0 px-0.5 text-[9px] leading-tight text-[var(--muted)]">
+        {chartOrderCaption(
+          taskFocus,
+          viewSide === "B",
+          extendCharts.length > 0,
+        )}
+      </p>
+    </>
+  ) : (
+    <p className="flex h-full items-center justify-center text-[11px] text-[var(--muted)]">
+      本拍暂无统计图
+    </p>
+  );
+
+  const problemLine =
+    taskFocus === "intent"
+      ? `当前分析问题：验证「${core.title}」的指向、阶段与空间依据`
+      : `当前分析问题：识别当前态势下的主要威胁目标，并比较其优先级`;
+
+  const evidenceCols = evidenceGridCols(rowCharts.length);
+  const evidenceBoard = sideCharts.length ? (
+    <>
+      <div
+        className={`grid min-h-0 gap-2.5 ${
+          rowCharts.length <= 4 ? "h-full" : ""
+        } ${rowCharts.length === 1 ? "mx-auto w-full max-w-4xl" : ""}`}
+        style={{
+          gridTemplateColumns: `repeat(${evidenceCols}, minmax(0, 1fr))`,
+          gridAutoRows:
+            rowCharts.length <= 4 ? "minmax(0, 1fr)" : "minmax(268px, 300px)",
+        }}
+      >
+        {rowCharts.map((chart) => (
+          <SideChartCard
+            key={chart.id}
+            chart={chart}
+            variant="board"
+            active={activeChartId === chart.id}
+            onSelectName={(name) => locateFromName(name, chart.id)}
+          />
+        ))}
+      </div>
+      <p className="mt-1.5 shrink-0 text-[9px] leading-tight text-[var(--muted)]">
+        {chartOrderCaption(
+          taskFocus,
+          viewSide === "B",
+          extendCharts.length > 0,
+        )}
+        {" · "}点卡片中的目标会打开侧栏地图定位
+      </p>
+    </>
+  ) : (
+    <p className="flex h-full items-center justify-center text-[11px] text-[var(--muted)]">
+      本拍暂无统计图
+    </p>
+  );
+
+  const analysisStrip = (
+    <div className="shrink-0 space-y-1.5 border-b border-[var(--line)] bg-[var(--panel-2)]/30 px-2.5 py-1.5">
+      <div>
+        <div className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+          问题 / 待验证判断
+        </div>
+        <p className="text-xs font-medium leading-snug text-[var(--ink)]">
+          {problemLine}
+        </p>
+      </div>
+      <div className="flex min-w-0 flex-wrap items-stretch gap-2">
+        <div className="flex min-w-[200px] flex-[1_1_220px] items-center gap-2 rounded-lg bg-[var(--panel)] px-2 py-1 ring-1 ring-[var(--line)]">
+          <div className="min-w-0 flex-1">
             <SlotHead
               compact
               en={taskFocus === "intent" ? "CLAIM" : "CORE"}
               zh={taskFocus === "intent" ? "主指向" : "核心"}
               title={core.title}
             />
-            <button
-              type="button"
-              disabled={!core.locateQuery}
-              onClick={() =>
-                locate(core.locateQuery, {
-                  color: coreColor,
-                  key: "core",
-                  axis: core.axis,
-                  queries:
-                    (core.locateQueries?.length ?? 0) > 1
-                      ? core.locateQueries
-                      : undefined,
-                })
-              }
-              className="inline-flex w-full items-center justify-center gap-1 rounded px-2 py-1 text-[11px] font-medium text-white disabled:opacity-40"
-              style={{
-                background: coreColor,
-                boxShadow:
-                  focusKey === "core" ? `0 0 0 2px ${coreColor}` : undefined,
-              }}
-            >
-              <Crosshair className="h-3 w-3" />
-              <MapPin className="h-3 w-3" />
-              定位
-            </button>
           </div>
-
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-1.5">
-            <SlotHead
-              compact
-              en={taskFocus === "intent" ? "TRACKS" : "PRIORITY"}
-              zh={taskFocus === "intent" ? "依据" : "排序"}
-            />
-            <div className="min-h-0 flex-1 space-y-1 overflow-auto p-0.5">
-              {priorities.length ? (
-                priorities.map((p) => (
+          <button
+            type="button"
+            disabled={!core.locateQuery}
+            onClick={() =>
+              locate(core.locateQuery, {
+                color: coreColor,
+                key: "core",
+                axis: core.axis,
+                queries:
+                  (core.locateQueries?.length ?? 0) > 1
+                    ? core.locateQueries
+                    : undefined,
+              })
+            }
+            className="inline-flex h-7 shrink-0 items-center gap-1 rounded px-2 text-[10px] font-medium text-white disabled:opacity-40"
+            style={{
+              background: coreColor,
+              boxShadow:
+                focusKey === "core" ? `0 0 0 2px ${coreColor}` : undefined,
+            }}
+          >
+            <MapPin className="h-3 w-3" />
+            定位
+          </button>
+        </div>
+        <div className="flex min-w-[240px] flex-[2_1_320px] flex-col gap-1 rounded-lg bg-[var(--panel)] px-2 py-1 ring-1 ring-[var(--line)]">
+          <SlotHead
+            compact
+            en={taskFocus === "intent" ? "TRACKS" : "PRIORITY"}
+            zh={taskFocus === "intent" ? "依据" : "排序"}
+          />
+          <div className="flex min-w-0 flex-wrap gap-1">
+            {priorities.length ? (
+              priorities.map((p) => (
+                <div key={p.id} className="min-w-[140px] flex-1">
                   <LocatorRow
-                    key={p.id}
                     item={p}
                     active={focusKey === p.id}
                     onPick={() => pickLocator(p)}
                   />
-                ))
-              ) : (
-                <p className="py-2 text-[10px] text-[var(--muted)]">暂无条目</p>
-              )}
-            </div>
+                </div>
+              ))
+            ) : (
+              <p className="py-1 text-[10px] text-[var(--muted)]">暂无条目</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (evidenceFirst) {
+    return (
+      <section className="relative flex h-full min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-hidden rounded-lg bg-[var(--panel-2)]/50 ring-1 ring-[var(--line)]">
+        <div className="relative z-[1100] flex shrink-0 items-center gap-2 border-b border-[var(--line)] bg-[var(--panel)] px-3 py-1">
+          <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            {titleBar}
+          </div>
+          <button
+            type="button"
+            className={`inline-flex shrink-0 items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium ${
+              mapOpen
+                ? "bg-[var(--accent)] text-[var(--accent-fg)]"
+                : "bg-[var(--panel-2)] text-[var(--ink)] hover:bg-[var(--panel-3)]"
+            }`}
+            onClick={() => setMapOpen((o) => !o)}
+            aria-expanded={mapOpen}
+          >
+            <MapIcon className="h-3.5 w-3.5" />
+            {mapOpen ? "收起地图" : "地图"}
+          </button>
+        </div>
+        {analysisStrip}
+        <div className="relative z-10 min-h-0 min-w-0 flex-1 overflow-y-auto px-2.5 py-2.5">
+          {evidenceBoard}
+        </div>
+
+        <aside
+          className="absolute z-[1200] flex w-[min(440px,42%)] flex-col overflow-hidden rounded-md bg-[var(--panel)] shadow-xl ring-1 ring-[var(--line)] transition-transform duration-300 ease-out"
+          style={{
+            top: 40,
+            right: 8,
+            bottom: 8,
+            transform: mapOpen ? "translateX(0)" : "translateX(110%)",
+            pointerEvents: mapOpen ? "auto" : "none",
+          }}
+          aria-hidden={!mapOpen}
+          inert={!mapOpen || undefined}
+        >
+          <div className="flex shrink-0 items-center justify-between border-b border-[var(--line)] px-2 py-1">
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+              <MapIcon className="h-3.5 w-3.5 text-[var(--accent)]" />
+              战场态势
+              <span className="font-normal normal-case tracking-normal text-[var(--muted)]">
+                空间证据
+              </span>
+            </span>
+            <button
+              type="button"
+              className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[11px] text-[var(--muted)] hover:bg-[var(--panel-3)] hover:text-[var(--ink)]"
+              onClick={() => setMapOpen(false)}
+            >
+              <X className="h-3 w-3" />
+              收起
+            </button>
+          </div>
+          <div className="map-shell relative min-h-0 flex-1 overflow-hidden">
+            {mapEl}
           </div>
         </aside>
-      </div>
+      </section>
+    );
+  }
 
-      <div className="flex min-h-0 min-w-0 flex-col overflow-hidden px-2 pb-1 pt-1">
-        {sideCharts.length ? (
-          <>
-            <div className="chart-h-scroll min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-hidden">
-              <div
-                className="grid h-full min-h-0 min-w-full gap-1.5"
-                style={{
-                  width: `${(rowCharts.length / chartCols) * 100}%`,
-                  gridTemplateColumns: `repeat(${rowCharts.length}, minmax(0, 1fr))`,
-                }}
-              >
-                {rowCharts.map((chart) => (
-                  <SideChartCard
-                    key={chart.id}
-                    chart={chart}
-                    active={activeChartId === chart.id}
-                    onSelectName={(name) => locateFromName(name, chart.id)}
-                  />
-                ))}
-              </div>
-            </div>
-            <p className="mt-0.5 shrink-0 px-0.5 text-[9px] leading-tight text-[var(--muted)]">
-              {chartOrderCaption(
-                taskFocus,
-                viewSide === "B",
-                extendCharts.length > 0,
-              )}
-            </p>
-          </>
-        ) : (
-          <p className="flex h-full items-center justify-center text-[11px] text-[var(--muted)]">
-            本拍暂无统计图
-          </p>
-        )}
-      </div>
+  if (overlay) {
+    const evidenceH = 236;
+    return (
+      <section className="relative h-full min-h-0 min-w-0 max-w-full flex-1 overflow-hidden rounded-lg bg-[#1a2420] ring-1 ring-[var(--line)]">
+        <div className="map-shell absolute inset-0 overflow-hidden">
+          {mapEl}
+        </div>
+
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-[1210] flex items-start gap-2 pl-14 pr-2 pt-2">
+          <div className="pointer-events-auto flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-md bg-[var(--panel)]/92 px-3 py-1 shadow-md ring-1 ring-black/10 backdrop-blur-md">
+            {titleBar}
+          </div>
+        </div>
+
+        {!analysisOpen ? (
+          <button
+            type="button"
+            className="absolute right-2 top-24 z-[1210] flex h-28 w-8 flex-col items-center justify-center gap-1 rounded-md bg-[var(--panel)]/94 text-[10px] font-semibold tracking-wide text-[var(--ink)] shadow-lg ring-1 ring-black/15 backdrop-blur-md hover:bg-[var(--panel)]"
+            onClick={() => setAnalysisOpen(true)}
+            aria-expanded={false}
+          >
+            <PanelRight className="h-3.5 w-3.5" />
+            <span className="[writing-mode:vertical-rl]">分析</span>
+          </button>
+        ) : null}
+
+        <aside
+          className="absolute z-[1200] flex w-[min(280px,38%)] flex-col overflow-hidden rounded-md bg-[var(--panel)]/95 shadow-xl ring-1 ring-black/15 backdrop-blur-md transition-[transform,bottom] duration-300 ease-out"
+          style={{
+            top: 52,
+            right: 8,
+            bottom: evidenceOpen ? evidenceH + 16 : 48,
+            transform: analysisOpen ? "translateX(0)" : "translateX(110%)",
+            pointerEvents: analysisOpen ? "auto" : "none",
+          }}
+          aria-hidden={!analysisOpen}
+        >
+          <div className="flex shrink-0 items-center justify-between border-b border-[var(--line)] px-2 py-1">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+              {taskFocus === "intent" ? "CLAIM / TRACKS" : "CORE / PRIORITY"}
+            </span>
+            <button
+              type="button"
+              className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[11px] text-[var(--muted)] hover:bg-[var(--panel-3)] hover:text-[var(--ink)]"
+              onClick={() => setAnalysisOpen(false)}
+            >
+              <X className="h-3 w-3" />
+              收起
+            </button>
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col divide-y divide-[var(--line)]">
+            {analysisBody}
+          </div>
+        </aside>
+
+        <div
+          className="absolute z-[1190] flex flex-col overflow-hidden rounded-md bg-[var(--panel)]/95 shadow-xl ring-1 ring-black/15 backdrop-blur-md transition-[height,right] duration-300 ease-out"
+          style={{
+            left: 8,
+            right: analysisOpen ? "min(296px, calc(38% + 16px))" : 8,
+            bottom: 8,
+            height: evidenceOpen ? evidenceH : 36,
+          }}
+        >
+          <button
+            type="button"
+            className="flex h-9 shrink-0 items-center justify-between gap-2 px-2.5 text-[11px] font-medium text-[var(--ink)] hover:bg-[var(--panel-2)]/60"
+            onClick={() => setEvidenceOpen((o) => !o)}
+            aria-expanded={evidenceOpen}
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <ChevronUp
+                className={`h-3.5 w-3.5 transition-transform ${evidenceOpen ? "rotate-180" : ""}`}
+              />
+              证据
+              <span className="text-[10px] font-normal text-[var(--muted)]">
+                {rowCharts.length} 张问句卡
+              </span>
+            </span>
+            <span className="text-[10px] text-[var(--muted)]">
+              {evidenceOpen ? "收起" : "展开"}
+            </span>
+          </button>
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-2 pb-1">
+            {evidenceBody}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="flex h-full min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-hidden rounded-lg bg-[var(--panel)] ring-1 ring-[var(--line)]">
+      <div
+        className={`grid h-full min-h-full shrink-0 ${
+          taskFocus === "intent"
+            ? "grid-rows-[auto_minmax(0,1fr)_minmax(168px,28%)]"
+            : "grid-rows-[auto_minmax(0,1fr)_minmax(228px,40%)]"
+        }`}
+      >
+        <div className="relative z-[1100] flex shrink-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-[var(--line)] px-3 py-1">
+          {titleBar}
+        </div>
+
+        <div className="grid min-h-0 grid-cols-[minmax(0,1fr)_minmax(168px,210px)] overflow-hidden border-b border-[var(--line)]">
+          <div className="map-shell relative min-h-0 overflow-hidden border-r border-[var(--line)]">
+            {mapEl}
+          </div>
+          <aside className="flex min-h-0 flex-col divide-y divide-[var(--line)] bg-[var(--panel-2)]/35">
+            {analysisBody}
+          </aside>
+        </div>
+
+        <div className="flex min-h-0 min-w-0 flex-col overflow-hidden px-2 pb-1 pt-1">
+          {evidenceBody}
+        </div>
       </div>
     </section>
   );
