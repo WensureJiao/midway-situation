@@ -297,7 +297,7 @@
     {
       "id": "cmp-air-profile",
       "type": "scatter",
-      "title": "问：在空飞机相对岛的东向×高度？",
+      "title": "问：在空飞机相对中途岛的东向与高度分布？",
       "description": "横轴东向 nm，纵轴高度 km",
       "series": [
         {

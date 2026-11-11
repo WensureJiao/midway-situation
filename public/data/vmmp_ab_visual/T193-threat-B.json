@@ -309,7 +309,7 @@
     {
       "id": "cmp-force-bearing",
       "type": "radar",
-      "title": "问：相对中途岛，敌我方位是否对齐进击/猎杀？",
+      "title": "问：相对中途岛，敌我方位是否对齐进击或猎杀方向？",
       "description": "八方位兵力计数；美/日双轮廓对照集中方向",
       "why_type": "M：Spatial+Locate → Position ⇒ radar",
       "series": [
@@ -488,7 +488,7 @@
     {
       "id": "cmp-threat-heat",
       "type": "heatmap",
-      "title": "问：筛排后谁落在哪一档？",
+      "title": "问：筛排后各目标落在哪一威胁档？",
       "description": "目标×紧急/高/中/低；有色格=该目标所在档",
       "why_type": "M：Hierarchical+Assess → Hierarchy ⇒ heatmap",
       "series": [

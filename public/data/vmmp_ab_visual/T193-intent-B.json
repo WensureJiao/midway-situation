@@ -154,7 +154,7 @@
     {
       "id": "cmp-intent-axes",
       "type": "radar",
-      "title": "图上作战指向朝哪、各多长？",
+      "title": "图上作战指向的方位与长度如何？",
       "description": "美/日作战指向落入十六方位；突起=指向所在扇区，半径=海里",
       "series": [
         {
@@ -180,7 +180,7 @@
     {
       "id": "cmp-force-bearing",
       "type": "radar",
-      "title": "相对岛，敌我方位扇区如何分布？",
+      "title": "敌我相对中途岛的方位扇区如何分布？",
       "description": "美/日舰艇相对中途岛八方位计数；突起=兵力所在扇区",
       "series": [
         {
@@ -302,7 +302,7 @@
     {
       "id": "cmp-aim-link",
       "type": "sankey",
-      "title": "谁在对准谁？",
+      "title": "作战指向的发起方与目标是哪些？",
       "description": "左=发起，右=目标；带宽=指向长度 nm。红美蓝日",
       "series": [
         {
@@ -326,7 +326,7 @@
     {
       "id": "cmp-highlight-range",
       "type": "hbar",
-      "title": "高亮实体离中途岛多远？",
+      "title": "高亮实体相对中途岛的距离如何？",
       "description": "条长=海里；越短越近。只看图上高亮",
       "series": [
         {
@@ -381,7 +381,7 @@
     {
       "id": "cmp-air-profile",
       "type": "scatter",
-      "title": "在空飞机相对岛的东向×高度？",
+      "title": "在空飞机相对中途岛的东向与高度分布？",
       "description": "横轴东向 nm，纵轴高度 km",
       "series": [
         {
@@ -634,7 +634,7 @@
     {
       "id": "cmp-heading",
       "type": "radar",
-      "title": "航向对准作战轴了吗？",
+      "title": "舰首航向与作战轴是否对准？",
       "description": "瓣=舰首航向，箭头=作战轴；重合=对准",
       "series": [
         {

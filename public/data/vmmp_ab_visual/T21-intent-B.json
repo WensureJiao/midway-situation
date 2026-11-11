@@ -309,7 +309,7 @@
     {
       "id": "cmp-force-bearing",
       "type": "radar",
-      "title": "问：相对岛，敌我方位扇区如何分布？（方位玫瑰）",
+      "title": "问：敌我相对中途岛的方位扇区如何分布？（方位玫瑰）",
       "description": "美/日舰艇相对中途岛八方位计数；突起=兵力所在扇区",
       "series": [
         {
@@ -430,7 +430,7 @@
     {
       "id": "cmp-alt-bands",
       "type": "grouped_bar",
-      "title": "问：美/日在空兵力落在哪些高度带？",
+      "title": "问：美日在空兵力分布在哪些高度带？",
       "description": "分组柱：各高度带架次（结构分布）",
       "series": [
         {
@@ -519,7 +519,7 @@
     {
       "id": "cmp-highlight-range",
       "type": "hbar",
-      "title": "问：高亮实体距中途岛各多少海里？",
+      "title": "问：高亮实体相对中途岛各距多少海里？",
       "description": "条长=真实距离",
       "series": [
         {

@@ -190,6 +190,8 @@ export function SituationWorkbench() {
             value={layoutId}
             recommendedId={layoutChoice?.id}
             reason={layoutChoice?.reason}
+            detail={layoutChoice?.detail}
+            source={layoutChoice?.source}
             pinned={layoutPinned}
             onChange={(id) => {
               setLayoutId(id);

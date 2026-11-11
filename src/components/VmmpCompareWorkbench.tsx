@@ -7,7 +7,7 @@ import { SpatialStudyPanel } from "@/components/SpatialStudyPanel";
 import { LayoutModeSwitch } from "@/components/LayoutModeSwitch";
 import { type LayoutTemplateId } from "@/lib/layoutTemplates";
 import {
-  layoutForComparePair,
+  layoutForCompareSide,
   type LayoutChoice,
 } from "@/lib/recommendLayout";
 import type {
@@ -231,13 +231,17 @@ export function VmmpCompareWorkbench() {
 
   useEffect(() => {
     setLayoutPinned(false);
-  }, [sliceId, taskFocus]);
+  }, [sliceId, taskFocus, abSide]);
 
   useEffect(() => {
-    const choice = layoutForComparePair(taskFocus, specA, specB);
+    // A / B 各跟各侧推荐；切换侧别时若未手选，随当前侧更新
+    const choice = layoutForCompareSide(
+      taskFocus,
+      abSide === "A" ? specA : specB,
+    );
     setLayoutChoice(choice);
     if (!layoutPinned) setLayoutId(choice.id);
-  }, [specA, specB, taskFocus, layoutPinned]);
+  }, [specA, specB, taskFocus, abSide, layoutPinned]);
   const activeThreatReason = abSide === "A" ? reasonThreatA : reasonThreatB;
   const activeIntentReason = abSide === "A" ? reasonIntentA : reasonIntentB;
   const rich = abSide === "B";
@@ -294,6 +298,8 @@ export function VmmpCompareWorkbench() {
             value={layoutId}
             recommendedId={layoutChoice?.id}
             reason={layoutChoice?.reason}
+            detail={layoutChoice?.detail}
+            source={layoutChoice?.source}
             pinned={layoutPinned}
             onChange={(id) => {
               setLayoutId(id);

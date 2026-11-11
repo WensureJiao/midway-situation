@@ -313,7 +313,7 @@ function SideChartCard({
     <div
       className={`flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--panel)] ring-1 ${
         board
-          ? "rounded-lg px-2.5 py-2 shadow-sm"
+          ? "rounded-md px-1.5 py-1 shadow-sm"
           : "rounded-md px-1.5 py-1"
       } ${active ? "ring-[var(--accent)]" : "ring-[var(--line)]"}`}
     >
@@ -321,11 +321,7 @@ function SideChartCard({
         <span className="shrink-0 rounded bg-[var(--panel-3)] px-1 py-px text-[9px] font-semibold tracking-wide text-[var(--muted)]">
           Q
         </span>
-        <h3
-          className={`min-w-0 flex-1 font-semibold leading-tight text-[var(--ink)] ${
-            board ? "line-clamp-2 text-xs" : "truncate text-[11px]"
-          }`}
-        >
+        <h3 className="min-w-0 flex-1 truncate text-[11px] font-semibold leading-tight text-[var(--ink)]">
           {question}
         </h3>
         {sideLegend ? (
@@ -355,8 +351,8 @@ function SideChartCard({
       </div>
       {insight ? (
         <p
-          className={`mt-1 shrink-0 border-t border-[var(--line)] pt-1 text-[10px] leading-snug text-[var(--ink)] ${
-            board ? "line-clamp-3" : "truncate leading-tight pt-0.5 mt-0.5"
+          className={`mt-0.5 shrink-0 border-t border-[var(--line)] pt-0.5 text-[9px] leading-tight text-[var(--ink)] ${
+            board ? "line-clamp-2" : "truncate"
           }`}
         >
           <span className="mr-1 font-semibold text-[var(--accent)]">结论</span>
@@ -958,16 +954,17 @@ export function SpatialStudyPanel({
       : `当前分析问题：识别当前态势下的主要威胁目标，并比较其优先级`;
 
   const evidenceCols = evidenceGridCols(rowCharts.length);
+  const evidenceRows = Math.max(1, Math.ceil(rowCharts.length / evidenceCols));
   const evidenceBoard = sideCharts.length ? (
     <>
       <div
-        className={`grid min-h-0 gap-2.5 ${
-          rowCharts.length <= 4 ? "h-full" : ""
-        } ${rowCharts.length === 1 ? "mx-auto w-full max-w-4xl" : ""}`}
+        className={`grid min-h-0 flex-1 gap-1.5 ${
+          rowCharts.length === 1 ? "mx-auto w-full max-w-3xl" : ""
+        }`}
         style={{
           gridTemplateColumns: `repeat(${evidenceCols}, minmax(0, 1fr))`,
-          gridAutoRows:
-            rowCharts.length <= 4 ? "minmax(0, 1fr)" : "minmax(268px, 300px)",
+          // 行高均分可用高度，铺满主区；多列控制单卡不至于过高
+          gridTemplateRows: `repeat(${evidenceRows}, minmax(0, 1fr))`,
         }}
       >
         {rowCharts.map((chart) => (
@@ -980,7 +977,7 @@ export function SpatialStudyPanel({
           />
         ))}
       </div>
-      <p className="mt-1.5 shrink-0 text-[9px] leading-tight text-[var(--muted)]">
+      <p className="mt-1 shrink-0 text-[9px] leading-tight text-[var(--muted)]">
         {chartOrderCaption(
           taskFocus,
           viewSide === "B",
@@ -1088,7 +1085,7 @@ export function SpatialStudyPanel({
           </button>
         </div>
         {analysisStrip}
-        <div className="relative z-10 min-h-0 min-w-0 flex-1 overflow-y-auto px-2.5 py-2.5">
+        <div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-2 py-1.5">
           {evidenceBoard}
         </div>
 

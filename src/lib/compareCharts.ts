@@ -53,7 +53,7 @@ export function buildAxisVectorChart(spec: SituationViewSpec): ChartSpec {
   return {
     id: "cmp-intent-axes",
     type: "scatter",
-    title: "图上作战指向朝哪、各多长？",
+    title: "图上作战指向的方位与长度如何？",
     description: "横轴方位°，纵轴长度 nm；红美蓝日 — 对照地图虚线轴",
     series: axisVectorScatterSeries(spec),
   };
@@ -393,12 +393,12 @@ export function concludeIntentAxes(
         : `美方指向更长，主作战方向先看红${mark}。`;
   } else if (ij[0]) {
     verdict = asRadar
-      ? "只有日方轴：看蓝瓣落在哪一格、有多长。"
-      : "只有日方轴：看蓝点落在哪一方位、有多高。";
+      ? "仅日方轴：对照蓝瓣所在方位格及其长度。"
+      : "仅日方轴：对照蓝点所在方位及其高度。";
   } else {
     verdict = asRadar
-      ? "只有美方轴：看红瓣落在哪一格、有多长。"
-      : "只有美方轴：看红点落在哪一方位、有多高。";
+      ? "仅美方轴：对照红瓣所在方位格及其长度。"
+      : "仅美方轴：对照红点所在方位及其高度。";
   }
   return `结论：${bits.join("；")}。${verdict}`;
 }
@@ -1687,49 +1687,49 @@ function buildSpatialRelationCharts(
     {
       id: "cmp-force-bearing",
       type: "radar",
-      title: "相对岛，敌我方位扇区如何分布？",
+      title: "敌我相对中途岛的方位扇区如何分布？",
       description: "美/日舰艇相对中途岛八方位计数；突起=兵力所在扇区",
       series: bearing,
     },
     {
       id: "cmp-air-profile",
       type: "scatter",
-      title: "在空飞机相对岛的东向×高度？",
+      title: "在空飞机相对中途岛的东向与高度分布？",
       description: "横轴东向 nm，纵轴高度 km",
       series: air,
     },
     {
       id: "cmp-hunt-range",
       type: "hbar",
-      title: "高亮之间/对岛间隔有多远？",
+      title: "高亮目标之间及相对中途岛的间隔如何？",
       description: "条长=海里；越短越近。悬停看具体关联",
       series: huntRangeSeries(pack, spec),
     },
     {
       id: "cmp-alt-bands",
       type: "multi_line",
-      title: "美/日在空兵力落在哪些高度带？",
+      title: "美日在空兵力分布在哪些高度带？",
       description: "折线：各高度带架次走势（美/日对照）",
       series: altBandsSeries(pack),
     },
     {
       id: "cmp-force-range",
       type: "hbar",
-      title: "各舰距中途岛多远？",
+      title: "各舰相对中途岛的距离如何？",
       description: "条长=海里；越短越近。红美蓝日",
       series: forceRangeBarSeries(pack),
     },
     {
       id: "cmp-force-range-area",
       type: "area",
-      title: "各舰距中途岛多远？",
+      title: "各舰相对中途岛的距离如何？",
       description: "横轴距岛海里，纵轴该距离内舰数；面积看美/日铺开过程",
       series: closeProfileSeries(pack),
     },
     {
       id: "cmp-force-range-strip",
       type: "scatter",
-      title: "各舰距中途岛多远？",
+      title: "各舰相对中途岛的距离如何？",
       description: "横轴距岛 nm（0=中途岛）；红美蓝日，一点一艘",
       series: forceRangeStripSeries(pack),
     },
@@ -1738,7 +1738,7 @@ function buildSpatialRelationCharts(
           {
             id: "cmp-zone-footprint" as const,
             type: "scatter" as const,
-            title: "关注圈圆心相对岛落在哪？",
+            title: "关注圈圆心相对中途岛位于何处？",
             description: "原点=中途岛；点大≈圈半径 nm",
             series: zoneFootprintScatterSeries(pack, spec),
           },
@@ -2192,7 +2192,7 @@ function buildTaskChartCandidates(
     {
       id: "cmp-aim-link" as const,
       type: "sankey" as const,
-      title: "谁在对准谁？",
+      title: "作战指向的发起方与目标是哪些？",
       description: "左=发起，右=目标；带宽=指向长度 nm。红美蓝日",
       series: aimLinkSankeySeries(spec),
     },
@@ -2212,7 +2212,7 @@ function buildTaskChartCandidates(
     {
       id: "cmp-highlight-range" as const,
       type: "hbar" as const,
-      title: "高亮实体离中途岛多远？",
+      title: "高亮实体相对中途岛的距离如何？",
       description: "条长=海里；越短越近。只看图上高亮",
       series: pack ? highlightRangeSeries(pack, spec) : [],
     },
@@ -2222,21 +2222,21 @@ function buildTaskChartCandidates(
     {
       id: "cmp-heading" as const,
       type: "radar" as const,
-      title: "航向对准作战轴了吗？",
+      title: "舰首航向与作战轴是否对准？",
       description: "瓣=舰首航向，箭头=作战轴；重合=对准",
       series: pack ? headingAlignSeries(pack, spec) : [],
     },
     {
       id: "cmp-urgent-near" as const,
       type: "scatter" as const,
-      title: "谁紧急又离岛近？",
+      title: "哪些目标威胁高且距离中途岛近？",
       description: "横轴距岛 nm，纵轴威胁等级；左上=紧急且近",
       series: pack ? urgentNearScatterSeries(pack, ratings) : [],
     },
     {
       id: "cmp-threat-evidence" as const,
       type: "scatter" as const,
-      title: "评级依据足不足？",
+      title: "威胁评级的证据是否充分？",
       description: "横轴充分度，纵轴等级；右上=定级且有据",
       series: threatEvidenceScatterSeries(ratings),
     },

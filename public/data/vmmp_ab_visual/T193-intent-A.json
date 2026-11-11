@@ -155,7 +155,7 @@
     {
       "id": "cmp-intent-axes",
       "type": "scatter",
-      "title": "图上作战指向朝哪、各多长？",
+      "title": "图上作战指向的方位与长度如何？",
       "description": "横轴方位°，纵轴长度 nm；红美蓝日 — 对照地图虚线轴",
       "series": [
         {
@@ -181,7 +181,7 @@
     {
       "id": "cmp-force-bearing",
       "type": "bar",
-      "title": "相对岛，敌我方位扇区如何分布？",
+      "title": "敌我相对中途岛的方位扇区如何分布？",
       "description": "美/日八方位计数（柱）",
       "series": [
         {
@@ -303,7 +303,7 @@
     {
       "id": "cmp-air-profile",
       "type": "scatter",
-      "title": "在空飞机相对岛的东向×高度？",
+      "title": "在空飞机相对中途岛的东向与高度分布？",
       "description": "横轴东向 nm，纵轴高度 km",
       "series": [
         {
@@ -755,7 +755,7 @@
     {
       "id": "cmp-hunt-range",
       "type": "hbar",
-      "title": "高亮之间/对岛间隔有多远？",
+      "title": "高亮目标之间及相对中途岛的间隔如何？",
       "description": "条长=海里；越短越近。悬停看具体关联",
       "series": [
         {
@@ -818,7 +818,7 @@
     {
       "id": "cmp-heading",
       "type": "hbar",
-      "title": "航向对准作战轴了吗？",
+      "title": "舰首航向与作战轴是否对准？",
       "description": "条短=舰首航向相对作战轴偏角小（对准）",
       "series": [
         {

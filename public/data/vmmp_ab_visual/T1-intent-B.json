@@ -113,7 +113,7 @@
     {
       "id": "cmp-force-bearing",
       "type": "radar",
-      "title": "相对岛，敌我方位扇区如何分布？（方位玫瑰）",
+      "title": "敌我相对中途岛的方位扇区如何分布？（方位玫瑰）",
       "description": "美/日舰艇相对中途岛八方位计数；突起=兵力所在扇区",
       "series": [
         {
@@ -234,7 +234,7 @@
     {
       "id": "cmp-intent-axes",
       "type": "radar",
-      "title": "图上作战指向朝哪、各多长？",
+      "title": "图上作战指向的方位与长度如何？",
       "description": "各作战指向长度轮廓（雷达）；对照地图虚线轴",
       "series": [
         {

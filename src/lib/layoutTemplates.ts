@@ -132,10 +132,11 @@ export function isSwitchableLayout(value: unknown): value is LayoutTemplateId {
   );
 }
 
-/** 证据优先：少卡单列，两张及以上双列，避免空白或图过小。 */
-export function evidenceGridCols(count: number): 1 | 2 {
+/** 证据优先：1 张单列，2～4 张双列，5 张起三列，缩小单卡以便同屏看全。 */
+export function evidenceGridCols(count: number): 1 | 2 | 3 {
   if (count <= 1) return 1;
-  return 2;
+  if (count <= 4) return 2;
+  return 3;
 }
 
 /**

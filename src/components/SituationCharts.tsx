@@ -361,21 +361,21 @@ function lineYDomain(values: number[]): [number, number] {
 }
 
 const CARD_QUESTION: Record<string, string> = {
-  "cmp-threat-rank": "谁最急？",
-  "cmp-force-landing": "敌我落在哪？",
-  "cmp-force-range": "距岛多远？",
-  "cmp-force-bearing": "方位如何分布？",
-  "cmp-zone-radius": "圈有多大？",
-  "cmp-zone-footprint": "圈心落在哪？",
-  "cmp-intent-axes": "指向朝哪？",
-  "cmp-hunt-range": "间隔多远？",
-  "cmp-aim-link": "谁在对准谁？",
-  "cmp-air-profile": "在空多高？",
-  "cmp-alt-bands": "高度落在哪？",
-  "cmp-highlight-range": "高亮离岛多远？",
-  "cmp-heading": "航向对准轴了吗？",
-  "cmp-urgent-near": "谁紧急又离岛近？",
-  "cmp-threat-evidence": "依据足不足？",
+  "cmp-threat-rank": "哪些目标的威胁程度最高",
+  "cmp-force-landing": "敌我兵力相对中途岛如何分布",
+  "cmp-force-range": "各舰相对中途岛的距离",
+  "cmp-force-bearing": "敌我相对中途岛的方位分布",
+  "cmp-zone-radius": "各关注圈半径对比",
+  "cmp-zone-footprint": "关注圈圆心相对中途岛的位置",
+  "cmp-intent-axes": "作战指向的方位与长度",
+  "cmp-hunt-range": "高亮目标间隔距离",
+  "cmp-aim-link": "作战指向的发起方与目标",
+  "cmp-air-profile": "在空飞机相对岛的东向与高度",
+  "cmp-alt-bands": "美日在空兵力的高度带分布",
+  "cmp-highlight-range": "高亮实体相对中途岛的距离",
+  "cmp-heading": "舰首航向与作战轴的对准程度",
+  "cmp-urgent-near": "高威胁且近岛目标分布",
+  "cmp-threat-evidence": "威胁评级的证据充分度",
 };
 
 export function chartQuestion(chart: ChartSpec): string {
@@ -536,7 +536,7 @@ export function chartInsight(chart: ChartSpec): string {
     if (us[0] && ij[0]) return `美 ${fmt(us[0])} · 日 ${fmt(ij[0])}`;
     if (us[0]) return `美方 ${fmt(us[0])}`;
     if (ij[0]) return `日方 ${fmt(ij[0])}`;
-    return "未画对准关系";
+    return "暂无作战指向关系";
   }
   if (chart.id === "cmp-heading") {
     if (chart.type === "hbar") {
@@ -602,7 +602,7 @@ export function chartInsight(chart: ChartSpec): string {
         )[0];
       return hit
         ? `${shortName(hit.name)} ${Math.round(Number(hit.x))}nm / ${hit.group ?? "高"}`
-        : "没有紧急且近的目标";
+        : "暂无高威胁近岛目标";
     }
     const top = peakRow(s);
     return top

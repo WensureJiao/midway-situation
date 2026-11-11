@@ -202,7 +202,7 @@
     {
       "id": "cmp-zone-footprint",
       "type": "scatter",
-      "title": "关注圈圆心相对岛落在哪？",
+      "title": "关注圈圆心相对中途岛位于何处？",
       "description": "原点=中途岛；点大≈圈半径 nm",
       "series": [
         {

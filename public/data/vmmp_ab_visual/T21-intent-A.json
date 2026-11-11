@@ -313,7 +313,7 @@
     {
       "id": "cmp-alt-bands",
       "type": "grouped_bar",
-      "title": "问：美/日在空兵力落在哪些高度带？",
+      "title": "问：美日在空兵力分布在哪些高度带？",
       "description": "分组柱：各高度带架次（结构分布）",
       "series": [
         {
@@ -402,7 +402,7 @@
     {
       "id": "cmp-evidence-focus",
       "type": "scatter",
-      "title": "问：高亮实体/圈心相对岛在哪？",
+      "title": "问：高亮实体与圈心相对中途岛位于何处？",
       "description": "只画高亮与活动区圆心",
       "series": [
         {
